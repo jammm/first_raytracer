@@ -23,11 +23,11 @@ vec3 color(const ray &r, hitable *world)
 
 int main()
 {
-    const int nx = 200;
-    const int ny = 100;
+    const int nx = 400;
+    const int ny = 200;
     const int comp = 3; //RGB
     unsigned char out_image[nx * ny * comp];
-    std::cout << "P3\n" << nx << " " << ny << "\n255\n";
+    //std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     vec3 lower_left_corner(-2.0f, -1.0f, -1.0f);
     vec3 horizontal(4.0f, 0.0f, 0.0f);
@@ -37,6 +37,9 @@ int main()
     list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f);
     list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f);
     hitable *world = new hitable_list(list, 2);
+
+    stbi_flip_vertically_on_write(true);
+
     for (int j = ny-1; j >= 0; j--)
     {
         for (int i = 0; i < nx; i++)
@@ -50,11 +53,11 @@ int main()
             int ir = int(col[0] * 255.99);
             int ig = int(col[1] * 255.99);
             int ib = int(col[2] * 255.99);
-            int index = j * ny + i * comp;
+            int index = (j * nx + i) * comp;
             out_image[index]     = unsigned char(ir);
             out_image[index + 1] = unsigned char(ig);
             out_image[index + 2] = unsigned char(ib);
-            std::cout << ir << " " << ig << " " << ib << "\n";
+            //std::cout << ir << " " << ig << " " << ib << "\n";
         }
     }
 
