@@ -112,9 +112,9 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ray.cpp" />
-    <ClCompile Include="vec3.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="hitable.h" />
     <ClInclude Include="hitable_list.h" />
     <ClInclude Include="ray.h" />
