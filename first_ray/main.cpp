@@ -10,13 +10,31 @@
 #define STBI_MSC_SECURE_CRT
 #include "stb_image_write.h"
 
+float drand48()
+{
+    return float(rand()) / float(RAND_MAX);
+}
+
+vec3 random_in_unit_sphere()
+{
+    vec3 p;
+
+    do
+    {
+        p = 2.0f * vec3(drand48(), drand48(), drand48()) - vec3(1, 1, 1);
+    } while (p.squared_length() >= 1.0f);
+
+    return p;
+}
+
 
 vec3 color(const ray &r, hitable *world)
 {
     hit_record rec;
-    if (world->hit(r, 0.0, FLT_MAX, rec))
+    if (world->hit(r, 0.001, FLT_MAX, rec))
     {
-        return 0.5f * vec3(rec.normal.x() + 1.0f, rec.normal.y() + 1.0f, rec.normal.z() + 1.0f);
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        return 0.5f * color( ray(rec.p, target - rec.p), world);
     }
     vec3 unit_direction = unit_vector(r.direction());
     float t = 0.5f * (unit_direction.y() + 1.0f);
@@ -54,9 +72,9 @@ int main()
                 col += color(r, world);
             }
             col /= float(ns);
-            int ir = int(col[0] * 255.99);
-            int ig = int(col[1] * 255.99);
-            int ib = int(col[2] * 255.99);
+            int ir = int(sqrt(col[0]) * 255.99);
+            int ig = int(sqrt(col[1]) * 255.99);
+            int ib = int(sqrt(col[2]) * 255.99);
             int index = (j * nx + i) * comp;
             out_image[index]     = unsigned char(ir);
             out_image[index + 1] = unsigned char(ig);
