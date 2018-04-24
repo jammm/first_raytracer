@@ -117,10 +117,12 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="hitable.h" />
     <ClInclude Include="hitable_list.h" />
+    <ClInclude Include="material.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="sphere.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_image_write.h" />
+    <ClInclude Include="util.h" />
     <ClInclude Include="vec3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
