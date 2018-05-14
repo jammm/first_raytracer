@@ -35,20 +35,21 @@ vec3 color(const ray &r, hitable *world, int depth)
 
 int main()
 {
-    const int nx = 400;
-    const int ny = 200;
+    const int nx = 1920;
+    const int ny = 1080;
     const int ns = 100;
     const int comp = 3; //RGB
-    unsigned char out_image[nx * ny * comp];
+    unsigned char *out_image = new unsigned char[nx * ny * comp];
     //std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
-    hitable *list[4];
+    hitable *list[5];
     camera cam;
-    list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(vec3(0.8f, 0.3f, 0.3f)));
+    list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
     list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f, new lambertian(vec3(0.8f, 0.8f, 0.0f)));
-    list[2] = new sphere(vec3(1.0f, 0, -1.0f), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f)));
-    list[3] = new sphere(vec3(-1.0f, 0.0f, -1.0f), 0.5f, new metal(vec3(0.8f, 0.8f, 0.8f)));
-    hitable *world = new hitable_list(list, 4);
+    list[2] = new sphere(vec3(1.0f, 0, -1.0f), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.5f));
+    list[3] = new sphere(vec3(-1.0f, 0.0f, -1.0f), 0.5f, new dielectric(1.5f));
+    list[4] = new sphere(vec3(-1.0f, 0.0f, -1.0f), -0.45f, new dielectric(1.5f));
+    hitable *world = new hitable_list(list, 5);
 
     stbi_flip_vertically_on_write(true);
 
@@ -82,6 +83,8 @@ int main()
     stbi_write_bmp("out.bmp", nx, ny, comp, (void *)out_image);
     stbi_write_png("out.png", nx, ny, comp, (void *)out_image, nx * comp);
     stbi_write_jpg("out.jpg", nx, ny, comp, (void *)out_image, 100);
+
+    delete out_image;
 
     return 0;
 }
