@@ -1,9 +1,10 @@
 #ifndef INCLUDE_VEC3_H
 #define INCLUDE_VEC3_H
 
+
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <iostream>
-#include <math.h>
 #include <stdlib.h>
 
 struct vec3
