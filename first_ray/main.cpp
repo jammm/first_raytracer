@@ -78,8 +78,8 @@ vec3 color(const ray &r, hitable *world, int depth)
 
 int main()
 {
-    const int nx = 1200;
-    const int ny = 800;
+    const int nx = 200;
+    const int ny = 100;
     const int ns = 100;
     const int comp = 3; //RGB
     unsigned char *out_image = new unsigned char[nx * ny * comp];
@@ -93,6 +93,7 @@ int main()
     camera cam(lookfrom, lookat, vec3(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
     float R = cos(M_PI / 4);
 
+    // TODO: Use files to read simple scene descriptions (YAML?)
     //list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
     //list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f, new lambertian(vec3(0.8f, 0.8f, 0.0f)));
     //list[2] = new sphere(vec3(1.0f, 0, -1.0f), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.5f));
@@ -103,6 +104,8 @@ int main()
 
     stbi_flip_vertically_on_write(true);
 
+    // TODO: Parallelize this stuff
+    // Use C++ std::thread or https://github.com/dougbinks/enkiTS
     for (int j = ny-1; j >= 0; j--)
     {
         for (int i = 0; i < nx; i++)
@@ -121,18 +124,20 @@ int main()
             int ig = int(sqrt(col[1]) * 255.99);
             int ib = int(sqrt(col[2]) * 255.99);
             int index = (j * nx + i) * comp;
+
+            // Store output pixels
+            // TODO: real-time streaming of pixels on a window
             out_image[index]     = unsigned char(ir);
             out_image[index + 1] = unsigned char(ig);
             out_image[index + 2] = unsigned char(ib);
-            //std::cout << ir << " " << ig << " " << ib << "\n";
         }
         std::cout << ".";
         //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
     }
 
-    stbi_write_bmp("out.bmp", nx, ny, comp, (void *)out_image);
-    stbi_write_png("out.png", nx, ny, comp, (void *)out_image, nx * comp);
-    stbi_write_jpg("out.jpg", nx, ny, comp, (void *)out_image, 100);
+    stbi_write_bmp("out_test.bmp", nx, ny, comp, (void *)out_image);
+    stbi_write_png("out_test.png", nx, ny, comp, (void *)out_image, nx * comp);
+    stbi_write_jpg("out_test.jpg", nx, ny, comp, (void *)out_image, 100);
 
     delete out_image;
 
