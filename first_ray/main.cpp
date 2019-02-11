@@ -7,6 +7,10 @@
 #include "util.h"
 #include <float.h>
 
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_MSC_SECURE_CRT
 #include "stb_image_write.h"
@@ -82,7 +86,10 @@ int main()
     const int ny = 100;
     const int ns = 100;
     const int comp = 3; //RGB
-    unsigned char *out_image = new unsigned char[nx * ny * comp];
+    GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
+    memset(out_image, 0, nx * ny * comp + 64);
+    //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
+    bool to_exit = false;
     //std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     hitable *list[5];
@@ -91,7 +98,7 @@ int main()
     float dist_to_focus = 10.0f;
     float aperture = 0.1f;
     camera cam(lookfrom, lookat, vec3(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
-    float R = cos(M_PI / 4);
+    float R = (float) cos(M_PI / 4);
 
     // TODO: Use files to read simple scene descriptions (YAML?)
     //list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
@@ -102,17 +109,76 @@ int main()
     //hitable *world = new hitable_list(list, 5);
     hitable *world = random_scene();
 
+    GLFWwindow* window;
+
+    /* Initialize GLFW */
+    if (!glfwInit())
+        return -1;
+
+    /* Create a windowed mode window and its OpenGL context */
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    window = glfwCreateWindow(nx, ny, "jam's ray tracer", NULL, NULL);
+    if (!window) {
+        fprintf(stderr, "ERROR: cannot not open window with GLFW3\n");
+        glfwTerminate();
+        return -1;
+    }
+
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+
+    /* Initialize GLEW */
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        // Problem: glewInit failed, something is seriously wrong.
+        std::cout << "glewInit failed: " << glewGetErrorString(err) << std::endl;
+        exit(1);
+    }
+
+    /* Create texture used to represent the color buffer */
+    GLuint render_texture;
+    glGenTextures(1, &render_texture);
+    std::cout << glGetError() << std::endl;
+    glBindTexture(GL_TEXTURE_2D, render_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    std::cout << glGetError() << std::endl;
+
+    /* Create FBO to represent the framebuffer for blitting to the screen */
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+
+    /* Bind FBO to both GL_FRAMEBUFFER and GL_READ_FRAMEBUFFER */
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
+    std::cout << glGetError() << std::endl;
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+    // Flip output image vertically
     stbi_flip_vertically_on_write(true);
+
+    /* Clear the window */
+    glClear(GL_COLOR_BUFFER_BIT);
 
     // TODO: Parallelize this stuff
     // Use C++ std::thread or https://github.com/dougbinks/enkiTS
     for (int j = ny-1; j >= 0; j--)
     {
+        if (to_exit) break;
         for (int i = 0; i < nx; i++)
         {
+            if (to_exit) break;
             vec3 col(0.0f, 0.0f, 0.0f);
             for (int s = 0; s < ns; s++)
             {
+                if (glfwWindowShouldClose(window))
+                {
+                    to_exit = true;
+                    break;
+                }
+
                 float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
                 float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
                 ray r = cam.get_ray(u, v);
@@ -126,10 +192,20 @@ int main()
             int index = (j * nx + i) * comp;
 
             // Store output pixels
-            // TODO: real-time streaming of pixels on a window
             out_image[index]     = unsigned char(ir);
             out_image[index + 1] = unsigned char(ig);
             out_image[index + 2] = unsigned char(ib);
+
+            /* Render here */
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
+            glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
+                GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            /* Swap front and back buffers */
+            glfwSwapBuffers(window);
+
+            /* Poll for and process events */
+            glfwPollEvents();
         }
         std::cout << ".";
         //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
@@ -139,6 +215,7 @@ int main()
     stbi_write_png("out_test.png", nx, ny, comp, (void *)out_image, nx * comp);
     stbi_write_jpg("out_test.jpg", nx, ny, comp, (void *)out_image, 100);
 
+    glfwTerminate();
     delete out_image;
 
     return 0;
