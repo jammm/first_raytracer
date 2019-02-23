@@ -4,6 +4,7 @@
 #include "sphere.h"
 #include "material.h"
 #include "camera.h"
+#include "texture.h"
 #include "util.h"
 #include <float.h>
 
@@ -20,9 +21,10 @@
 
 hitable *random_scene()
 {
+    /* n == number of spheres */
     int n = 500;
     hitable **list = new hitable*[n + 1];
-    list[0] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5, 0.5, 0.5)));
+    list[0] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(new constant_texture(vec3(0.5, 0.5, 0.5))));
     int i = 1;
     for (int a = -11;a < 11; a++)
     {
@@ -35,7 +37,7 @@ hitable *random_scene()
                 if (choose_mat < 0.8)
                 {
                     //diffuse
-                    list[i++] = new sphere(center, 0.2, new lambertian(vec3(drand48() * drand48(), drand48() * drand48(), drand48() * drand48())));
+                    list[i++] = new sphere(center, 0.2, new lambertian(new constant_texture(vec3(drand48() * drand48(), drand48() * drand48(), drand48() * drand48()))));
                 }
                 else if (choose_mat < 0.95)
                 {
@@ -53,7 +55,7 @@ hitable *random_scene()
     }
 
     list[i++] = new sphere(vec3(0, 1, 0), 1.0, new dielectric(1.5));
-    list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1)));
+    list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(new constant_texture(vec3(0.4, 0.2, 0.1))));
     list[i++] = new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
 
     return new hitable_list(list, i);
@@ -88,9 +90,8 @@ int main()
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
-    //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
+    out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     bool to_exit = false;
-    //std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     hitable *list[5];
     vec3 lookfrom(13, 2, 3);
@@ -100,7 +101,7 @@ int main()
     camera cam(lookfrom, lookat, vec3(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
     float R = (float) cos(M_PI / 4);
 
-    // TODO: Use files to read simple scene descriptions (YAML?)
+    // TODO: Read obj files for meshes. Scenes come later
     //list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
     //list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f, new lambertian(vec3(0.8f, 0.8f, 0.0f)));
     //list[2] = new sphere(vec3(1.0f, 0, -1.0f), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.5f));
