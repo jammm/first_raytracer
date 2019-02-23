@@ -31,32 +31,32 @@ hitable *random_scene()
         for (int b = -11; b < 11; b++)
         {
             float choose_mat = drand48();
-            vec3 center(a + 0.9* drand48(), 0.2, b + 0.9 * drand48());
-            if ((center - vec3(4, 0.2, 0)).length() > 0.9)
+            vec3 center(a + 0.9f * drand48(), 0.2f, b + 0.9f * drand48());
+            if ((center - vec3(4, 0.2f, 0)).length() > 0.9f)
             {
                 if (choose_mat < 0.8)
                 {
                     //diffuse
-                    list[i++] = new sphere(center, 0.2, new lambertian(new constant_texture(vec3(drand48() * drand48(), drand48() * drand48(), drand48() * drand48()))));
+                    list[i++] = new sphere(center, 0.2f, new lambertian(new constant_texture(vec3(drand48() * drand48(), drand48() * drand48(), drand48() * drand48()))));
                 }
                 else if (choose_mat < 0.95)
                 {
                     //metal
-                    list[i++] = new sphere(center, 0.2,
-                        new metal(vec3(0.5* (1 + drand48()), 0.5 * (1 + drand48()), 0.5 * (1 + drand48())), 0.5*drand48()));
+                    list[i++] = new sphere(center, 0.2f,
+                        new metal(vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())), 0.5f*drand48()));
                 }
                 else
                 {
                     //dielectric
-                    list[i++] = new sphere(center, 0.2, new dielectric(1.5));
+                    list[i++] = new sphere(center, 0.2f, new dielectric(1.5f));
                 }
             }
         }
     }
 
-    list[i++] = new sphere(vec3(0, 1, 0), 1.0, new dielectric(1.5));
-    list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(new constant_texture(vec3(0.4, 0.2, 0.1))));
-    list[i++] = new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+    list[i++] = new sphere(vec3(0, 1, 0), 1.0f, new dielectric(1.5));
+    list[i++] = new sphere(vec3(-4, 1, 0), 1.0f, new lambertian(new constant_texture(vec3(0.4f, 0.2f, 0.1f))));
+    list[i++] = new sphere(vec3(4, 1, 0), 1.0f, new metal(vec3(0.7f, 0.6f, 0.5f), 0));
 
     return new hitable_list(list, i);
 }
@@ -93,7 +93,6 @@ int main()
     out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     bool to_exit = false;
 
-    hitable *list[5];
     vec3 lookfrom(13, 2, 3);
     vec3 lookat(0, 0, 0);
     float dist_to_focus = 10.0f;
@@ -102,6 +101,7 @@ int main()
     float R = (float) cos(M_PI / 4);
 
     // TODO: Read obj files for meshes. Scenes come later
+    //hitable *list[5];
     //list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
     //list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f, new lambertian(vec3(0.8f, 0.8f, 0.0f)));
     //list[2] = new sphere(vec3(1.0f, 0, -1.0f), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.5f));
