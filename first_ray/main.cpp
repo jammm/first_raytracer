@@ -24,7 +24,9 @@ hitable *random_scene()
     /* n == number of spheres */
     int n = 500;
     hitable **list = new hitable*[n + 1];
-    list[0] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(new constant_texture(vec3(0.5, 0.5, 0.5))));
+    //Large sphere's texture can be checkered
+    texture *checker = new checker_texture(new constant_texture(vec3(0.2f, 0.3f, 0.1f)), new constant_texture(vec3(0.9f, 0.9f, 0.9f)));
+    list[0] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(checker));
     int i = 1;
     for (int a = -11;a < 11; a++)
     {
@@ -84,8 +86,8 @@ vec3 color(const ray &r, hitable *world, int depth)
 
 int main()
 {
-    const int nx = 200;
-    const int ny = 100;
+    const int nx = 1024;
+    const int ny = 768;
     const int ns = 100;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
