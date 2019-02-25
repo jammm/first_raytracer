@@ -8,15 +8,25 @@
 #include "util.h"
 #include <float.h>
 
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STBI_MSC_SECURE_CRT
+
+#ifdef _WIN32
+    #define GLEW_STATIC
+    #include <GL/glew.h>
+    #define _CRT_SECURE_NO_DEPRECATE
+    #define STBI_MSC_SECURE_CRT
+#endif
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#endif
+#include <GLFW/glfw3.h>
 #include "stb_image_write.h"
 
-
+void glfw_error_callback(int, const char* err_str)
+{
+    std::cout << "GLFW Error: " << err_str << std::endl;
+}
 
 
 hitable *random_scene()
@@ -114,17 +124,25 @@ int main()
 
     GLFWwindow* window;
 
+    /* Register GLFW error callback */
+    glfwSetErrorCallback(glfw_error_callback);
     /* Initialize GLFW */
     if (!glfwInit())
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    /* Also specify the OpenGL version (seems like this is sensitive to many potential issues) */
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+    /* OSX requires forward compatibility for some reason */
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     window = glfwCreateWindow(nx, ny, "jam's ray tracer", NULL, NULL);
     if (!window) {
-        fprintf(stderr, "ERROR: cannot not open window with GLFW3\n");
+        fprintf(stderr, "ERROR: cannot open window with GLFW3\n");
         glfwTerminate();
         return -1;
     }
@@ -132,6 +150,7 @@ int main()
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+#ifdef _WIN32
     /* Initialize GLEW */
     GLenum err = glewInit();
     if (err != GLEW_OK) {
@@ -139,6 +158,7 @@ int main()
         std::cout << "glewInit failed: " << glewGetErrorString(err) << std::endl;
         exit(1);
     }
+#endif
 
     /* Create texture used to represent the color buffer */
     GLuint render_texture;
@@ -195,9 +215,9 @@ int main()
             int index = (j * nx + i) * comp;
 
             // Store output pixels
-            out_image[index]     = unsigned char(ir);
-            out_image[index + 1] = unsigned char(ig);
-            out_image[index + 2] = unsigned char(ib);
+            out_image[index]     = (unsigned char)ir;
+            out_image[index + 1] = (unsigned char)ig;
+            out_image[index + 2] = (unsigned char)ib;
 
             /* Render here */
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
@@ -219,7 +239,7 @@ int main()
     stbi_write_jpg("out_test.jpg", nx, ny, comp, (void *)out_image, 100);
 
     glfwTerminate();
-    delete out_image;
+    delete[] out_image;
 
     return 0;
 }
