@@ -67,8 +67,8 @@ hitable *random_scene()
     }
 
     list[i++] = new sphere(vec3(0, 1, 0), 1.0f, new dielectric(1.5));
-    list[i++] = new sphere(vec3(-4, 1, 0), 1.0f, new lambertian(new constant_texture(vec3(0.4f, 0.2f, 0.1f))));
-    list[i++] = new sphere(vec3(4, 1, 0), 1.0f, new metal(vec3(0.7f, 0.6f, 0.5f), 0));
+    list[i++] = new sphere(vec3(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(vec3(0.99f, 0.99f, 0.99f))));
+    list[i++] = new sphere(vec3(-4, 1, 0), 1.0f, new metal(vec3(0.7f, 0.6f, 0.5f), 0));
 
     return new hitable_list(list, i);
 }
@@ -80,18 +80,17 @@ vec3 color(const ray &r, hitable *world, int depth)
     {
         ray scattered;
         vec3 attenuation;
+        vec3 emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
         if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered))
         {
-            return attenuation * color(scattered, world, depth + 1);
+            return emitted + attenuation * color(scattered, world, depth + 1);
         }
-        else
-        {
-            return vec3(0.0f, 0.0f, 0.0f);
-        }
+        return emitted;
     }
-    vec3 unit_direction = unit_vector(r.direction());
-    float t = 0.5f * (unit_direction.y() + 1.0f);
-    return (1.0f - t)*vec3(1.0f, 1.0f, 1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
+    //vec3 unit_direction = unit_vector(r.direction());
+    //float t = 0.5f * (unit_direction.y() + 1.0f);
+    //return (1.0f - t)*vec3(1.0f, 1.0f, 1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
+    return vec3(0, 0, 0);
 }
 
 int main()
@@ -187,6 +186,7 @@ int main()
 
     // TODO: Parallelize this stuff
     // Use C++ std::thread or https://github.com/dougbinks/enkiTS
+#pragma omp parallel for
     for (int j = ny-1; j >= 0; j--)
     {
         if (to_exit) break;
