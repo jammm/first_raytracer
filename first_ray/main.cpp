@@ -2,6 +2,7 @@
 #include <iostream>
 #include "hitable_list.h"
 #include "sphere.h"
+#include "mesh.h"
 #include "material.h"
 #include "camera.h"
 #include "texture.h"
@@ -38,7 +39,7 @@ hitable *random_scene()
     texture *checker = new checker_texture(new constant_texture(vec3(0.2f, 0.3f, 0.1f)), new constant_texture(vec3(0.9f, 0.9f, 0.9f)));
     list[0] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(checker));
     int i = 1;
-    for (int a = -11;a < 11; a++)
+    /*for (int a = -11;a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
         {
@@ -64,11 +65,49 @@ hitable *random_scene()
                 }
             }
         }
+    }*/
+
+    // TODO: Remove this later
+    for (int a = -11; a < 11; a++)
+    {
+        for (int b = -11; b < 11; b++)
+        {
+            float choose_mat = drand48();
+            vec3 center(a + 0.9f * drand48(), 0.2f, b + 0.9f * drand48());
+            if ((center - vec3(4, 0.2f, 0)).length() > 0.9f)
+            {
+                if (choose_mat < 0.8)
+                {
+                    //diffuse
+                    list[i++] = new triangle(center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        new lambertian(new constant_texture(vec3(drand48() * drand48(), drand48() * drand48(), drand48() * drand48()))));
+                }
+                else if (choose_mat < 0.95)
+                {
+                    //metal
+                    list[i++] = new triangle(center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        new metal(vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())), 0.5f*drand48()));
+                }
+                else
+                {
+                    //dielectric
+                    list[i++] = new triangle(center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        center + vec3(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
+                        new dielectric(1.5f));
+                }
+            }
+        }
     }
 
-    list[i++] = new sphere(vec3(0, 1, 0), 1.0f, new dielectric(1.5));
-    list[i++] = new sphere(vec3(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(vec3(0.99f, 0.99f, 0.99f))));
-    list[i++] = new sphere(vec3(-4, 1, 0), 1.0f, new metal(vec3(0.7f, 0.6f, 0.5f), 0));
+    //list[i++] = new sphere(vec3(0, 1, 0), 1.0f, new dielectric(1.5));
+    //list[i++] = new sphere(vec3(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(vec3(0.99f, 0.99f, 0.99f))));
+    //list[i++] = new sphere(vec3(-4, 1, 0), 1.0f, new metal(vec3(0.7f, 0.6f, 0.5f), 0));
+    list[i++] = new triangle(vec3(0, 1, 0), vec3(4, 2, 0), vec3(-4, 1, 0), new diffuse_light(new constant_texture(vec3(0.99f, 0.99f, 0.99f))));
 
     return new hitable_list(list, i);
 }
@@ -87,10 +126,10 @@ vec3 color(const ray &r, hitable *world, int depth)
         }
         return emitted;
     }
-    //vec3 unit_direction = unit_vector(r.direction());
-    //float t = 0.5f * (unit_direction.y() + 1.0f);
-    //return (1.0f - t)*vec3(1.0f, 1.0f, 1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
-    return vec3(0, 0, 0);
+    vec3 unit_direction = unit_vector(r.direction());
+    float t = 0.5f * (unit_direction.y() + 1.0f);
+    return (1.0f - t)*vec3(1.0f, 1.0f, 1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
+    //return vec3(0, 0, 0);
 }
 
 int main()

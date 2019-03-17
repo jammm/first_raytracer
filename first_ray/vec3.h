@@ -112,6 +112,11 @@ inline vec3 unit_vector(const vec3 &v)
     return v / v.length();
 }
 
+inline vec3 permute(const vec3 &p, int x, int y, int z)
+{
+    return vec3(p[x], p[y], p[z]);
+}
+
 inline vec3& vec3::operator+=(const vec3 & v2)
 {
     e[0] += v2.e[0];
