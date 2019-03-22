@@ -68,20 +68,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;D:\Program Files\Assimp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;D:\Program Files\Assimp\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;D:\Program Files\Assimp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;D:\Program Files\Assimp\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;D:\Program Files\Assimp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;D:\Program Files\Assimp\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\jam\ray_tracers\glfw\include;D:\jam\ray_tracers\glew-2.1.0\include;D:\Program Files\Assimp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\jam\ray_tracers\glew-2.1.0\lib\Release\x64;D:\jam\ray_tracers\glfw\src\Release;D:\Program Files\Assimp\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -91,7 +91,7 @@
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -102,7 +102,7 @@
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -117,7 +117,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,7 +132,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -148,8 +148,9 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_image_write.h" />
     <ClInclude Include="texture.h" />
+    <ClInclude Include="triangle.h" />
     <ClInclude Include="util.h" />
-    <ClInclude Include="vec3.h" />
+    <ClInclude Include="geometry.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

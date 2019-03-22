@@ -7,18 +7,18 @@ class sphere : public hitable
 {
 public:
     sphere() {}
-    sphere(const vec3 &cen, const float &r, material *mat) : center(cen), radius(r), mat_ptr(mat) {}
+    sphere(const Vector3f &cen, const float &r, material *mat) : center(cen), radius(r), mat_ptr(mat) {}
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
 
-    vec3 center;
+    Vector3f center;
     float radius;
     material *mat_ptr;
 };
 
 bool sphere::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
 {
-    vec3 oc = r.origin() - center;
+    Vector3f oc = r.origin() - center;
     float a = dot(r.direction(), r.direction());
     float b = dot(oc, r.direction());
     float c = dot(oc, oc) - radius * radius;

@@ -5,7 +5,7 @@
 
 class material;
 
-void get_sphere_uv(const vec3 &p, float &u, float &v)
+void get_sphere_uv(const Vector3f &p, float &u, float &v)
 {
     float phi = atan2(p.z(), p.x());
     float theta = asin(p.y());
@@ -18,8 +18,8 @@ struct hit_record
     float t;
     float u;
     float v;
-    vec3 p;
-    vec3 normal;
+    Vector3f p;
+    Vector3f normal;
     material *mat_ptr;
 };
 

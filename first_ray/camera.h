@@ -3,12 +3,12 @@
 
 #include "ray.h"
 
-vec3 random_in_unit_disk()
+Vector3f random_in_unit_disk()
 {
-    vec3 p;
+    Vector3f p;
     do
     {
-        p = 2.0f * vec3(drand48(), drand48(), 0.0f) - vec3(1.0f, 1.0f, 0.0f);
+        p = 2.0f * Vector3f(drand48(), drand48(), 0.0f) - Vector3f(1.0f, 1.0f, 0.0f);
     } while (dot(p, p) >= 1.0f);
 
     return p;
@@ -16,7 +16,7 @@ vec3 random_in_unit_disk()
 
 struct camera
 {
-    camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist)
+    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float focus_dist)
     {
         lens_radius = aperture / 2;
         float theta = vfov * (float)M_PI / 180.0f;
@@ -36,16 +36,16 @@ struct camera
 
     ray get_ray(const float &s, const float &t)
     {
-        vec3 rd = lens_radius * random_in_unit_disk();
-        vec3 offset = u * rd.x() + v * rd.y();
+        Vector3f rd = lens_radius * random_in_unit_disk();
+        Vector3f offset = u * rd.x() + v * rd.y();
         return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset);
     }
 
-    vec3 origin;
-    vec3 lower_left_corner;
-    vec3 horizontal;
-    vec3 vertical;
-    vec3 u, v, w;
+    Vector3f origin;
+    Vector3f lower_left_corner;
+    Vector3f horizontal;
+    Vector3f vertical;
+    Vector3f u, v, w;
     float lens_radius;
 
 };

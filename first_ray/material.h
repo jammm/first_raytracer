@@ -5,13 +5,13 @@
 #include "util.h"
 #include "texture.h"
 
-vec3 random_in_unit_sphere()
+Vector3f random_in_unit_sphere()
 {
-    vec3 p;
+    Vector3f p;
 
     do
     {
-        p = 2.0f * vec3(drand48(), drand48(), drand48()) - vec3(1, 1, 1);
+        p = 2.0f * Vector3f(drand48(), drand48(), drand48()) - Vector3f(1, 1, 1);
     } while (p.squared_length() >= 1.0f);
 
     return p;
@@ -20,17 +20,17 @@ vec3 random_in_unit_sphere()
 class material
 {
 public:
-    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const = 0;
-    virtual vec3 emitted(const float &u, const float &v, const vec3 &p) const { return vec3(0, 0, 0); }
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const = 0;
+    virtual Vector3f emitted(const float &u, const float &v, const Vector3f &p) const { return Vector3f(0, 0, 0); }
 };
 
 class lambertian : public material
 {
 public:
     lambertian(texture *a) : albedo(a) {}
-    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const
     {
-        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        Vector3f target = rec.p + rec.normal + random_in_unit_sphere();
         scattered = ray(rec.p, target - rec.p);
         attenuation = albedo->value(0, 0, rec.p);
         return true;
@@ -39,7 +39,7 @@ public:
     texture *albedo;
 };
 
-vec3 reflect(const vec3 &v, const vec3 &n)
+Vector3f reflect(const Vector3f &v, const Vector3f &n)
 {
     return v - 2 * dot(v, n)*n;
 }
@@ -47,16 +47,16 @@ vec3 reflect(const vec3 &v, const vec3 &n)
 class metal : public material
 {
 public:
-    metal(const vec3 &a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0f; }
-    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const
+    metal(const Vector3f &a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0f; }
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const
     {
-        vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
+        Vector3f reflected = reflect(unit_vector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
 
-    vec3 albedo;
+    Vector3f albedo;
     float fuzz;
 };
 
@@ -67,9 +67,9 @@ float schlick(const float &cosine, const float &ref_idx)
     return r0 + (1 - r0)*pow((1 - cosine), 5);
 }
 
-bool refract(const vec3 &v, const vec3 &n, float ni_over_nt, vec3 &refracted)
+bool refract(const Vector3f &v, const Vector3f &n, float ni_over_nt, Vector3f &refracted)
 {
-    vec3 uv = unit_vector(v);
+    Vector3f uv = unit_vector(v);
     float dt = dot(uv, n);
     float discriminant = 1.0f - ni_over_nt*ni_over_nt*(1 - dt*dt);
     if (discriminant > 0)
@@ -85,13 +85,13 @@ class dielectric : public material
 public:
     dielectric(float ri) : ref_idx(ri) {}
 
-    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const
     {
-        vec3 outward_normal;
-        vec3 reflected = reflect(r_in.direction(), rec.normal);
+        Vector3f outward_normal;
+        Vector3f reflected = reflect(r_in.direction(), rec.normal);
         float ni_over_nt;
-        attenuation = vec3(1.0f, 1.0f, 1.0f);
-        vec3 refracted;
+        attenuation = Vector3f(1.0f, 1.0f, 1.0f);
+        Vector3f refracted;
         float reflect_prob;
         float cosine;
         if (dot(r_in.direction(), rec.normal) > 0)
@@ -135,8 +135,8 @@ class diffuse_light : public material
 {
 public:
     diffuse_light(texture *a) : emit(a) {}
-    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const { return false; }
-    virtual vec3 emitted(const float &u, const float &v, const vec3 &p) const
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const { return false; }
+    virtual Vector3f emitted(const float &u, const float &v, const Vector3f &p) const
     { 
         return emit->value(u, v, p);
     }

@@ -1,26 +1,26 @@
 #ifndef TEXTURE_H_
 #define TEXTURE_H_
 
-#include "vec3.h"
+#include "geometry.h"
 #include <cmath>
 
 class texture
 {
 public:
-    virtual vec3 value(const float &u, const float &v, const vec3 &p) const = 0;
+    virtual Vector3f value(const float &u, const float &v, const Vector3f &p) const = 0;
 };
 
 class constant_texture : public texture
 {
 public:
     constant_texture() {}
-    constant_texture(const vec3 &c) : color(c) {}
-    virtual vec3 value(const float &u, const float &v, const vec3 &p) const
+    constant_texture(const Vector3f &c) : color(c) {}
+    virtual Vector3f value(const float &u, const float &v, const Vector3f &p) const
     {
         return color;
     }
 
-    vec3 color;
+    Vector3f color;
 };
 
 class checker_texture : public texture
@@ -28,7 +28,7 @@ class checker_texture : public texture
 public:
     checker_texture() {}
     checker_texture(texture *t0, texture *t1) : even(t0), odd(t1) {}
-    virtual vec3 value(const float &u, const float &v, const vec3 &p) const
+    virtual Vector3f value(const float &u, const float &v, const Vector3f &p) const
     {
         float sines = sin(10*p.x()) * sin(10*p.y()) * sin(10*p.z());
         if (sines < 0.0f)
