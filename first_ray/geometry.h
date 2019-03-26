@@ -8,10 +8,21 @@
 #include <stdlib.h>
 
 template <typename T>
+
+// Vector stuff
 struct Vector3
 {
-    Vector3<T>() {}
-    Vector3<T>(const float e1, const float e2, const float &e3) { e[0] = e1; e[1] = e2; e[2] = e3; }
+    Vector3() {}
+    Vector3(const float e1, const float e2, const float &e3) { e[0] = e1; e[1] = e2; e[2] = e3; }
+
+    template<typename U>
+    explicit Vector3(const Vector3<U> &v)
+    {
+        e[0] = (T)v[0];
+        e[1] = (T)v[1];
+        e[2] = (T)v[2];
+    }
+
     inline float x() const { return e[0]; }
     inline float y() const { return e[1]; }
     inline float z() const { return e[2]; }
@@ -20,16 +31,16 @@ struct Vector3
     inline float b() const { return e[2]; }
 
     inline const Vector3<T>& operator+() const { return *this; }
-    inline Vector3<T>operator-() const { return Vector3<T>(-e[0], -e[1], -e[2]); }
+    inline Vector3 operator-() const { return Vector3<T>(-e[0], -e[1], -e[2]); }
     inline float operator[](int i) const { return e[i]; }
     inline float& operator[](int i) { return e[i]; }
 
-    inline Vector3<T>& operator+=(const Vector3<T> &v2);
-    inline Vector3<T>& operator-=(const Vector3<T> &v2);
-    inline Vector3<T>& operator*=(const Vector3<T> &v2);
-    inline Vector3<T>& operator/=(const Vector3<T> &v2);
-    inline Vector3<T>& operator*=(const T &t);
-    inline Vector3<T>& operator/=(const T &t);
+    inline Vector3& operator+=(const Vector3<T> &v2);
+    inline Vector3& operator-=(const Vector3<T> &v2);
+    inline Vector3& operator*=(const Vector3<T> &v2);
+    inline Vector3& operator/=(const Vector3<T> &v2);
+    inline Vector3& operator*=(const T &t);
+    inline Vector3& operator/=(const T &t);
 
     inline T length() const
         { return static_cast<float>(sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2])); }
@@ -37,7 +48,7 @@ struct Vector3
         { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
     inline void make_unit_vector();
 
-    // e == 3 component vector in single precision floating point
+    // Vector3 data
     T e[3];
 };
 
@@ -183,5 +194,24 @@ inline Vector3<T>& Vector3<T>::operator/=(const T &t)
     e[2] *= k;
     return *this;
 }
+
+// Point stuff
+template <typename T>
+struct Point2
+{
+    Point2() {}
+    Point2(T _x, T _y) : x(_x), y(_y) {}
+
+    template<typename U>
+    explicit Point2(const Point2<U> &v)
+    {
+        x = (T)v.x;
+        y = (T)v.y;
+    }
+    // Point2 data
+    T x, y;
+};
+
+typedef Point2<float> Point2f;
 
 #endif

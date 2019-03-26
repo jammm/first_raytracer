@@ -5,7 +5,7 @@
 
 class material;
 
-void get_sphere_uv(const Vector3f &p, float &u, float &v)
+inline void get_sphere_uv(const Vector3f &p, float &u, float &v)
 {
     float phi = atan2(p.z(), p.x());
     float theta = asin(p.y());

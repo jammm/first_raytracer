@@ -24,6 +24,12 @@
 #include <GLFW/glfw3.h>
 #include "stb_image_write.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/DefaultLogger.hpp>
+#include <assimp/LogStream.hpp>
+
 void glfw_error_callback(int, const char* err_str)
 {
     std::cout << "GLFW Error: " << err_str << std::endl;
@@ -67,47 +73,18 @@ hitable *random_scene()
         }
     }*/
 
-    // TODO: Remove this later
-    for (int a = -11; a < 11; a++)
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/cube.obj",
+                                                    std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)))));
+
+    for (auto triangle : mesh)
     {
-        for (int b = -11; b < 11; b++)
-        {
-            float choose_mat = drand48();
-            Vector3f center(a + 0.9f * drand48(), 0.2f, b + 0.9f * drand48());
-            if ((center - Vector3f(4, 0.2f, 0)).length() > 0.9f)
-            {
-                if (choose_mat < 0.8)
-                {
-                    //diffuse
-                    list[i++] = new triangle(center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        new lambertian(new constant_texture(Vector3f(drand48() * drand48(), drand48() * drand48(), drand48() * drand48()))));
-                }
-                else if (choose_mat < 0.95)
-                {
-                    //metal
-                    list[i++] = new triangle(center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        new metal(Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())), 0.5f*drand48()));
-                }
-                else
-                {
-                    //dielectric
-                    list[i++] = new triangle(center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        center + Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())),
-                        new dielectric(1.5f));
-                }
-            }
-        }
+        list[i++] = triangle.get();
     }
 
     //list[i++] = new sphere(Vector3f(0, 1, 0), 1.0f, new dielectric(1.5));
     //list[i++] = new sphere(Vector3f(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
     //list[i++] = new sphere(Vector3f(-4, 1, 0), 1.0f, new metal(Vector3f(0.7f, 0.6f, 0.5f), 0));
-    list[i++] = new triangle(Vector3f(0, 1, 0), Vector3f(4, 2, 0), Vector3f(-4, 1, 0), new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
+    //list[i++] = new triangle(Vector3f(0, 1, 0), Vector3f(4, 2, 0), Vector3f(-4, 1, 0), new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
 
     return new hitable_list(list, i);
 }
@@ -146,7 +123,7 @@ int main()
     Vector3f lookfrom(13, 2, 3);
     Vector3f lookat(0, 0, 0);
     float dist_to_focus = 10.0f;
-    float aperture = 0.1f;
+    float aperture = 0.01f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
     float R = (float) cos(M_PI / 4);
 
@@ -224,7 +201,7 @@ int main()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // TODO: Parallelize this stuff
-    // Use C++ std::thread or https://github.com/dougbinks/enkiTS
+    // Use C++ std::thread, TBB or https://github.com/dougbinks/enkiTS
 #pragma omp parallel for
     for (int j = ny-1; j >= 0; j--)
     {
@@ -278,7 +255,10 @@ int main()
     stbi_write_jpg("out_test.jpg", nx, ny, comp, (void *)out_image, 100);
 
     glfwTerminate();
+
+    //TODO: Use unique_ptr to promote laziness
     delete[] out_image;
+    delete[] world;
 
     return 0;
 }
