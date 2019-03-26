@@ -1,7 +1,5 @@
 #include "mesh_loader.h"
 
-std::unique_ptr<const aiScene> mesh_loader::scene = nullptr;
-
 std::shared_ptr<triangle_mesh> mesh_loader::load_obj(std::string file)
 {
     std::vector<int> indices;
@@ -10,9 +8,9 @@ std::shared_ptr<triangle_mesh> mesh_loader::load_obj(std::string file)
     Point2f *uv;
 
     Assimp::Importer importer;
-    scene.reset(importer.ReadFile("cube/cube.obj", aiProcessPreset_TargetRealtime_Quality));
+    const aiScene *scene = importer.ReadFile("cube/cube.obj", aiProcessPreset_TargetRealtime_Quality);
     // If the import failed, report it
-    if (!scene.get())
+    if (!scene)
     {
         fprintf(stderr, "ASSIMP ERROR: cannot load .obj file\n");
         return NULL;

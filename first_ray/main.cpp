@@ -8,6 +8,9 @@
 #include "texture.h"
 #include "util.h"
 #include <float.h>
+#include <omp.h>
+#include <thread>
+#include <chrono>
 
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -113,7 +116,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 100;
+    const int ns = 1;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
@@ -126,6 +129,7 @@ int main()
     float aperture = 0.01f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
     float R = (float) cos(M_PI / 4);
+    int finished_threads = 0;
 
     // TODO: Read obj files for meshes. Scenes come later
     //hitable *list[5];
@@ -150,6 +154,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 #ifdef __APPLE__
     /* OSX requires forward compatibility for some reason */
@@ -202,52 +207,62 @@ int main()
 
     // TODO: Parallelize this stuff
     // Use C++ std::thread, TBB or https://github.com/dougbinks/enkiTS
-#pragma omp parallel for
-    for (int j = ny-1; j >= 0; j--)
+
+    #pragma omp parallel
     {
-        if (to_exit) break;
-        for (int i = 0; i < nx; i++)
+        #pragma omp master
         {
-            if (to_exit) break;
-            Vector3f col(0.0f, 0.0f, 0.0f);
-            for (int s = 0; s < ns; s++)
+            while(!to_exit)
             {
+                /* Poll for and process events */
+                glfwPollEvents();
+                /* Render here */
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
+                glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
+                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+                /* Swap front and back buffers */
+                glfwSwapBuffers(window);
+
                 if (glfwWindowShouldClose(window))
                 {
                     to_exit = true;
-                    break;
                 }
-
-                float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
-                float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
-                ray r = cam.get_ray(u, v);
-                //Vector3f p = r.point_at_parameter(2.0f);
-                col += color(r, world, 0);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
-            col /= float(ns);
-            int ir = int(sqrt(col[0]) * 255.99);
-            int ig = int(sqrt(col[1]) * 255.99);
-            int ib = int(sqrt(col[2]) * 255.99);
-            int index = (j * nx + i) * comp;
-
-            // Store output pixels
-            out_image[index]     = (unsigned char)ir;
-            out_image[index + 1] = (unsigned char)ig;
-            out_image[index + 2] = (unsigned char)ib;
-
-            /* Render here */
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
-            glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
-                GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            /* Swap front and back buffers */
-            glfwSwapBuffers(window);
-
-            /* Poll for and process events */
-            glfwPollEvents();
         }
-        std::cout << ".";
-        //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
+
+        #pragma omp for nowait
+        for (int j = ny-1; j >= 0; j--)
+        {
+            for (int i = 0; i < nx; i++)
+            {
+                Vector3f col(0.0f, 0.0f, 0.0f);
+                for (int s = 0; s < ns; s++)
+                {
+                    float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
+                    float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
+                    ray r = cam.get_ray(u, v);
+                    //Vector3f p = r.point_at_parameter(2.0f);
+                    col += color(r, world, 0);
+                }
+                col /= float(ns);
+                int ir = int(sqrt(col[0]) * 255.99);
+                int ig = int(sqrt(col[1]) * 255.99);
+                int ib = int(sqrt(col[2]) * 255.99);
+                int index = (j * nx + i) * comp;
+
+                // Store output pixels
+                out_image[index]     = (unsigned char)ir;
+                out_image[index + 1] = (unsigned char)ig;
+                out_image[index + 2] = (unsigned char)ib;
+
+            }
+            std::cout << ".";
+            //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
+        }
+        if(++finished_threads == omp_get_max_threads() - 1)
+            to_exit = true;
     }
 
     stbi_write_bmp("out_test.bmp", nx, ny, comp, (void *)out_image);
