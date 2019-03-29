@@ -134,6 +134,12 @@ inline Vector3<T>cross(const Vector3<T>&v1, const Vector3<T>&v2)
 }
 
 template <typename T>
+inline Vector3<T>abs(const Vector3<T> &v)
+{
+    return Vector3<T>(abs(v.e[0]), abs(v.e[1]), abs(v.e[2]));
+}
+
+template <typename T>
 inline Vector3<T>unit_vector(const Vector3<T>&v)
 {
     return v / v.length();

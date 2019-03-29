@@ -41,7 +41,10 @@ public:
 class triangle : public hitable
 {
 public:
-    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num, std::shared_ptr<material> &mat) : mesh(mesh), mat_ptr(mat)
+    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num, std::shared_ptr<material> &mat) : mesh(mesh),
+        mat_ptr(mat),
+        edge1(mesh->vertices[mesh->indices[3 * tri_num + 1]] - mesh->vertices[mesh->indices[3 * tri_num]]),
+        edge2(mesh->vertices[mesh->indices[3 * tri_num + 2]] - mesh->vertices[mesh->indices[3 * tri_num]])
     {
         V = &mesh->indices[3 * tri_num];
     }
@@ -51,11 +54,9 @@ public:
     {
         const float EPSILON = 0.0000001;
         float a, f, u, v;
-        const Vector3f v0 = mesh->vertices[V[0]];
-        const Vector3f v1 = mesh->vertices[V[1]];
-        const Vector3f v2 = mesh->vertices[V[2]];
-        const Vector3f edge1 = v1 - v0;
-        const Vector3f edge2 = v2 - v0;
+        const Vector3f &v0 = mesh->vertices[V[0]];
+        const Vector3f &v1 = mesh->vertices[V[1]];
+        const Vector3f &v2 = mesh->vertices[V[2]];
         const Vector3f h = cross(r.d, edge2);
         a = dot(edge1, h);
         // Check if this ray is parallel to this triangle's plane.
@@ -74,7 +75,9 @@ public:
         float t = f * dot(edge2, q);
 
         // Check if ray intersected successfully
-        if (t > EPSILON)
+        if (t > EPSILON
+            && t > t_min
+            && t < t_max)
         {
             rec.t = t;
             rec.p = r.point_at_parameter(t);
@@ -91,6 +94,9 @@ public:
 
     // Triangle data
     const int *V;
+    // Store edges here so we don't calculate for every intersection test
+    const Vector3f edge1;
+    const Vector3f edge2;
     std::shared_ptr<triangle_mesh> mesh;
 
     std::shared_ptr<material> mat_ptr;

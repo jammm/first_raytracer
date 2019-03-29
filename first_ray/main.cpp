@@ -45,9 +45,9 @@ hitable *random_scene()
     int n = 500;
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
-    texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.9f, 0.9f, 0.9f)));
-    list[0] = new sphere(Vector3f(0, -1000, 0), 1000, new lambertian(checker));
-    int i = 1;
+    texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)));
+    //list[0] = new sphere(Vector3f(0, -1000, 0), 1000, new lambertian(checker));
+    int i = 0;
     /*for (int a = -11;a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
@@ -77,7 +77,7 @@ hitable *random_scene()
     }*/
 
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/cube.obj",
-                                                    std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)))));
+        std::make_shared<lambertian>(checker));
 
     for (auto triangle : mesh)
     {
@@ -99,7 +99,7 @@ Vector3f color(const ray &r, hitable *world, int depth)
     {
         ray scattered;
         Vector3f attenuation;
-        Vector3f emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
+        Vector3f emitted = rec.mat_ptr->emitted(rec);
         if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered))
         {
             return emitted + attenuation * color(scattered, world, depth + 1);
@@ -116,7 +116,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1;
+    const int ns = 4;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
@@ -208,30 +208,8 @@ int main()
     // TODO: Parallelize this stuff
     // Use C++ std::thread, TBB or https://github.com/dougbinks/enkiTS
 
-    #pragma omp parallel
+    #pragma omp parallel shared(to_exit)
     {
-        #pragma omp master
-        {
-            while(!to_exit)
-            {
-                /* Poll for and process events */
-                glfwPollEvents();
-                /* Render here */
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
-                glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
-                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-                /* Swap front and back buffers */
-                glfwSwapBuffers(window);
-
-                if (glfwWindowShouldClose(window))
-                {
-                    to_exit = true;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-        }
-
         #pragma omp for nowait
         for (int j = ny-1; j >= 0; j--)
         {
@@ -258,11 +236,50 @@ int main()
                 out_image[index + 2] = (unsigned char)ib;
 
             }
+            if (omp_get_thread_num() == 0)
+            {
+                /* Poll for and process events */
+                glfwPollEvents();
+                /* Render here */
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
+                glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
+                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+                /* Swap front and back buffers */
+                glfwSwapBuffers(window);
+
+                if (glfwWindowShouldClose(window))
+                {
+                    to_exit = true;
+                }
+            }
             std::cout << ".";
             //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
         }
-        if(++finished_threads == omp_get_max_threads() - 1)
-            to_exit = true;
+        std::cout << finished_threads << std::endl;
+        if(++finished_threads == omp_get_max_threads())
+            to_exit = false;
+        #pragma omp master
+        {
+            while (!to_exit)
+            {
+                /* Poll for and process events */
+                glfwPollEvents();
+                /* Render here */
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
+                glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
+                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+                /* Swap front and back buffers */
+                glfwSwapBuffers(window);
+
+                if (glfwWindowShouldClose(window))
+                {
+                    to_exit = true;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        }
     }
 
     stbi_write_bmp("out_test.bmp", nx, ny, comp, (void *)out_image);
