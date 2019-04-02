@@ -5,6 +5,7 @@
 #include "triangle.h"
 #include "material.h"
 #include "camera.h"
+#include "image.h"
 #include "texture.h"
 #include "util.h"
 #include <float.h>
@@ -12,20 +13,15 @@
 #include <thread>
 #include <chrono>
 
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
 #ifdef _WIN32
     #define GLEW_STATIC
     #include <GL/glew.h>
     #define _CRT_SECURE_NO_DEPRECATE
-    #define STBI_MSC_SECURE_CRT
 #endif
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #endif
 #include <GLFW/glfw3.h>
-#include "stb_image_write.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -46,9 +42,13 @@ hitable *random_scene()
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)));
-    list[0] = new sphere(Vector3f(0, -1003, 0), 1000, new lambertian(checker));
+    // TODO: Avoid hardcoded texture filenames. Use assimp!
+    std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
+    texture *image_tex = new image_texture(img);
+
+    list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
     int i = 1;
-    /*for (int a = -11;a < 11; a++)
+    for (int a = -11;a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
         {
@@ -74,13 +74,12 @@ hitable *random_scene()
                 }
             }
         }
-    }*/
+    }
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    // TODO: Load textures
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/cube.obj",
-        std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)))));
+        std::make_shared<lambertian>(lambertian(image_tex)));
 
     for (auto triangle : mesh)
     {
@@ -119,7 +118,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 64;
+    const int ns = 100;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
@@ -129,7 +128,7 @@ int main()
     Vector3f lookfrom(13, 2, 3);
     Vector3f lookat(0, 0, 0);
     float dist_to_focus = 10.0f;
-    float aperture = 0.1f;
+    float aperture = 0.05f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
     float R = (float) cos(M_PI / 4);
     int finished_threads = 0;
@@ -218,6 +217,7 @@ int main()
         {
             for (int i = 0; i < nx; i++)
             {
+                if (to_exit) break;
                 Vector3f col(0.0f, 0.0f, 0.0f);
                 for (int s = 0; s < ns; s++)
                 {
@@ -261,7 +261,7 @@ int main()
         }
         std::cout << finished_threads << std::endl;
         if(++finished_threads == omp_get_max_threads())
-            to_exit = false;
+            to_exit = true;
         #pragma omp master
         {
             while (!to_exit)

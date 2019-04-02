@@ -144,6 +144,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="hitable.h" />
     <ClInclude Include="hitable_list.h" />
+    <ClInclude Include="image.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="mesh_loader.h" />
     <ClInclude Include="ray.h" />

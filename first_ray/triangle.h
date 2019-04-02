@@ -48,8 +48,8 @@ public:
     {
         V = &mesh->indices[3 * tri_num];
     }
-    //triangle(Vector3f _v0, Vector3f _v1, Vector3f _v2, material *mat) : v0(_v0), v1(_v1), v2(_v2), mat_ptr(mat) {}
 
+    //Use Möller–Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
     {
         const float EPSILON = 0.0000001;
@@ -83,8 +83,11 @@ public:
             rec.p = r.point_at_parameter(t);
             rec.normal = cross(edge1, edge2);
             rec.normal.make_unit_vector();
-            rec.u = u;
-            rec.v = v;
+            // Use u, v to find interpolated coordinates
+            // P = (1 - u - v) * V0 + u * V1 + v * V2 
+            Point2f uvhit = (1-u-v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
+            rec.u = uvhit.x;
+            rec.v = uvhit.y;
             rec.mat_ptr = mat_ptr.get();
             return true;
         }

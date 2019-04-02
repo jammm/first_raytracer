@@ -214,9 +214,45 @@ struct Point2
         x = (T)v.x;
         y = (T)v.y;
     }
+
+    inline Point2<T>& operator*=(const Point2<T>& p2);
+
+
     // Point2 data
     T x, y;
 };
+
+template <typename T>
+inline Point2<T> operator+(const Point2<T>&p1, const Point2<T>&p2)
+{
+    return Point2<T>(p1.x + p2.x, p1.y + p2.y);
+}
+
+template <typename T>
+inline Point2<T> operator*(const Point2<T>&p1, const Point2<T>&p2)
+{
+    return Point2<T>(p1.x * p2.x, p1.y * p2.y);
+}
+
+template <typename T>
+inline Point2<T>& Point2<T>::operator*=(const Point2<T>& p2)
+{
+    x *= p2.x;
+    y *= p2.y;
+    return *this;
+}
+
+template <typename T>
+inline Point2<T> operator*(const float &t, const Point2<T>&p)
+{
+    return Point2<T>(t*p.x, t*p.y);
+}
+
+template <typename T>
+inline Point2<T> operator*(const Point2<T>&p, const float &t)
+{
+    return t * p;
+}
 
 typedef Point2<float> Point2f;
 
