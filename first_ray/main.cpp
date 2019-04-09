@@ -38,7 +38,7 @@ void glfw_error_callback(int, const char* err_str)
 hitable *random_scene()
 {
     /* n == number of spheres */
-    int n = 500;
+    int n = 70000;
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)));
@@ -46,9 +46,9 @@ hitable *random_scene()
     std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
     texture *image_tex = new image_texture(img);
 
-    list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
-    int i = 1;
-    for (int a = -11;a < 11; a++)
+    //list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
+    int i = 0;
+    /*for (int a = -11;a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
         {
@@ -74,12 +74,12 @@ hitable *random_scene()
                 }
             }
         }
-    }
+    }*/
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/cube.obj",
-        std::make_shared<lambertian>(lambertian(image_tex)));
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
+        std::make_shared<lambertian>(lambertian(checker)));
 
     for (auto triangle : mesh)
     {
@@ -118,7 +118,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 100;
+    const int ns = 1;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);

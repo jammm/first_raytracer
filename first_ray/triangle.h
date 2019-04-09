@@ -9,6 +9,8 @@ class triangle_mesh
 {
 public:
 
+	triangle_mesh() {}
+
     triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
         const int *indices, Vector3f *n, Point2f *_uv, const bool &shallow_copy = false)
         : nTriangles(nTriangles),
@@ -62,7 +64,7 @@ public:
         // Check if this ray is parallel to this triangle's plane.
         if (a > -EPSILON && a < EPSILON)
             return false;    
-        f = 1.0 / a;
+        f = 1.0f / a;
         Vector3f s = r.o - v0;
         u = f * dot(s, h);
         if (u < 0.0 || u > 1.0)

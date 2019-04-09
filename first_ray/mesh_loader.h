@@ -3,6 +3,7 @@
 
 #include "triangle.h"
 #include <memory>
+#include <vector>
 #include <assert.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -13,7 +14,7 @@
 class mesh_loader
 {
 public:
-    static std::shared_ptr<triangle_mesh> load_obj(std::string file);
+    static std::vector<std::shared_ptr<triangle_mesh>> load_obj(std::string file);
 };
 
 #endif

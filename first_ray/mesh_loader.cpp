@@ -1,49 +1,49 @@
 #include "mesh_loader.h"
 
-std::shared_ptr<triangle_mesh> mesh_loader::load_obj(std::string file)
+std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string file)
 {
-    std::vector<int> indices;
-    Vector3f *vertices;
-    Vector3f *normals;
-    Point2f *uv;
+    std::vector<std::shared_ptr<triangle_mesh>> meshes;
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile("cube/cube.obj", aiProcessPreset_TargetRealtime_Quality);
+    const aiScene *scene = importer.ReadFile(file, aiProcessPreset_TargetRealtime_Quality);
     // If the import failed, report it
-    if (!scene)
-    {
-        fprintf(stderr, "ASSIMP ERROR: cannot load .obj file\n");
-        return NULL;
-    }
+    assert(scene);
 
-    // TODO: iterate through meshes
-    aiMesh *mesh = scene->mMeshes[0];
+	for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
+	{
+		aiMesh *mesh = scene->mMeshes[i];
 
-    vertices = new Vector3f[mesh->mNumVertices];
-    normals = new Vector3f[mesh->mNumVertices];
-    uv = new Point2f[mesh->mNumVertices];
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-    {
-        vertices[i][0] = mesh->mVertices[i].x;
-        vertices[i][1] = mesh->mVertices[i].y;
-        vertices[i][2] = mesh->mVertices[i].z;
+		Vector3f *vertices = new Vector3f[mesh->mNumVertices];
+		Vector3f *normals = new Vector3f[mesh->mNumVertices];
+		Point2f *uv = new Point2f[mesh->mNumVertices];
+        std::vector<int> indices;
 
-        normals[i][0] = mesh->mNormals[i].x;
-        normals[i][1] = mesh->mNormals[i].y;
-        normals[i][2] = mesh->mNormals[i].z;
+		for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
+		{
+			vertices[j][0] = mesh->mVertices[j].x;
+			vertices[j][1] = mesh->mVertices[j].y;
+			vertices[j][2] = mesh->mVertices[j].z;
 
-        uv[i].x = mesh->mTextureCoords[0][i].x;
-        uv[i].y = mesh->mTextureCoords[0][i].y;
-    }
-    //Store indices
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-        const aiFace& face = mesh->mFaces[i];
-        assert(face.mNumIndices == 3);
-        indices.push_back(face.mIndices[0]);
-        indices.push_back(face.mIndices[1]);
-        indices.push_back(face.mIndices[2]);
-    }
+			normals[j][0] = mesh->mNormals[j].x;
+			normals[j][1] = mesh->mNormals[j].y;
+			normals[j][2] = mesh->mNormals[j].z;
 
-    return std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, true);
+			uv[j].x = mesh->mTextureCoords[0][j].x;
+			uv[j].y = mesh->mTextureCoords[0][j].y;
+		}
+		//Store indices
+		for (unsigned int k = 0; k < mesh->mNumFaces; k++)
+		{
+			const aiFace& face = mesh->mFaces[k];
+			assert(face.mNumIndices == 3);
+			indices.push_back(face.mIndices[0]);
+			indices.push_back(face.mIndices[1]);
+			indices.push_back(face.mIndices[2]);
+		}
+
+        //Push triangle mesh into vector
+        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, true));
+	}
+
+    return meshes;
 }
