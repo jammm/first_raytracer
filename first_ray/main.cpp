@@ -79,7 +79,7 @@ hitable *random_scene()
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
-        std::make_shared<lambertian>(lambertian(checker)));
+        std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.9f, 0.9f)))));
 
     for (auto triangle : mesh)
     {
@@ -125,7 +125,7 @@ int main()
     out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     bool to_exit = false;
 
-    Vector3f lookfrom(13, 2, 3);
+    Vector3f lookfrom(3, 2, 13);
     Vector3f lookat(0, 0, 0);
     float dist_to_focus = 10.0f;
     float aperture = 0.05f;
