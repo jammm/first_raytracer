@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #include <cstdlib>
 
-float drand48()
+inline float drand48()
 {
     return float(rand()) / float(RAND_MAX);
 }

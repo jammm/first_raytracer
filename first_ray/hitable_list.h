@@ -3,18 +3,6 @@
 
 #include "hitable.h"
 
-aabb surrounding_box(aabb box0, aabb box1)
-{
-	Vector3f small(fmin(box0.min.x(), box1.min.x()),
-				   fmin(box0.min.y(), box1.min.y()),
-				   fmin(box0.min.z(), box1.min.z()));
-	Vector3f big  (fmin(box0.max.x(), box1.max.x()),
-				   fmin(box0.max.y(), box1.max.y()),
-				   fmin(box0.max.z(), box1.max.z()));
-
-	return aabb(small, big);
-}
-
 class hitable_list : public hitable
 {
 public:
@@ -22,6 +10,7 @@ public:
     hitable_list(hitable **l, int n) { list = l; list_size = n; }
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
+    virtual bool bounding_box(float t0, float t1, aabb &b) const;
     hitable **list;
     int list_size;
 };

@@ -8,6 +8,7 @@
 #include "image.h"
 #include "texture.h"
 #include "util.h"
+#include "bvh.h"
 #include <float.h>
 #include <omp.h>
 #include <thread>
@@ -46,9 +47,9 @@ hitable *random_scene()
     std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
     texture *image_tex = new image_texture(img);
 
-    //list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
-    int i = 0;
-    /*for (int a = -11;a < 11; a++)
+    list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
+    int i = 1;
+    for (int a = -11;a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
         {
@@ -74,13 +75,13 @@ hitable *random_scene()
                 }
             }
         }
-    }*/
+    }
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
         std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.9f, 0.9f)))));
-
+    
     for (auto triangle : mesh)
     {
         list[i++] = triangle.get();
@@ -91,7 +92,7 @@ hitable *random_scene()
     //list[i++] = new sphere(Vector3f(-4, 1, 0), 1.0f, new metal(Vector3f(0.7f, 0.6f, 0.5f), 0));
     //list[i++] = new triangle(Vector3f(0, 1, 0), Vector3f(4, 2, 0), Vector3f(-4, 1, 0), new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
 
-    return new hitable_list(list, i);
+    return new bvh_node(list, i, 0.0f, 0.0f);
 }
 
 Vector3f color(const ray &r, hitable *world, int depth)
@@ -118,7 +119,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1;
+    const int ns = 500;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
