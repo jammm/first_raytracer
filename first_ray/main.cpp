@@ -119,7 +119,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 500;
+    const int ns = 4;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
