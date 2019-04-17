@@ -10,8 +10,7 @@
 #include "util.h"
 #include "bvh.h"
 #include <float.h>
-#include <omp.h>
-#include <thread>
+#include <taskflow/taskflow.hpp>
 #include <chrono>
 
 #ifdef _WIN32
@@ -115,6 +114,28 @@ Vector3f color(const ray &r, hitable *world, int depth)
     //return Vector3f(0, 0, 0);
 }
 
+void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
+{
+	while (!to_exit)
+	{
+		/* Poll for and process events */
+		glfwPollEvents();
+		/* Render here */
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
+		glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
+			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		/* Swap front and back buffers */
+		glfwSwapBuffers(window);
+
+		if (future._Is_ready() || glfwWindowShouldClose(window))
+		{
+			to_exit = true;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(3));
+	}
+}
+
 int main()
 {
     const int nx = 1024;
@@ -124,7 +145,7 @@ int main()
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
     out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
-    bool to_exit = false;
+	bool to_exit = false;
 
     Vector3f lookfrom(3, 2, 13);
     Vector3f lookat(0, 0, 0);
@@ -132,7 +153,9 @@ int main()
     float aperture = 0.05f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
     float R = (float) cos(M_PI / 4);
-    int finished_threads = 0;
+
+	// Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
+	tf::Taskflow tf;
 
     // TODO: Read obj files for meshes. Scenes come later
     //hitable *list[5];
@@ -208,83 +231,50 @@ int main()
     /* Clear the window */
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // TODO: Parallelize this stuff
-    // Use C++ std::thread, TBB or https://github.com/dougbinks/enkiTS
-
-    #pragma omp parallel shared(to_exit)
+	tf.parallel_for(ny, 0, -1, [&] (int j)
     {
-        #pragma omp for nowait
-        for (int j = ny-1; j >= 0; j--)
+        for (int i = 0; i < nx; i++)
         {
-            for (int i = 0; i < nx; i++)
+            if (to_exit) break;
+            Vector3f col(0.0f, 0.0f, 0.0f);
+            for (int s = 0; s < ns; s++)
             {
-                if (to_exit) break;
-                Vector3f col(0.0f, 0.0f, 0.0f);
-                for (int s = 0; s < ns; s++)
-                {
-                    float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
-                    float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
-                    ray r = cam.get_ray(u, v);
-                    //Vector3f p = r.point_at_parameter(2.0f);
-                    col += color(r, world, 0);
-                }
-                col /= float(ns);
-                int ir = int(sqrt(col[0]) * 255.99);
-                int ig = int(sqrt(col[1]) * 255.99);
-                int ib = int(sqrt(col[2]) * 255.99);
-                int index = (j * nx + i) * comp;
-
-                // Store output pixels
-                out_image[index]     = (unsigned char)ir;
-                out_image[index + 1] = (unsigned char)ig;
-                out_image[index + 2] = (unsigned char)ib;
-
+                float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
+                float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
+                ray r = cam.get_ray(u, v);
+                //Vector3f p = r.point_at_parameter(2.0f);
+                col += color(r, world, 0);
             }
-            if (omp_get_thread_num() == 0)
-            {
-                /* Poll for and process events */
-                glfwPollEvents();
-                /* Render here */
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
-                glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
-                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            col /= float(ns);
+            int ir = int(sqrt(col[0]) * 255.99);
+            int ig = int(sqrt(col[1]) * 255.99);
+            int ib = int(sqrt(col[2]) * 255.99);
+            int index = (j * nx + i) * comp;
 
-                /* Swap front and back buffers */
-                glfwSwapBuffers(window);
+            // Store output pixels
+            out_image[index]     = (unsigned char)ir;
+            out_image[index + 1] = (unsigned char)ig;
+            out_image[index + 2] = (unsigned char)ib;
 
-                if (glfwWindowShouldClose(window))
-                {
-                    to_exit = true;
-                }
-            }
-            std::cout << ".";
-            //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
         }
-        std::cout << finished_threads << std::endl;
-        if(++finished_threads == omp_get_max_threads())
-            to_exit = true;
-        #pragma omp master
-        {
-            while (!to_exit)
-            {
-                /* Poll for and process events */
-                glfwPollEvents();
-                /* Render here */
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
-                glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
-                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        std::cout << ".";
+        //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
+	});
 
-                /* Swap front and back buffers */
-                glfwSwapBuffers(window);
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
-                if (glfwWindowShouldClose(window))
-                {
-                    to_exit = true;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-        }
-    }
+
+
+	auto future = tf.dispatch();
+
+	// Refresh window in background
+	background_thread(future, out_image, window, nx, ny, to_exit);
+
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+
+	std::cout << "\nIt took me " << time_span.count() << " seconds.";
 
     stbi_write_bmp("out_test.bmp", nx, ny, comp, (void *)out_image);
     stbi_write_png("out_test.png", nx, ny, comp, (void *)out_image, nx * comp);
