@@ -7,7 +7,7 @@ class aabb
 {
 public:
 	aabb() {}
-	aabb(const Vector3f &min, const Vector3f &max) : min(min), max(max) {}
+	aabb(const Vector3f &min, const Vector3f &max) : min(min), max(max), size(max - min) {}
 
 
 	// AABB intersection using slab method as described by peter shirley's ray tracing the next week book.
@@ -30,8 +30,27 @@ public:
         return true;
 	}
 
+	int longest_axis() const
+	{
+		int axis = 0;
+
+		if (size.y() > size.x())
+			axis = 1;
+		else if (size.z() > size.x())
+			axis = 2;
+
+		return axis;
+	}
+
+	// Returns surface area of AABB
+	inline float area() const
+	{
+		return 2 * ((size.x() * size.y()) + (size.y() * size.z()) + (size.x() * size.z()));
+	}
+
 	Vector3f min;
 	Vector3f max;
+	Vector3f size;
 
 };
 
