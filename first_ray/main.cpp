@@ -128,6 +128,7 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
 
+		// TODO: Avoid using _Is_ready() as it's VS specific
 		if (future._Is_ready() || glfwWindowShouldClose(window))
 		{
 			to_exit = true;
@@ -140,7 +141,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 4;
+    const int ns = 1000;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
@@ -276,9 +277,9 @@ int main()
 
 	std::cout << "\nIt took me " << time_span.count() << " seconds.";
 
-    stbi_write_bmp("out_test.bmp", nx, ny, comp, (void *)out_image);
-    stbi_write_png("out_test.png", nx, ny, comp, (void *)out_image, nx * comp);
-    stbi_write_jpg("out_test.jpg", nx, ny, comp, (void *)out_image, 100);
+	image(out_image, nx, ny, comp).save_image(stbi::STBI_BMP);
+	image(out_image, nx, ny, comp).save_image(stbi::STBI_JPG);
+	image(out_image, nx, ny, comp).save_image(stbi::STBI_PNG);
 
     glfwTerminate();
 

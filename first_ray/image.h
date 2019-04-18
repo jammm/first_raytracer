@@ -25,26 +25,33 @@ class image
     bool loaded_from_stbi;
 public:
     image() {}
-    image(const std::string &filename) : filename(filename)
+    image(const std::string &filename) : filename(filename), loaded_from_stbi(true)
     {
         data = stbi_load(filename.c_str(), &nx, &ny, &nn, 0);
-        loaded_from_stbi = true;
     }
 
-    image(unsigned char *data, const int &nx, const int &ny, const int &nn) : data(data), nx(nx), ny(ny), nn(nn) {}
+    image(unsigned char *data, const int &nx, const int &ny, const int &nn) : data(data), nx(nx), ny(ny), nn(nn),
+																			  filename("out_test"), loaded_from_stbi(false)
+	{}
 
     int save_image(stbi type)
     {
+		std::string to_save;
+
         switch (type)
         {
             case stbi::STBI_JPG:
-                stbi_write_bmp(filename.c_str(), nx, ny, nn, (void *)data);
+				
+				to_save = (filename.find(".jpg") == std::string::npos) ? filename + ".jpg" : filename;
+                stbi_write_bmp(to_save.c_str(), nx, ny, nn, (void *)data);
                 break;
             case stbi::STBI_PNG:
-                stbi_write_png(filename.c_str(), nx, ny, nn, (void *)data, nx * nn);
+				to_save = (filename.find(".png") == std::string::npos) ? filename + ".png" : filename;
+                stbi_write_png(to_save.c_str(), nx, ny, nn, (void *)data, nx * nn);
                 break;
             case stbi::STBI_BMP:
-                stbi_write_jpg(filename.c_str(), nx, ny, nn, (void *)data, 100);
+				to_save = (filename.find(".bmp") == std::string::npos) ? filename + ".bmp" : filename;
+                stbi_write_jpg(to_save.c_str(), nx, ny, nn, (void *)data, 100);
                 break;
             default:
                 return -1;
