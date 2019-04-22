@@ -9,6 +9,7 @@
 #include "texture.h"
 #include "util.h"
 #include "bvh.h"
+#include "parallel_bvh.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -48,9 +49,9 @@ hitable *random_scene()
 
     list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
     int i = 1;
-    for (int a = -11;a < 11; a++)
+    for (int a = -4;a < 2; a++)
     {
-        for (int b = -11; b < 11; b++)
+        for (int b = -4; b < 2; b++)
         {
             float choose_mat = drand48();
             Vector3f center(a + 0.9f * drand48(), 0.2f, b + 0.9f * drand48());
@@ -78,20 +79,23 @@ hitable *random_scene()
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
+    /*static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
         std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.9f, 0.9f)))));
     
     for (auto triangle : mesh)
     {
         list[i++] = triangle.get();
-    }
+    }*/
 
     //list[i++] = new sphere(Vector3f(0, 1, 0), 1.0f, new dielectric(1.5));
     //list[i++] = new sphere(Vector3f(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
     //list[i++] = new sphere(Vector3f(-4, 1, 0), 1.0f, new metal(Vector3f(0.7f, 0.6f, 0.5f), 0));
     //list[i++] = new triangle(Vector3f(0, 1, 0), Vector3f(4, 2, 0), Vector3f(-4, 1, 0), new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
 
-    return new bvh_node(list, i, 0.0f, 0.0f);
+    //parallel_bvh_node *dummy = parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+
+    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new bvh_node(list, i, 0.0f, 0.0f);
 }
 
 Vector3f color(const ray &r, hitable *world, int depth)
@@ -141,7 +145,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1000;
+    const int ns = 50;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
@@ -166,7 +170,14 @@ int main()
     //list[3] = new sphere(Vector3f(-1.0f, 0.0f, -1.0f), 0.5f, new dielectric(1.5f));
     //list[4] = new sphere(Vector3f(-1.0f, 0.0f, -1.0f), -0.45f, new dielectric(1.5f));
     //hitable *world = new hitable_list(list, 5);
+    std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
+
     hitable *world = random_scene();
+
+    std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
+    std::cout << "\n BVH construction took me " << time_spann.count() << " seconds.";
+
 
     GLFWwindow* window;
 

@@ -71,10 +71,13 @@
     <ClInclude Include="..\aabb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\bvh.h">
+    <ClInclude Include="..\aarect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\aarect.h">
+    <ClInclude Include="..\parallel_bvh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bvh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
