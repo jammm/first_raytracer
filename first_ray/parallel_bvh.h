@@ -131,6 +131,8 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, i
         }).name("right");
     }
 
+    subflow.detach();
+
 	box = main_box;
 }
 
@@ -144,7 +146,7 @@ parallel_bvh_node *parallel_bvh_node::create_bvh(hitable **l, int n, float time0
     }).name("root");
 
     tf.dispatch().get();
-    tf.dump_topologies(std::cout);
+    //tf.dump_topologies(std::cout);
     
     return root;
 }

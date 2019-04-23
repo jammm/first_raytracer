@@ -79,13 +79,13 @@ hitable *random_scene()
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    /*static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
         std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.9f, 0.9f)))));
     
     for (auto triangle : mesh)
     {
         list[i++] = triangle.get();
-    }*/
+    }
 
     //list[i++] = new sphere(Vector3f(0, 1, 0), 1.0f, new dielectric(1.5));
     //list[i++] = new sphere(Vector3f(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
