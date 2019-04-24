@@ -49,9 +49,9 @@ hitable *random_scene()
 
     list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
     int i = 1;
-    for (int a = -4;a < 2; a++)
+    for (int a = -11;a < 11; a++)
     {
-        for (int b = -4; b < 2; b++)
+        for (int b = -11; b < 11; b++)
         {
             float choose_mat = drand48();
             Vector3f center(a + 0.9f * drand48(), 0.2f, b + 0.9f * drand48());
@@ -145,7 +145,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 50;
+    const int ns = 100;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);

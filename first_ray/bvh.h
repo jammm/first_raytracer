@@ -67,7 +67,7 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
 	aabb main_box;
 	bool dummy = l[0]->bounding_box(time0, time1, main_box);
 	
-	for (unsigned int i = 1; i < n; ++i)	
+	for (int i = 1; i < n; ++i)
 	{
 		aabb new_box;
 		bool dummy = l[i]->bounding_box(time0, time1, new_box);
@@ -82,26 +82,26 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
     else
         qsort(l, n, sizeof(hitable *), box_z_compare);
 
-	for (unsigned int i = 0; i < n; ++i)
+	for (int i = 0; i < n; ++i)
 		bool dummy = l[i]->bounding_box(time0, time1, boxes[i]);
 
 	left_area[0] = boxes[0].area();
 	aabb left_box = boxes[0];
-	for (unsigned int i = 1; i < n - 1; ++i)
+	for (int i = 1; i < n - 1; ++i)
 	{
 		left_box = surrounding_box(left_box, boxes[i]);
 		left_area[i] = left_box.area();
 	}
 	right_area[n - 1] = boxes[n - 1].area();
 	aabb right_box = boxes[n - 1];
-	for (unsigned int i = n - 2; i > 0; --i)
+	for (int i = n - 2; i > 0; --i)
 	{
 		right_box = surrounding_box(right_box, boxes[i]);
 		right_area[i] = right_box.area();
 	}
 	float min_SAH = FLT_MAX;
 	int min_SAH_idx;
-	for (unsigned int i = 0; i < n - 1; ++i)
+	for (int i = 0; i < n - 1; ++i)
 	{
 		float SAH = i*left_area[i] + (n-i -1)*right_area[i+1];
 		if (SAH < min_SAH)
