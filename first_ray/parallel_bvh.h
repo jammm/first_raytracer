@@ -117,7 +117,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, i
 		left = l[0];
     else
     {
-        subflow.emplace([=](tf::SubflowBuilder& subflow2)
+        subflow.emplace([&left = left , l, n, time0, time1, min_SAH_idx](tf::SubflowBuilder& subflow2)
         {
             left = new parallel_bvh_node(subflow2, l, min_SAH_idx + 1, time0, time1);
         }).name("left");
@@ -126,7 +126,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, i
 		right = l[min_SAH_idx + 1];
     else
     {
-        subflow.emplace([=](tf::SubflowBuilder& subflow2) {
+        subflow.emplace([&right = right, l, n, time0, time1, min_SAH_idx](tf::SubflowBuilder& subflow2) {
             right = new parallel_bvh_node(subflow2, l + min_SAH_idx + 1, n - min_SAH_idx - 1, time0, time1);
         }).name("right");
     }
