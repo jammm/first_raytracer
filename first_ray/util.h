@@ -4,6 +4,15 @@
 #ifdef _WIN32
 #include <cstdlib>
 
+inline float drand48()
+{
+    return float(rand()) / float(RAND_MAX);
+}
+
+#else
+const float FLT_MAX = std::numeric_limits<float>::max();
+#endif
+
 inline int box_x_compare(const void *a, const void *b)
 {
     aabb box_left;
@@ -55,12 +64,6 @@ inline int box_z_compare(const void *a, const void *b)
     else
         return 1;
 }
-
-inline float drand48()
-{
-    return float(rand()) / float(RAND_MAX);
-}
-#endif
 
 #endif
 

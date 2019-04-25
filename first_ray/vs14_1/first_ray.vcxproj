@@ -177,6 +177,7 @@
     <ClInclude Include="../geometry.h" />
     <ClInclude Include="..\aabb.h" />
     <ClInclude Include="..\aarect.h" />
+    <ClInclude Include="..\box.h" />
     <ClInclude Include="..\bvh.h" />
     <ClInclude Include="..\parallel_bvh.h" />
   </ItemGroup>

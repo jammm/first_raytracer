@@ -10,6 +10,8 @@
 #include "util.h"
 #include "bvh.h"
 #include "parallel_bvh.h"
+#include "aarect.h"
+#include "box.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -34,7 +36,6 @@ void glfw_error_callback(int, const char* err_str)
 {
     std::cout << "GLFW Error: " << err_str << std::endl;
 }
-
 
 hitable *random_scene()
 {
@@ -87,15 +88,30 @@ hitable *random_scene()
         list[i++] = triangle.get();
     }
 
-    //list[i++] = new sphere(Vector3f(0, 1, 0), 1.0f, new dielectric(1.5));
-    //list[i++] = new sphere(Vector3f(4, 1, 0), 1.0f, new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
-    //list[i++] = new sphere(Vector3f(-4, 1, 0), 1.0f, new metal(Vector3f(0.7f, 0.6f, 0.5f), 0));
-    //list[i++] = new triangle(Vector3f(0, 1, 0), Vector3f(4, 2, 0), Vector3f(-4, 1, 0), new diffuse_light(new constant_texture(Vector3f(0.99f, 0.99f, 0.99f))));
-
-    //parallel_bvh_node *dummy = parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
-
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
     //return new bvh_node(list, i, 0.0f, 0.0f);
+}
+
+hitable *cornell_box()
+{
+    hitable **list = new hitable*[8];
+    int i = 0;
+    material *red = new lambertian(new constant_texture(Vector3f(0.65f, 0.05f, 0.05f)));
+    material *white = new lambertian(new constant_texture(Vector3f(0.73f, 0.73f, 0.73f)));
+    material *green = new lambertian(new constant_texture(Vector3f(0.12f, 0.45f, 0.15f)));
+    material *light = new diffuse_light(new constant_texture(Vector3f(15, 15, 15)));
+
+    list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
+    list[i++] = new yz_rect(0, 555, 0, 555, 0, red);
+    list[i++] = new xz_rect(213, 343, 227, 332, 554, light);
+    list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
+    list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
+    list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
+    list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 165, 165), white), -18), Vector3f(130, 0, 65));
+    list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), white), 15), Vector3f(265, 0, 295));
+
+    //return new hitable_list(list, i);
+    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 Vector3f color(const ray &r, hitable *world, int depth)
@@ -112,10 +128,10 @@ Vector3f color(const ray &r, hitable *world, int depth)
         }
         return emitted;
     }
-    Vector3f unit_direction = unit_vector(r.direction());
-    float t = 0.5f * (unit_direction.y() + 1.0f);
-    return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
-    //return Vector3f(0, 0, 0);
+    //Vector3f unit_direction = unit_vector(r.direction());
+    //float t = 0.5f * (unit_direction.y() + 1.0f);
+    //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
+    return Vector3f(0, 0, 0);
 }
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
@@ -145,34 +161,33 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 100;
+    const int ns = 1000;
     const int comp = 3; //RGB
     GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
     memset(out_image, 0, nx * ny * comp + 64);
     out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 	bool to_exit = false;
 
-    Vector3f lookfrom(3, 2, 13);
+    Vector3f lookfrom(278, 278, -800);
+    Vector3f lookat(278, 278, 0);
+    float dist_to_focus = 10.0f;
+    float aperture = 0.0f;
+    camera cam(lookfrom, lookat, Vector3f(0,1,0), 40.0f, float(nx)/float(ny), aperture, dist_to_focus);
+    float R = (float) cos(M_PI / 4);
+
+    /*Vector3f lookfrom(3, 2, 13);
     Vector3f lookat(0, 0, 0);
     float dist_to_focus = 10.0f;
     float aperture = 0.05f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
-    float R = (float) cos(M_PI / 4);
+    float R = (float) cos(M_PI / 4);*/
 
 	// Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
 	tf::Taskflow tf;
 
-    // TODO: Read obj files for meshes. Scenes come later
-    //hitable *list[5];
-    //list[0] = new sphere(Vector3f(0.0f, 0.0f, -1.0f), 0.5f, new lambertian(Vector3f(0.1f, 0.2f, 0.5f)));
-    //list[1] = new sphere(Vector3f(0.0f, -100.5f, -1.0f), 100.0f, new lambertian(Vector3f(0.8f, 0.8f, 0.0f)));
-    //list[2] = new sphere(Vector3f(1.0f, 0, -1.0f), 0.5f, new metal(Vector3f(0.8f, 0.6f, 0.2f), 0.5f));
-    //list[3] = new sphere(Vector3f(-1.0f, 0.0f, -1.0f), 0.5f, new dielectric(1.5f));
-    //list[4] = new sphere(Vector3f(-1.0f, 0.0f, -1.0f), -0.45f, new dielectric(1.5f));
-    //hitable *world = new hitable_list(list, 5);
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
-    hitable *world = random_scene();
+    hitable *world = cornell_box();
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
