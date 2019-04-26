@@ -161,11 +161,13 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1000;
+    const int ns = 100;
     const int comp = 3; //RGB
-    GLubyte *out_image = new unsigned char[nx * ny * comp + 64];
-    memset(out_image, 0, nx * ny * comp + 64);
-    out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
+    std::unique_ptr<GLubyte[]> out_image(new GLubyte[nx * ny * comp + 64]);
+    std::unique_ptr<GLfloat[]> fout_image(new GLfloat[nx * ny * comp * 64]);
+    memset(out_image.get(), 0, nx * ny * comp + 64);
+    memset(fout_image.get(), 0.0f, nx * ny * comp + 64);
+    //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 	bool to_exit = false;
 
     Vector3f lookfrom(278, 278, -800);
@@ -192,7 +194,6 @@ int main()
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\n BVH construction took me " << time_spann.count() << " seconds.";
-
 
     GLFWwindow* window;
 
@@ -269,19 +270,27 @@ int main()
                 float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
                 float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
                 ray r = cam.get_ray(u, v);
-                //Vector3f p = r.point_at_parameter(2.0f);
                 col += color(r, world, 0);
             }
             col /= float(ns);
-            int ir = int(sqrt(col[0]) * 255.99);
-            int ig = int(sqrt(col[1]) * 255.99);
-            int ib = int(sqrt(col[2]) * 255.99);
+
+            float fr = sqrt(col[0]);
+            float fg = sqrt(col[1]);
+            float fb = sqrt(col[2]);
+
+            int ir = int(fr * 255.99);
+            int ig = int(fg * 255.99);
+            int ib = int(fb * 255.99);
             int index = (j * nx + i) * comp;
 
             // Store output pixels
-            out_image[index]     = (unsigned char)ir;
-            out_image[index + 1] = (unsigned char)ig;
-            out_image[index + 2] = (unsigned char)ib;
+            out_image[index]     = (GLubyte)ir;
+            out_image[index + 1] = (GLubyte)ig;
+            out_image[index + 2] = (GLubyte)ib;
+
+            fout_image[index]     = fr;
+            fout_image[index + 1] = fg;
+            fout_image[index + 2] = fb;
 
         }
         std::cout << ".";
@@ -295,7 +304,7 @@ int main()
 	auto future = tf.dispatch();
 
 	// Refresh window in background
-	background_thread(future, out_image, window, nx, ny, to_exit);
+	background_thread(future, out_image.get(), window, nx, ny, to_exit);
 
 	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
@@ -303,15 +312,15 @@ int main()
 
 	std::cout << "\nIt took me " << time_span.count() << " seconds.";
 
-	image(out_image, nx, ny, comp).save_image(stbi::STBI_BMP);
-	image(out_image, nx, ny, comp).save_image(stbi::STBI_JPG);
-	image(out_image, nx, ny, comp).save_image(stbi::STBI_PNG);
+	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
+	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
+	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
+    image_pfm(fout_image.get(), nx, ny, comp).save_image("out_test.pfm");
 
     glfwTerminate();
 
     //TODO: Use unique_ptr to promote laziness
-    delete[] out_image;
-    delete[] world;
+    //delete[] world;
 
     return 0;
 }

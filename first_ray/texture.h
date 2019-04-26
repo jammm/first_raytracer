@@ -64,9 +64,9 @@ public:
         if (j < 0) j = 0;
         if (i > nx - 1) i = nx - 1;
         if (j > ny - 1) j = ny - 1;
-        float r = int(img->data[3 * i + 3 * nx*j]) / 255.0;
-        float g = int(img->data[3 * i + 3 * nx*j + 1]) / 255.0;
-        float b = int(img->data[3 * i + 3 * nx*j + 2]) / 255.0;
+        float r = int(img->data[3 * i + 3 * nx*j]) / 255.0f;
+        float g = int(img->data[3 * i + 3 * nx*j + 1]) / 255.0f;
+        float b = int(img->data[3 * i + 3 * nx*j + 2]) / 255.0f;
 
         return Vector3f(r, g, b);
     }
