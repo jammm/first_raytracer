@@ -163,8 +163,8 @@ int main()
     const int ny = 768;
     const int ns = 100;
     const int comp = 3; //RGB
-    std::unique_ptr<GLubyte[]> out_image(new GLubyte[nx * ny * comp + 64]);
-    std::unique_ptr<GLfloat[]> fout_image(new GLfloat[nx * ny * comp * 64]);
+    auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
+    auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
     memset(out_image.get(), 0, nx * ny * comp + 64);
     memset(fout_image.get(), 0.0f, nx * ny * comp + 64);
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
@@ -259,7 +259,7 @@ int main()
     /* Clear the window */
     glClear(GL_COLOR_BUFFER_BIT);
 
-	tf.parallel_for(ny, 0, -1, [&] (int j)
+	tf.parallel_for(ny-1, 0, -1, [&] (int j)
     {
         for (int i = 0; i < nx; i++)
         {
