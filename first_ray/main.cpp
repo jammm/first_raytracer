@@ -274,13 +274,13 @@ int main()
             }
             col /= float(ns);
 
-            float fr = sqrt(col[0]);
-            float fg = sqrt(col[1]);
-            float fb = sqrt(col[2]);
+            float fr = col[0];
+            float fg = col[1];
+            float fb = col[2];
 
-            int ir = int(fr * 255.99);
-            int ig = int(fg * 255.99);
-            int ib = int(fb * 255.99);
+            int ir = int(sqrt(fr) * 255.99);
+            int ig = int(sqrt(fg) * 255.99);
+            int ib = int(sqrt(fb) * 255.99);
             int index = (j * nx + i) * comp;
 
             // Store output pixels
