@@ -161,7 +161,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 100;
+    const int ns = 1500;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -189,7 +189,7 @@ int main()
 
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
-    hitable *world = cornell_box();
+    std::unique_ptr<hitable> world(cornell_box());
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
@@ -270,7 +270,7 @@ int main()
                 float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
                 float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
                 ray r = cam.get_ray(u, v);
-                col += color(r, world, 0);
+                col += color(r, world.get(), 0);
             }
             col /= float(ns);
 

@@ -15,8 +15,8 @@ public:
 
     static parallel_bvh_node *create_bvh(hitable **l, int n, float time0, float time1);
 
-	hitable *left;
-	hitable *right;
+	std::unique_ptr<hitable> left;
+	std::unique_ptr<hitable> right;
 	aabb box;
 };
 
@@ -114,20 +114,20 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, i
 	}
 
 	if (min_SAH_idx == 0)
-		left = l[0];
+		left.reset(l[0]);
     else
     {
         subflow.emplace([&left = left , l, n, time0, time1, min_SAH_idx](tf::SubflowBuilder& subflow2)
         {
-            left = new parallel_bvh_node(subflow2, l, min_SAH_idx + 1, time0, time1);
+            left = std::make_unique<parallel_bvh_node>(subflow2, l, min_SAH_idx + 1, time0, time1);
         }).name("left");
     }
 	if (min_SAH_idx == n - 2)
-		right = l[min_SAH_idx + 1];
+		right.reset(l[min_SAH_idx + 1]);
     else
     {
         subflow.emplace([&right = right, l, n, time0, time1, min_SAH_idx](tf::SubflowBuilder& subflow2) {
-            right = new parallel_bvh_node(subflow2, l + min_SAH_idx + 1, n - min_SAH_idx - 1, time0, time1);
+            right = std::make_unique<parallel_bvh_node>(subflow2, l + min_SAH_idx + 1, n - min_SAH_idx - 1, time0, time1);
         }).name("right");
     }
 
