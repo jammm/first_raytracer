@@ -28,8 +28,12 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			normals[j][1] = mesh->mNormals[j].y;
 			normals[j][2] = mesh->mNormals[j].z;
 
-			uv[j].x = mesh->mTextureCoords[0][j].x;
-			uv[j].y = mesh->mTextureCoords[0][j].y;
+            // Some meshes don't have texture coords
+            if (mesh->HasTextureCoords(j))
+            {
+                uv[j].x = mesh->mTextureCoords[0][j].x;
+                uv[j].y = mesh->mTextureCoords[0][j].y;
+            }
 		}
 		//Store indices
 		for (unsigned int k = 0; k < mesh->mNumFaces; k++)
