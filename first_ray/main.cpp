@@ -40,7 +40,7 @@ void glfw_error_callback(int, const char* err_str)
 hitable *random_scene()
 {
     /* n == number of spheres */
-    int n = 70000;
+    int n = 1100000;
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)));
@@ -48,9 +48,9 @@ hitable *random_scene()
     std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
     texture *image_tex = new image_texture(img);
 
-    list[0] = new sphere(Vector3f(0, -1001, 0), 1000, new lambertian(checker));
+    list[0] = new sphere(Vector3f(0, -1002, 0), 1000, new lambertian(checker));
     int i = 1;
-    for (int a = -11;a < 11; a++)
+    /*for (int a = -11;a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
         {
@@ -76,12 +76,12 @@ hitable *random_scene()
                 }
             }
         }
-    }
+    }*/
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
-        std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.9f, 0.9f)))));
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/buddha.obj",
+        std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.1f, 0.1f)))));
     
     for (auto triangle : mesh)
     {
@@ -128,10 +128,10 @@ Vector3f color(const ray &r, hitable *world, int depth)
         }
         return emitted;
     }
-    //Vector3f unit_direction = unit_vector(r.direction());
-    //float t = 0.5f * (unit_direction.y() + 1.0f);
-    //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
-    return Vector3f(0, 0, 0);
+    Vector3f unit_direction = unit_vector(r.direction());
+    float t = 0.5f * (unit_direction.y() + 1.0f);
+    return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
+    //return Vector3f(0, 0, 0);
 }
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
@@ -149,7 +149,7 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
 		glfwSwapBuffers(window);
 
 		// TODO: Avoid using _Is_ready() as it's VS specific
-		if (future._Is_ready() || glfwWindowShouldClose(window))
+		if (glfwWindowShouldClose(window))
 		{
 			to_exit = true;
 		}
@@ -161,7 +161,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1500;
+    const int ns = 128;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -170,26 +170,28 @@ int main()
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 	bool to_exit = false;
 
-    Vector3f lookfrom(278, 278, -800);
+    /*Vector3f lookfrom(278, 278, -800);
     Vector3f lookat(278, 278, 0);
     float dist_to_focus = 10.0f;
     float aperture = 0.0f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 40.0f, float(nx)/float(ny), aperture, dist_to_focus);
     float R = (float) cos(M_PI / 4);
+    */
 
-    /*Vector3f lookfrom(3, 2, 13);
+    Vector3f lookfrom(-1, 2, -3);
     Vector3f lookat(0, 0, 0);
     float dist_to_focus = 10.0f;
-    float aperture = 0.05f;
+    float aperture = 0.001f;
     camera cam(lookfrom, lookat, Vector3f(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
-    float R = (float) cos(M_PI / 4);*/
+    float R = (float) cos(M_PI / 4);
 
 	// Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
 	tf::Taskflow tf;
 
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
-    std::unique_ptr<hitable> world(cornell_box());
+    // Initialize scene
+    std::unique_ptr<hitable> world(random_scene());
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
