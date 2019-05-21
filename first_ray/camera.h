@@ -16,6 +16,7 @@ Vector3f random_in_unit_disk()
 
 struct camera
 {
+    camera() {}
     camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float focus_dist)
     {
         lens_radius = aperture / 2;
