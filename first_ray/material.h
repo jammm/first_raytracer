@@ -17,6 +17,18 @@ Vector3f random_in_unit_sphere()
     return p;
 }
 
+Vector3f random_in_unit_sphere()
+{
+    Vector3f p;
+
+    do
+    {
+        p = 2.0f * Vector3f(drand48(), drand48(), drand48()) - Vector3f(1, 1, 1);
+    } while (p.squared_length() >= 1.0f);
+
+    return p.make_unit_vector();
+}
+
 class material
 {
 public:
