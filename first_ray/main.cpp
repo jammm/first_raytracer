@@ -127,11 +127,12 @@ Vector3f color(const ray &r, hitable *world, int depth)
     if (world->hit(r, 0.001f, FLT_MAX, rec))
     {
         ray scattered;
-        Vector3f attenuation;
+        Vector3f albedo;
         Vector3f emitted = rec.mat_ptr->emitted(rec);
-        if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered))
+        float pdf;
+        if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf))
         {
-            return emitted + attenuation * color(scattered, world, depth + 1);
+            return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered) * color(scattered, world, depth + 1) / pdf;
         }
         return emitted;
     }

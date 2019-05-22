@@ -32,7 +32,8 @@ Vector3f random_on_unit_sphere()
 class material
 {
 public:
-    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const = 0;
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &albedo, ray &scattered, float &pdf) const = 0;
+    virtual float scattering_pdf(const ray &r_in, const hit_record &rec, const ray &scattered) const { return false; }
     virtual Vector3f emitted(const hit_record &rec) const { return Vector3f(0, 0, 0); }
 };
 
@@ -40,15 +41,26 @@ class lambertian : public material
 {
 public:
     lambertian(texture *a) : albedo(a) {}
-    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const
+
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &alb, ray &scattered, float &pdf) const
     {
         Vector3f target = rec.p + rec.normal + random_in_unit_sphere();
         scattered = ray(rec.p, target - rec.p);
         hit_record record = rec;
         record.u = 0;
         record.v = 0;
-        attenuation = albedo->value(rec);
+        pdf = dot(rec.normal, unit_vector(scattered.direction())) / M_PI;
+        alb = albedo->value(rec);
         return true;
+    }
+
+    virtual float scattering_pdf(const ray &r_in, const hit_record &rec, const ray &scattered) const
+    {
+        float cosine = dot(rec.normal, unit_vector(scattered.direction()));
+        if (cosine < 0.0f)
+            cosine = 0.0f;
+
+        return cosine / M_PI;
     }
 
     texture *albedo;
@@ -63,7 +75,7 @@ class metal : public material
 {
 public:
     metal(const Vector3f &a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0f; }
-    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered, float &pdf) const
     {
         Vector3f reflected = reflect(unit_vector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
@@ -100,7 +112,7 @@ class dielectric : public material
 public:
     dielectric(float ri) : ref_idx(ri) {}
 
-    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered, float &pdf) const
     {
         Vector3f outward_normal;
         Vector3f reflected = reflect(r_in.direction(), rec.normal);
@@ -150,7 +162,7 @@ class diffuse_light : public material
 {
 public:
     diffuse_light(texture *a) : emit(a) {}
-    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered) const { return false; }
+    virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered, float &pdf) const { return false; }
     virtual Vector3f emitted(const hit_record &rec) const
     { 
         return emit->value(rec);
