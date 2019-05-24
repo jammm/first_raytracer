@@ -3,6 +3,7 @@
 
 #include "ray.h"
 #include "aabb.h"
+#include <cfloat>
 
 class material;
 
@@ -112,7 +113,7 @@ public:
         bbox = aabb(min, max);
     }
 
-    bool rotate_y::hit(const ray& r, float t_min, float t_max, hit_record& rec) const
+    bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const
     {
         Vector3f origin = r.origin();
         Vector3f direction = r.direction();
@@ -148,6 +149,5 @@ public:
     bool hasbox;
     aabb bbox;
 };
-
 
 #endif
