@@ -13,8 +13,6 @@ public:
     Vector3f local(const Vector3f &a) const { return a.x()*u() + a.y()*v() + a.z()*w(); }
     void build_from_w(const Vector3f & n);
 
-
-
     Vector3f axis[3];
 };
 

@@ -4,6 +4,7 @@
 #include "hitable.h"
 #include "util.h"
 #include "texture.h"
+#include "onb.h"
 
 Vector3f random_in_unit_sphere()
 {
@@ -29,6 +30,18 @@ Vector3f random_on_unit_sphere()
     return unit_vector(p);
 }
 
+inline Vector3f random_cosine_direction()
+{
+    float r1 = drand48();
+    float r2 = drand48();
+    float z = sqrt(1 - r2);
+    float phi = 2 * M_PI*r1;
+    float x = cos(phi) * 2 * sqrt(r2);
+    float y = sin(phi) * 2 * sqrt(r2);
+
+    return Vector3f(x, y, z);
+}
+
 class material
 {
 public:
@@ -44,12 +57,14 @@ public:
 
     virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &alb, ray &scattered, float &pdf) const
     {
-        Vector3f target = rec.p + rec.normal + random_in_unit_sphere();
-        scattered = ray(rec.p, target - rec.p);
+        onb uvw;
+        uvw.build_from_w(rec.normal);
+        Vector3f direction = uvw.local(random_cosine_direction());
+        scattered = ray(rec.p, unit_vector(direction));
         hit_record record = rec;
         record.u = 0;
         record.v = 0;
-        pdf = dot(rec.normal, unit_vector(scattered.direction())) / M_PI;
+        pdf = dot(uvw.w(), scattered.direction())  / M_PI;
         alb = albedo->value(rec);
         return true;
     }
@@ -153,7 +168,6 @@ public:
 
         return true;
     }
-
 
     float ref_idx;
 };
