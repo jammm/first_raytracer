@@ -1,6 +1,8 @@
 #ifndef ONB_H_
 #define ONB_H_
 
+// Orthonormal basis generator
+// Only works on directions
 class onb
 {
 public:

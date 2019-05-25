@@ -12,6 +12,7 @@
 #include "parallel_bvh.h"
 #include "aarect.h"
 #include "box.h"
+#include "pdf.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -128,11 +129,14 @@ Vector3f color(const ray &r, hitable *world, int depth)
     {
         ray scattered;
         Vector3f albedo;
-        Vector3f emitted = rec.mat_ptr->emitted(rec);
-        float pdf;
-        if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf))
+        Vector3f emitted = rec.mat_ptr->emitted(r, rec);
+        float pdf_val;
+        if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf_val))
         {
-            return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered) * color(scattered, world, depth + 1) / pdf;
+            cosine_pdf p(rec.normal);
+            scattered = ray(rec.p, p.generate());
+            pdf_val = p.value(scattered.direction());
+            return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered) * color(scattered, world, depth + 1) / pdf_val;
         }
         return emitted;
     }
@@ -168,7 +172,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 128;
+    const int ns = 1000;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);

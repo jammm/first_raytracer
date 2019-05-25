@@ -47,7 +47,7 @@ class material
 public:
     virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &albedo, ray &scattered, float &pdf) const = 0;
     virtual float scattering_pdf(const ray &r_in, const hit_record &rec, const ray &scattered) const { return false; }
-    virtual Vector3f emitted(const hit_record &rec) const { return Vector3f(0, 0, 0); }
+    virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
 };
 
 class lambertian : public material
@@ -177,8 +177,10 @@ class diffuse_light : public material
 public:
     diffuse_light(texture *a) : emit(a) {}
     virtual bool scatter(const ray &r_in, const hit_record &rec, Vector3f &attenuation, ray &scattered, float &pdf) const { return false; }
-    virtual Vector3f emitted(const hit_record &rec) const
-    { 
+    virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const
+    {
+        if (dot(rec.normal, r_in.direction()) < 0)
+            return Vector3f(0, 0, 0);
         return emit->value(rec);
     }
     texture *emit;

@@ -181,6 +181,7 @@
     <ClInclude Include="..\bvh.h" />
     <ClInclude Include="..\onb.h" />
     <ClInclude Include="..\parallel_bvh.h" />
+    <ClInclude Include="..\pdf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
