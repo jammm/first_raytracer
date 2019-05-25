@@ -88,7 +88,7 @@ public:
     void load_image(std::string filename)
     {
         std::ifstream is(filename, std::ios::binary | std::ios::in);
-        if (!is.is_open()) throw std::exception("FimageIo: cannot find specified PFM file");
+        if (!is.is_open()) throw std::runtime_error("cannot find specified PFM file");
 
         // read pfm file header
         int &width = nx;
@@ -129,7 +129,7 @@ public:
 
         // write PFM header
         std::ofstream os(filename, std::ios::binary);
-        if (!os.is_open()) throw std::exception("cannot open file");
+        if (!os.is_open()) throw std::runtime_error("cannot open file");
         os << "PF" << std::endl;
         os << width << " " << height << std::endl;
         os << "-1" << std::endl;

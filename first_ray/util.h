@@ -3,14 +3,13 @@
 
 #ifdef _WIN32
 #include <cstdlib>
+#include <cfloat>
 
 inline float drand48()
 {
     return float(rand()) / float(RAND_MAX);
 }
 
-#else
-const float FLT_MAX = std::numeric_limits<float>::max();
 #endif
 
 inline int box_x_compare(const void *a, const void *b)
