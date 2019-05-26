@@ -60,6 +60,26 @@ public:
         box = aabb(Vector3f(x0, k - 0.0001, z0), Vector3f(x1, k + 0.0001, z1));
         return true;
     }
+
+    virtual float pdf_value(const Vector3f &o, const Vector3f &v) const
+    {
+        hit_record rec;
+        if (this->hit(ray(o, v), 0.001, FLT_MAX, rec))
+        {
+            float area = (x1 - x0)*(z1 - z0);
+            float distance_squared = rec.t*rec.t*v.squared_length();
+            float cosine = fabs(dot(v, rec.normal) / v.length());
+
+            return distance_squared / (cosine * area);
+        }
+        return 0;
+    }
+    virtual Vector3f random(const Vector3f &o) const
+    {
+        Vector3f random_point = Vector3f(x0+drand48()*(x1-x0), k, z0+drand48()*(z1-z0));
+        return random_point - o;
+    }
+
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
     {
         const float t = (k - r.origin().y()) / r.direction().y();

@@ -133,7 +133,10 @@ Vector3f color(const ray &r, hitable *world, int depth)
         float pdf_val;
         if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf_val))
         {
-            cosine_pdf p(rec.normal);
+            hitable *light_shape = new xz_rect(213, 343, 227, 332, 554, 0);
+            hitable_pdf p0(light_shape, rec.p);
+            cosine_pdf p1(rec.normal);
+            mixture_pdf p(&p0, &p1);
             scattered = ray(rec.p, p.generate());
             pdf_val = p.value(scattered.direction());
             return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered) * color(scattered, world, depth + 1) / pdf_val;
@@ -200,7 +203,7 @@ int main()
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
-    std::cout << "\n BVH construction took me " << time_spann.count() << " seconds.";
+    std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     GLFWwindow* window;
 
@@ -245,10 +248,8 @@ int main()
     /* Create texture used to represent the color buffer */
     GLuint render_texture;
     glGenTextures(1, &render_texture);
-    std::cout << glGetError() << std::endl;
     glBindTexture(GL_TEXTURE_2D, render_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-    std::cout << glGetError() << std::endl;
 
     /* Create FBO to represent the framebuffer for blitting to the screen */
     GLuint fbo;
@@ -258,7 +259,6 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
-    std::cout << glGetError() << std::endl;
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     // Flip output image vertically
@@ -318,17 +318,18 @@ int main()
 
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
-	std::cout << "\nIt took me " << time_span.count() << " seconds.";
+	std::cout << "\nIt took me " << time_span.count() << " seconds to render."<<std::endl;
 
+    std::cout << "Saving BMP..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
+    std::cout << "Saving JPG..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
+    std::cout << "Saving PNG..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
+    std::cout << "Saving PFM..." << std::endl;
     image_pfm(fout_image.get(), nx, ny, comp).save_image("out_test.pfm");
 
     glfwTerminate();
-
-    //TODO: Use unique_ptr to promote laziness
-    //delete[] world;
 
     return 0;
 }
