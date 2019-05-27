@@ -1,16 +1,14 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#ifdef _WIN32
-#include <cstdlib>
-#include <cfloat>
-
+#include <random>
 inline float drand48()
 {
-    return float(rand()) / float(RAND_MAX);
+    thread_local static std::random_device seed_gen;
+    thread_local static std::mt19937 engine(seed_gen());
+    thread_local static std::uniform_real_distribution<> dist(0.0, 1.0);
+    return dist(engine);
 }
-
-#endif
 
 inline int box_x_compare(const void *a, const void *b)
 {

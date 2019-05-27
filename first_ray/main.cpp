@@ -140,7 +140,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
             else
             {
                 hitable_pdf plight(light_shape, hrec.p);
-                mixture_pdf p(&plight, srec.pdf_ptr);
+                mixture_pdf p(&plight, srec.pdf_ptr.get());
                 ray scattered = ray(hrec.p, p.generate());
                 float pdf_val = p.value(scattered.direction());
                 return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)

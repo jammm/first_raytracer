@@ -36,7 +36,7 @@ struct scatter_record
     ray specular_ray;
     bool is_specular;
     Vector3f attenuation;
-    pdf *pdf_ptr;
+    std::unique_ptr<pdf> pdf_ptr;
 };
 
 class material
@@ -56,7 +56,7 @@ public:
     {
         srec.is_specular = false;
         srec.attenuation = albedo->value(hrec);
-        srec.pdf_ptr = new cosine_pdf(hrec.normal);
+        srec.pdf_ptr = std::make_unique<cosine_pdf>(hrec.normal);
         return true;
     }
 
@@ -87,7 +87,7 @@ public:
         srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere());
         srec.attenuation = albedo;
         srec.is_specular = true;
-        srec.pdf_ptr = 0;
+        srec.pdf_ptr = nullptr;
         return true;
     }
 
