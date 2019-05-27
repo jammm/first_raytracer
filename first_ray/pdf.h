@@ -6,6 +6,18 @@
 #include "hitable.h"
 #include <algorithm>
 
+inline Vector3f random_cosine_direction()
+{
+    float r1 = drand48();
+    float r2 = drand48();
+    float z = sqrt(1 - r2);
+    float phi = 2 * M_PI*r1;
+    float x = cos(phi) * 2 * sqrt(r2);
+    float y = sin(phi) * 2 * sqrt(r2);
+
+    return Vector3f(x, y, z);
+}
+
 class pdf
 {
 public:

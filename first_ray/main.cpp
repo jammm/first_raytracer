@@ -110,6 +110,8 @@ hitable *cornell_box(camera &cam, const float &aspect)
     list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
     list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 165, 165), white), -18), Vector3f(130, 0, 65));
     list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), white), 15), Vector3f(265, 0, 295));
+    material *aluminium = new metal(Vector3f(0.8, 0.85, 0.88), 0.0);
+    list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), aluminium), 15), Vector3f(265, 0, 295));
 
     Vector3f lookfrom(278, 278, -800);
     Vector3f lookat(278, 278, 0);
@@ -122,24 +124,28 @@ hitable *cornell_box(camera &cam, const float &aspect)
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
-Vector3f color(const ray &r, hitable *world, int depth)
+Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 {
-    hit_record rec;
-    if (world->hit(r, 0.001f, FLT_MAX, rec))
+    hit_record hrec;
+    if (world->hit(r, 0.001f, FLT_MAX, hrec))
     {
-        ray scattered;
-        Vector3f albedo;
-        Vector3f emitted = rec.mat_ptr->emitted(r, rec);
-        float pdf_val;
-        if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf_val))
+        scatter_record srec;
+        Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
+        if (depth < 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
-            hitable *light_shape = new xz_rect(213, 343, 227, 332, 554, 0);
-            hitable_pdf p0(light_shape, rec.p);
-            cosine_pdf p1(rec.normal);
-            mixture_pdf p(&p0, &p1);
-            scattered = ray(rec.p, p.generate());
-            pdf_val = p.value(scattered.direction());
-            return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered) * color(scattered, world, depth + 1) / pdf_val;
+            if (srec.is_specular)
+            {
+                return srec.attenuation*color(srec.specular_ray, world, light_shape, depth+1);
+            }
+            else
+            {
+                hitable_pdf plight(light_shape, hrec.p);
+                mixture_pdf p(&plight, srec.pdf_ptr);
+                ray scattered = ray(hrec.p, p.generate());
+                float pdf_val = p.value(scattered.direction());
+                return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
+                        * color(scattered, world, light_shape, depth + 1) / pdf_val;
+            }
         }
         return emitted;
     }
@@ -267,6 +273,9 @@ int main()
     /* Clear the window */
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // TODO: Find a better way to specify lights in the scene
+    hitable *light_shape = new xz_rect(213, 343, 227, 332, 554, 0);
+
 	tf.parallel_for(ny-1, 0, -1, [&] (int j)
     {
         for (int i = 0; i < nx; i++)
@@ -278,7 +287,7 @@ int main()
                 float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
                 float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
                 ray r = cam.get_ray(u, v);
-                col += color(r, world.get(), 0);
+                col += color(r, world.get(), light_shape, 0);
             }
             col /= float(ns);
 
