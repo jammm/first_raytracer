@@ -33,6 +33,16 @@
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/LogStream.hpp>
 
+inline Vector3f de_nan(const Vector3f &c)
+{
+    Vector3f temp = c;
+    if (!(temp[0] == temp[0])) temp[0] = 0;
+    if (!(temp[1] == temp[1])) temp[1] = 0;
+    if (!(temp[2] == temp[2])) temp[2] = 0;
+
+    return temp;
+}
+
 void glfw_error_callback(int, const char* err_str)
 {
     std::cout << "GLFW Error: " << err_str << std::endl;
@@ -104,21 +114,22 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
     list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
     list[i++] = new yz_rect(0, 555, 0, 555, 0, red);
-    list[i++] = new xz_rect(213, 343, 227, 332, 554, light);
+    list[i++] = new flip_normals(new xz_rect(213, 343, 227, 332, 554, light));
     list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
     list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
     list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
-    list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 165, 165), white), -18), Vector3f(130, 0, 65));
-    list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), white), 15), Vector3f(265, 0, 295));
-    material *aluminium = new metal(Vector3f(0.8, 0.85, 0.88), 0.0);
-    list[i++] = new translate(new rotate_y(new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), aluminium), 15), Vector3f(265, 0, 295));
+    material *glass = new dielectric(1.5);
+    list[i++] = new sphere(Vector3f(190, 90, 190), 90, glass);
+    list[i++] = new translate(new rotate_y(
+        new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), white), 15), Vector3f(265, 0, 295));
 
     Vector3f lookfrom(278, 278, -800);
     Vector3f lookat(278, 278, 0);
     float dist_to_focus = 10.0f;
     float aperture = 0.0f;
+    float vfov = 40.0f;
 
-    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), 40.0f, aspect, aperture, dist_to_focus);
+    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     //return new hitable_list(list, i);
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -275,6 +286,11 @@ int main()
 
     // TODO: Find a better way to specify lights in the scene
     hitable *light_shape = new xz_rect(213, 343, 227, 332, 554, 0);
+    hitable *glass_sphere = new sphere(Vector3f(190, 90, 190), 90, 0);
+    hitable *a[2];
+    a[0] = light_shape;
+    a[1] = glass_sphere;
+    hitable_list hlist(a, 2);
 
 	tf.parallel_for(ny-1, 0, -1, [&] (int j)
     {
@@ -287,7 +303,7 @@ int main()
                 float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
                 float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
                 ray r = cam.get_ray(u, v);
-                col += color(r, world.get(), light_shape, 0);
+                col += de_nan(color(r, world.get(), &hlist, 0));
             }
             col /= float(ns);
 

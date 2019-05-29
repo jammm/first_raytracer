@@ -2,6 +2,8 @@
 #define HITABLE_LIST_H_
 
 #include "hitable.h"
+#include "util.h"
+#include <assert.h>
 
 class hitable_list : public hitable
 {
@@ -11,6 +13,8 @@ public:
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
     virtual bool bounding_box(float t0, float t1, aabb &b) const;
+    virtual float pdf_value(const Vector3f &o, const Vector3f &v) const;
+    virtual Vector3f random(const Vector3f &o) const;
     hitable **list;
     int list_size;
 };
@@ -55,6 +59,26 @@ bool hitable_list::bounding_box(float t0, float t1, aabb &box) const
 	}
 
 	return true;
+}
+
+float hitable_list::pdf_value(const Vector3f &o, const Vector3f &v) const
+{
+    float weight = 1.0/list_size;
+    float sum = 0;
+    for (int i = 0; i < list_size; i++)
+        sum += weight * list[i]->pdf_value(o, v);
+
+    return sum;
+}
+
+Vector3f hitable_list::random(const Vector3f &o) const
+{
+    float rand = drand48();
+    int index = int(rand * list_size);
+    assert(index >= 0);
+    assert(index < 2);
+    assert(rand >= 0.0f && rand <= 1.0f);
+    return list[index]->random(o);
 }
 
 #endif

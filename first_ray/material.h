@@ -42,7 +42,7 @@ struct scatter_record
 class material
 {
 public:
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const = 0;
+    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const { return false; }
     virtual float scattering_pdf(const ray &r_in, const hit_record &rec, const ray &scattered) const { return false; }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
 };
@@ -125,6 +125,8 @@ public:
         Vector3f outward_normal;
         Vector3f reflected = reflect(r_in.direction(), hrec.normal);
         float ni_over_nt;
+        srec.is_specular = true;
+        srec.pdf_ptr = 0;
         srec.attenuation = Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f refracted;
         float reflect_prob;
@@ -145,19 +147,18 @@ public:
         {
             reflect_prob = schlick(cosine, ref_idx);
         }
-        /*else
+        else
         {
-            scattered = ray(hrec.p, reflected);
             reflect_prob = 1.0f;
         }
         if (drand48() < reflect_prob)
         {
-            scattered = ray(hrec.p, reflected);
+            srec.specular_ray = ray(hrec.p, reflected);
         }
         else
         {
-            scattered = ray(hrec.p, refracted);
-        }*/
+            srec.specular_ray = ray(hrec.p, refracted);
+        }
 
         return true;
     }
@@ -173,8 +174,9 @@ public:
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const
     {
         if (dot(rec.normal, r_in.direction()) < 0)
+            return emit->value(rec);
+        else
             return Vector3f(0, 0, 0);
-        return emit->value(rec);
     }
     texture *emit;
 };

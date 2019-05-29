@@ -4,6 +4,7 @@
 #include "geometry.h"
 #include "onb.h"
 #include "hitable.h"
+#include "util.h"
 #include <algorithm>
 
 inline Vector3f random_cosine_direction()
@@ -14,6 +15,18 @@ inline Vector3f random_cosine_direction()
     float phi = 2 * M_PI*r1;
     float x = cos(phi) * 2 * sqrt(r2);
     float y = sin(phi) * 2 * sqrt(r2);
+
+    return Vector3f(x, y, z);
+}
+
+inline Vector3f random_to_sphere(const float &radius, const float &distance_squared)
+{
+    float r1 = drand48();
+    float r2 = drand48();
+    float z = 1 + r2 * (sqrt(1 - radius*radius/distance_squared) - 1);
+    float phi = 2*M_PI*r1;
+    float x = cos(phi)*sqrt(1-z*z);
+    float y = sin(phi)*sqrt(1-z*z);
 
     return Vector3f(x, y, z);
 }

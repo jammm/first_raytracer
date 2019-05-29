@@ -5,6 +5,7 @@
 #include "aabb.h"
 #include <cfloat>
 
+
 class material;
 
 inline void get_sphere_uv(const Vector3f &p, float &u, float &v)
