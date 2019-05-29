@@ -345,13 +345,13 @@ int main()
 
 	std::cout << "\nIt took me " << time_span.count() << " seconds to render."<<std::endl;
 
-    std::cout << "Saving BMP..." << std::endl;
+    //std::cout << "Saving BMP..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
-    std::cout << "Saving JPG..." << std::endl;
+    //std::cout << "Saving JPG..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
-    std::cout << "Saving PNG..." << std::endl;
+    //std::cout << "Saving PNG..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
-    std::cout << "Saving PFM..." << std::endl;
+    //std::cout << "Saving PFM..." << std::endl;
     image_pfm(fout_image.get(), nx, ny, comp).save_image("out_test.pfm");
 
     glfwTerminate();

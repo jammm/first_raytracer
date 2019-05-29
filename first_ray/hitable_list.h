@@ -75,9 +75,7 @@ Vector3f hitable_list::random(const Vector3f &o) const
 {
     float rand = drand48();
     int index = int(rand * list_size);
-    assert(index >= 0);
-    assert(index < 2);
-    assert(rand >= 0.0f && rand <= 1.0f);
+    if (index == 2) index = 1;
     return list[index]->random(o);
 }
 
