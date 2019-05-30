@@ -88,7 +88,7 @@ public:
         const float x = r.origin().x() + t*r.direction().x();
         const float z = r.origin().z() + t*r.direction().z();
 
-        // check if raz lies outside the rect
+        // check if ray lies outside the rect
         if (x < x0 || z < z0 || x > x1 || z > z1)
             return false;
 
