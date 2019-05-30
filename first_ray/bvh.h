@@ -25,35 +25,20 @@ bool bvh_node::bounding_box(float t0, float t1, aabb &b) const
 
 bool bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
 {
+    // Martin Lamber's BVH improvement https://twitter.com/Peter_shirley/status/1105292977423900673
     if (box.hit(r, t_min, t_max))
     {
-        hit_record left_rec, right_rec;
-        bool hit_left = left->hit(r, t_min, t_max, left_rec);
-        bool hit_right = right->hit(r, t_min, t_max, right_rec);
-
-        if (hit_left && hit_right)
+        if (left->hit(r, t_min, t_max, rec))
         {
-            if (left_rec.t < right_rec.t)
-                rec = left_rec;
-            else
-                rec = right_rec;
-            return true;
-        }
-        else if (hit_left)
-        {
-            rec = left_rec;
-            return true;
-        }
-        else if (hit_right)
-        {
-            rec = right_rec;
+            right->hit(r, t_min, rec.t, rec);
             return true;
         }
         else
-            return false;
+        {
+            return right->hit(r, t_min, t_max, rec);
+        }
     }
-    else
-        return false;
+    return false;
 }
 
 #if 1
