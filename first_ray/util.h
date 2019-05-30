@@ -7,7 +7,7 @@ inline float drand48()
 {
     thread_local static std::random_device seed_gen;
     thread_local static std::mt19937 engine(seed_gen());
-    thread_local static std::uniform_real_distribution<> dist(0.0f, 0.9999f);
+    thread_local static std::uniform_real_distribution<> dist(0.0f, 1.0f);
     return dist(engine);
 }
 

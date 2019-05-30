@@ -48,7 +48,7 @@ void glfw_error_callback(int, const char* err_str)
     std::cout << "GLFW Error: " << err_str << std::endl;
 }
 
-hitable *random_scene()
+hitable *random_scene(camera &cam, const float &aspect)
 {
     /* n == number of spheres */
     int n = 1100000;
@@ -91,13 +91,20 @@ hitable *random_scene()
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/mitsuba.obj",
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/buddha.obj",
         std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.1f, 0.1f)))));
     
     for (auto triangle : mesh)
     {
         list[i++] = triangle.get();
     }
+
+    Vector3f lookfrom(12, 2, 3);
+    Vector3f lookat(0, 0, 0);
+    float dist_to_focus = 10.0f;
+    float aperture = 0.001f;
+    float vfov = 40.0f;
+    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
     //return new bvh_node(list, i, 0.0f, 0.0f);
@@ -201,14 +208,6 @@ int main()
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 	bool to_exit = false;
 
-    /*
-        Vector3f lookfrom(12, 2, 3);
-        Vector3f lookat(0, 0, 0);
-        float dist_to_focus = 10.0f;
-        float aperture = 0.001f;
-        camera cam(lookfrom, lookat, Vector3f(0,1,0), 40.0f, float(nx)/float(ny), aperture, dist_to_focus);
-    */
-
 	// Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
 	tf::Taskflow tf;
 
@@ -296,6 +295,8 @@ int main()
     {
         for (int i = 0; i < nx; i++)
         {
+            //if ((i != 384) || (j != 81))
+            //    continue;
             if (to_exit) break;
             Vector3f col(0.0f, 0.0f, 0.0f);
             for (int s = 0; s < ns; s++)
@@ -311,9 +312,9 @@ int main()
             float fg = col[1];
             float fb = col[2];
 
-            int ir = int(sqrt(fr) * 255.99);
-            int ig = int(sqrt(fg) * 255.99);
-            int ib = int(sqrt(fb) * 255.99);
+            int ir = std::min(int(sqrt(fr) * 255.99), 255);
+            int ig = std::min(int(sqrt(fg) * 255.99), 255);
+            int ib = std::min(int(sqrt(fb) * 255.99), 255);
             int index = (j * nx + i) * comp;
 
             // Store output pixels
