@@ -13,7 +13,7 @@ Vector3f random_in_unit_sphere()
 
     do
     {
-        p = 2.0f * Vector3f(drand48(), drand48(), drand48()) - Vector3f(1, 1, 1);
+        p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), gen_cano_rand()) - Vector3f(1, 1, 1);
     } while (p.squared_length() >= 1.0f);
 
     return p;
@@ -25,7 +25,7 @@ Vector3f random_on_unit_sphere()
 
     do
     {
-        p = 2.0f * Vector3f(drand48(), drand48(), drand48()) - Vector3f(1, 1, 1);
+        p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), gen_cano_rand()) - Vector3f(1, 1, 1);
     } while (p.squared_length() >= 1.0f);
 
     return unit_vector(p);
@@ -151,7 +151,7 @@ public:
         {
             reflect_prob = 1.0f;
         }
-        if (drand48() < reflect_prob)
+        if (gen_cano_rand() < reflect_prob)
         {
             srec.specular_ray = ray(hrec.p, reflected);
         }

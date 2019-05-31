@@ -73,7 +73,7 @@ float hitable_list::pdf_value(const Vector3f &o, const Vector3f &v) const
 
 Vector3f hitable_list::random(const Vector3f &o) const
 {
-    float rand = drand48();
+    float rand = gen_cano_rand();
     int index = int(rand * list_size);
     if (index == 2) index = 1;
     return list[index]->random(o);

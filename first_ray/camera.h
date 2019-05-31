@@ -8,7 +8,7 @@ Vector3f random_in_unit_disk()
     Vector3f p;
     do
     {
-        p = 2.0f * Vector3f(drand48(), drand48(), 0.0f) - Vector3f(1.0f, 1.0f, 0.0f);
+        p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), 0.0f) - Vector3f(1.0f, 1.0f, 0.0f);
     } while (dot(p, p) >= 1.0f);
 
     return p;

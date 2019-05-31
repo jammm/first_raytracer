@@ -9,8 +9,8 @@
 
 inline Vector3f random_cosine_direction()
 {
-    float r1 = drand48();
-    float r2 = drand48();
+    float r1 = gen_cano_rand();
+    float r2 = gen_cano_rand();
     float z = sqrt(1 - r2);
     float phi = 2 * M_PI*r1;
     float x = cos(phi) * 2 * sqrt(r2);
@@ -21,8 +21,8 @@ inline Vector3f random_cosine_direction()
 
 inline Vector3f random_to_sphere(const float &radius, const float &distance_squared)
 {
-    float r1 = drand48();
-    float r2 = drand48();
+    float r1 = gen_cano_rand();
+    float r2 = gen_cano_rand();
     float z = 1 + r2 * (sqrt(1 - radius*radius/distance_squared) - 1);
     float phi = 2*M_PI*r1;
     float x = cos(phi)*sqrt(1-z*z);
@@ -90,7 +90,7 @@ public:
 
     virtual Vector3f generate() const
     {
-        if (drand48() < 0.5)
+        if (gen_cano_rand() < 0.5)
             return p[0]->generate();
 
         return p[1]->generate();

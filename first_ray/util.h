@@ -3,7 +3,8 @@
 
 #include <random>
 
-inline float drand48()
+// Generates the canonical uniform random variable ξ
+inline float gen_cano_rand()
 {
     thread_local static std::random_device seed_gen;
     thread_local static std::mt19937 engine(seed_gen());

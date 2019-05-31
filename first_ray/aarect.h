@@ -76,7 +76,7 @@ public:
     }
     virtual Vector3f random(const Vector3f &o) const
     {
-        Vector3f random_point = Vector3f(x0+drand48()*(x1-x0), k, z0+drand48()*(z1-z0));
+        Vector3f random_point = Vector3f(x0+gen_cano_rand()*(x1-x0), k, z0+gen_cano_rand()*(z1-z0));
         return random_point - o;
     }
 

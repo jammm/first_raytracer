@@ -65,20 +65,20 @@ hitable *random_scene(camera &cam, const float &aspect)
     {
         for (int b = -11; b < 11; b++)
         {
-            float choose_mat = drand48();
-            Vector3f center(a + 0.9f * drand48(), 0.2f, b + 0.9f * drand48());
+            float choose_mat = gen_cano_rand();
+            Vector3f center(a + 0.9f * gen_cano_rand(), 0.2f, b + 0.9f * gen_cano_rand());
             if ((center - Vector3f(4, 0.2f, 0)).length() > 0.9f)
             {
                 if (choose_mat < 0.8)
                 {
                     //diffuse
-                    list[i++] = new sphere(center, 0.2f, new lambertian(new constant_texture(Vector3f(drand48() * drand48(), drand48() * drand48(), drand48() * drand48()))));
+                    list[i++] = new sphere(center, 0.2f, new lambertian(new constant_texture(Vector3f(gen_cano_rand() * gen_cano_rand(), gen_cano_rand() * gen_cano_rand(), gen_cano_rand() * gen_cano_rand()))));
                 }
                 else if (choose_mat < 0.95)
                 {
                     //metal
                     list[i++] = new sphere(center, 0.2f,
-                        new metal(Vector3f(0.5f*(1 + drand48()), 0.5f*(1 + drand48()), 0.5f*(1 + drand48())), 0.5f*drand48()));
+                        new metal(Vector3f(0.5f*(1 + gen_cano_rand()), 0.5f*(1 + gen_cano_rand()), 0.5f*(1 + gen_cano_rand())), 0.5f*gen_cano_rand()));
                 }
                 else
                 {
@@ -199,7 +199,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1000;
+    const int ns = 200;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -295,8 +295,6 @@ int main()
     {
         for (int i = 0; i < nx; i++)
         {
-            //if ((i != 384) || (j != 81))
-            //    continue;
             if (to_exit) break;
             Vector3f col(0.0f, 0.0f, 0.0f);
             for (int s = 0; s < ns; s++)
@@ -346,13 +344,13 @@ int main()
 
 	std::cout << "\nIt took me " << time_span.count() << " seconds to render."<<std::endl;
 
-    //std::cout << "Saving BMP..." << std::endl;
+    std::cout << "Saving BMP..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
-    //std::cout << "Saving JPG..." << std::endl;
+    std::cout << "Saving JPG..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
-    //std::cout << "Saving PNG..." << std::endl;
+    std::cout << "Saving PNG..." << std::endl;
 	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
-    //std::cout << "Saving PFM..." << std::endl;
+    std::cout << "Saving PFM..." << std::endl;
     image_pfm(fout_image.get(), nx, ny, comp).save_image("out_test.pfm");
 
     glfwTerminate();
