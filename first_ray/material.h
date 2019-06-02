@@ -7,7 +7,7 @@
 #include "onb.h"
 #include "pdf.h"
 
-Vector3f random_in_unit_sphere()
+inline Vector3f random_in_unit_sphere()
 {
     Vector3f p;
 
@@ -19,7 +19,7 @@ Vector3f random_in_unit_sphere()
     return p;
 }
 
-Vector3f random_on_unit_sphere()
+inline Vector3f random_on_unit_sphere()
 {
     Vector3f p;
 
@@ -72,7 +72,7 @@ public:
     texture *albedo;
 };
 
-Vector3f reflect(const Vector3f &v, const Vector3f &n)
+static Vector3f reflect(const Vector3f &v, const Vector3f &n)
 {
     return v - 2 * dot(v, n)*n;
 }
@@ -95,14 +95,14 @@ public:
     float fuzz;
 };
 
-float schlick(const float &cosine, const float &ref_idx)
+static float schlick(const float &cosine, const float &ref_idx)
 {
     float r0 = (1 - ref_idx) / (1 + ref_idx);
     r0 = r0 * r0;
     return r0 + (1 - r0)*pow((1 - cosine), 5);
 }
 
-bool refract(const Vector3f &v, const Vector3f &n, float ni_over_nt, Vector3f &refracted)
+static bool refract(const Vector3f &v, const Vector3f &n, float ni_over_nt, Vector3f &refracted)
 {
     Vector3f uv = unit_vector(v);
     float dt = dot(uv, n);

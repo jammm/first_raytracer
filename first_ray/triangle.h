@@ -1,9 +1,11 @@
 #ifndef TRIANGLE_H_
 #define TRIANGLE_H_
 
-#include "hitable.h"
 #include <memory>
 #include <vector>
+#include "hitable.h"
+#include "material.h"
+
 
 class triangle_mesh
 {
@@ -12,10 +14,10 @@ public:
 	triangle_mesh() {}
 
     triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
-        const int *indices, Vector3f *n, Point2f *_uv, const bool &shallow_copy = false)
+        const int *indices, Vector3f *n, Point2f *_uv, std::unique_ptr<material> mat, const bool &shallow_copy = false)
         : nTriangles(nTriangles),
         nVertices(nVertices),
-        indices(indices, indices + 3 * nTriangles)
+        indices(indices, indices + 3 * nTriangles), mat(move(mat))
 
     {
 
@@ -38,13 +40,14 @@ public:
     std::unique_ptr<Vector3f[]> vertices;
     std::unique_ptr<Vector3f[]> normals;
     std::unique_ptr<Point2f[]> uv;
+    std::unique_ptr<material> mat;
 };
 
 class triangle : public hitable
 {
 public:
-    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num, std::shared_ptr<material> &mat) : mesh(mesh),
-        mat_ptr(mat),
+    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num) : mesh(mesh),
+        mat_ptr(mesh->mat.get()),
         edge1(mesh->vertices[mesh->indices[3 * tri_num + 1]] - mesh->vertices[mesh->indices[3 * tri_num]]),
         edge2(mesh->vertices[mesh->indices[3 * tri_num + 2]] - mesh->vertices[mesh->indices[3 * tri_num]])
     {
@@ -126,7 +129,7 @@ public:
     std::shared_ptr<material> mat_ptr;
 };
 
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::shared_ptr<material> mat);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file);
 
 
 #endif

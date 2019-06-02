@@ -1,4 +1,5 @@
 #include "mesh_loader.h"
+#include "material.h"
 
 std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string file)
 {
@@ -45,8 +46,21 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			indices.push_back(face.mIndices[2]);
 		}
 
+        auto matt = scene->mMaterials[mesh->mMaterialIndex];
+        std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
+        std::unique_ptr<material> mati = std::make_unique<lambertian>(new image_texture(img));
+
+        aiString name;
+        matt->Get(AI_MATKEY_NAME, name);
+
+        aiColor3D c(0.f, 0.f, 0.f);
+        matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
+
+        std::unique_ptr<material> mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+        
+
         //Push triangle mesh into vector
-        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, true));
+        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), true));
 	}
 
     return meshes;

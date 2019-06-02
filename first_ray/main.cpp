@@ -91,8 +91,7 @@ hitable *random_scene(camera &cam, const float &aspect)
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/buddha.obj",
-        std::make_shared<lambertian>(lambertian(new constant_texture(Vector3f(0.9f, 0.1f, 0.1f)))));
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj");
     
     for (auto triangle : mesh)
     {
@@ -142,6 +141,27 @@ hitable *cornell_box(camera &cam, const float &aspect)
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
+hitable *cornell_box_obj(camera &cam, const float &aspect)
+{
+    hitable **list = new hitable*[300];
+    int i = 0;
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj");
+
+    for (auto triangle : mesh)
+    {
+        list[i++] = triangle.get();
+    }
+
+    Vector3f lookfrom(0, -3, 3);
+    Vector3f lookat(0, 0, 0);
+    float dist_to_focus = 10.0f;
+    float aperture = 0.001f;
+    float vfov = 40.0f;
+    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+}
+
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 {
     hit_record hrec;
@@ -157,8 +177,8 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
             }
             else
             {
-                hitable_pdf plight(light_shape, hrec.p);
-                mixture_pdf p(&plight, srec.pdf_ptr.get());
+                //hitable_pdf plight(light_shape, hrec.p);
+                mixture_pdf p(srec.pdf_ptr.get(), srec.pdf_ptr.get());
                 ray scattered = ray(hrec.p, p.generate());
                 float pdf_val = p.value(scattered.direction());
                 return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
@@ -167,10 +187,10 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         }
         return emitted;
     }
-    //Vector3f unit_direction = unit_vector(r.direction());
-    //float t = 0.5f * (unit_direction.y() + 1.0f);
-    //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
-    return Vector3f(0, 0, 0);
+    Vector3f unit_direction = unit_vector(r.direction());
+    float t = 0.5f * (unit_direction.y() + 1.0f);
+    return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
+    //return Vector3f(0, 0, 0);
 }
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
@@ -199,7 +219,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 200;
+    const int ns = 100;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -215,7 +235,7 @@ int main()
 
     // Initialize scene
     camera cam;
-    std::unique_ptr<hitable> world(cornell_box(cam, float(nx) / float(ny)));
+    std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
@@ -276,9 +296,6 @@ int main()
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    // Flip output image vertically
-    stbi_flip_vertically_on_write(true);
 
     /* Clear the window */
     glClear(GL_COLOR_BUFFER_BIT);

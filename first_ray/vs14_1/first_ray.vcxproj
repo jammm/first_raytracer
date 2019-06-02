@@ -159,6 +159,7 @@
     <ClCompile Include="../main.cpp" />
     <ClCompile Include="../mesh_loader.cpp" />
     <ClCompile Include="../triangle.cpp" />
+    <ClCompile Include="..\image.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../camera.h" />
