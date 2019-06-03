@@ -96,14 +96,17 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
 		}
 	}
 
-	if (min_SAH_idx == 0)
-		left = l[0];
-	else
-		left = new bvh_node(l, min_SAH_idx + 1, time0, time1);
-	if (min_SAH_idx == n - 2)
-		right = l[min_SAH_idx + 1];
-	else
-		right = new bvh_node(l + min_SAH_idx + 1, n - min_SAH_idx - 1, time0, time1);
+    if (n == 1) {
+        left = right = l[0];
+    }
+    else if (n == 2) {
+        left = l[0];
+        right = l[1];
+    }
+    else {
+        left = new bvh_node(l, n / 2, time0, time1);
+        right = new bvh_node(l + n / 2, n - n / 2, time0, time1);
+    }
 
 	box = main_box;
 }

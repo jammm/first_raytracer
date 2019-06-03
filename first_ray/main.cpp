@@ -145,23 +145,30 @@ hitable *cornell_box_obj(camera &cam, const float &aspect)
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj");
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj");
 
     for (auto triangle : mesh)
     {
         list[i++] = triangle.get();
     }
 
-    Vector3f lookfrom(0, -3, 3);
-    Vector3f lookat(0, 0, 0);
+    Vector3f lookfrom(0, 1, 3.9f);
+    Vector3f lookat(0, 1, 0);
     float dist_to_focus = 10.0f;
     float aperture = 0.001f;
     float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return new hitable_list(list, i);
+   //return new bvh_node(list, i, 0.0f, 0.0f);
+   //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
+
+// TODO
+// Do everything in solid angle measure
+// Use solid angle measure to make reference images
+// Then use the reference against other measures/methods
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 {
     hit_record hrec;
@@ -187,10 +194,10 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         }
         return emitted;
     }
-    Vector3f unit_direction = unit_vector(r.direction());
-    float t = 0.5f * (unit_direction.y() + 1.0f);
-    return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
-    //return Vector3f(0, 0, 0);
+    //Vector3f unit_direction = unit_vector(r.direction());
+    //float t = 0.5f * (unit_direction.y() + 1.0f);
+    //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
+    return Vector3f(0, 0, 0);
 }
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
@@ -219,7 +226,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 100;
+    const int ns = 1000;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);

@@ -107,8 +107,8 @@ public:
         const Vector3f &v2 = mesh->vertices[V[2]];
 
         Vector3f minv(fmin(fmin(v0.x(), v1.x()), v2.x()),
-                            fmin(fmin(v0.y(), v1.y()), v2.y()),
-                            fmin(fmin(v0.z(), v1.z()), v2.z()));
+                      fmin(fmin(v0.y(), v1.y()), v2.y()),
+                      fmin(fmin(v0.z(), v1.z()), v2.z()));
 
         Vector3f maxv(fmax(fmax(v0.x(), v1.x()), v2.x()),
                       fmax(fmax(v0.y(), v1.y()), v2.y()),
@@ -119,7 +119,7 @@ public:
         return true;
     }
 
-    // Triangle data
+    // Triangle vertex index data
     const int *V;
     // Store edges here so we don't calculate for every intersection test
     const Vector3f edge1;

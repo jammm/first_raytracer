@@ -53,14 +53,20 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
         aiString name;
         matt->Get(AI_MATKEY_NAME, name);
 
+        std::cout << "Loading " << name.C_Str() << std::endl;
+
         aiColor3D c(0.f, 0.f, 0.f);
         matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
 
-        std::unique_ptr<material> mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+        std::unique_ptr<material> mat;
+        if (aiString("light") != name)
+            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+        else
+            mat = std::make_unique<diffuse_light>(new constant_texture(Vector3f(40.0f, 40.0f, 40.0f)));
         
-
         //Push triangle mesh into vector
-        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), true));
+        //if (name == aiString("rightWall"))
+            meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), true));
 	}
 
     return meshes;
