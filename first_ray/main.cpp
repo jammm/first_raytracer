@@ -159,8 +159,8 @@ hitable *cornell_box_obj(camera &cam, const float &aspect)
     float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return new hitable_list(list, i);
-   //return new bvh_node(list, i, 0.0f, 0.0f);
+   //return new hitable_list(list, i);
+   return new bvh_node(list, i, 0.0f, 0.0f);
    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
@@ -172,7 +172,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect)
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 {
     hit_record hrec;
-    if (world->hit(r, 0.001f, FLT_MAX, hrec))
+    if (world->hit(r, -FLT_MAX, FLT_MAX, hrec))
     {
         scatter_record srec;
         Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);

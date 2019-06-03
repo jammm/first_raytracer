@@ -23,7 +23,7 @@ public:
 				std::swap(t0, t1);
 			tmin = t0 > tmin ? t0 : tmin;
 			tmax = t1 < tmax ? t1 : tmax;
-			if (tmax <= tmin)
+			if (tmax < tmin)
 				return false;
 		}
         
