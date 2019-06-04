@@ -13,7 +13,7 @@ public:
     Vector3f w() const { return axis[2]; }
     Vector3f local(const float &a, const float &b, const float &c) { return a*u() + b*v() + c*w(); }
     Vector3f local(const Vector3f &a) const { return a.x()*u() + a.y()*v() + a.z()*w(); }
-    void onb::build_from_w(const Vector3f &n)
+    void build_from_w(const Vector3f &n)
     {
         axis[2] = unit_vector(n);
         Vector3f a;
