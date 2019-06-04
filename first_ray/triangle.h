@@ -119,6 +119,35 @@ public:
         return true;
     }
 
+    virtual float pdf_value(const Vector3f &o, const Vector3f &v) const
+    {
+        hit_record rec;
+
+        if (this->hit(ray(o, v), 0.001, FLT_MAX, rec))
+        {
+            float area = 0.5f * cross(edge1, edge2).length();
+            float distance_squared = rec.t*rec.t*v.squared_length();
+            float cosine = fabs(dot(v, rec.normal) / v.length());
+
+            return distance_squared / (cosine * area);
+        }
+        return 0;
+    }
+    virtual Vector3f random(const Vector3f &o) const
+    {
+        const Vector3f &v0 = mesh->vertices[V[0]];
+        const Vector3f &v1 = mesh->vertices[V[1]];
+        const Vector3f &v2 = mesh->vertices[V[2]];
+
+        Point2f u(gen_cano_rand(), gen_cano_rand());
+        float su0 = std::sqrt(u.x);
+        float b0 = 1 - su0;
+        float b1 = u.y * su0;
+
+        Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
+        return random_point - o;
+    }
+
     // Triangle vertex index data
     const int *V;
     // Store edges here so we don't calculate for every intersection test
@@ -129,7 +158,7 @@ public:
     std::shared_ptr<material> mat_ptr;
 };
 
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);
 
 
 #endif

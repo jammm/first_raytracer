@@ -23,13 +23,13 @@ public:
 
 box::box(const Vector3f &pmin, const Vector3f &pmax, material *mat) : pmin(pmin), pmax(pmax)
 {
-    hitable **list = new hitable*[6];
-    list[0] = new xy_rect(pmin.x(), pmax.x(), pmin.y(), pmax.y(), pmax.z(), mat);
-    list[1] = new flip_normals(new xy_rect(pmin.x(), pmax.x(), pmin.y(), pmax.y(), pmin.z(), mat));
-    list[2] = new xz_rect(pmin.x(), pmax.x(), pmin.z(), pmax.z(), pmax.y(), mat);
-    list[3] = new flip_normals(new xz_rect(pmin.x(), pmax.x(), pmin.z(), pmax.z(), pmin.y(), mat));
-    list[4] = new yz_rect(pmin.y(), pmax.y(), pmin.z(), pmax.z(), pmax.x(), mat);
-    list[5] = new flip_normals(new yz_rect(pmin.y(), pmax.y(), pmin.z(), pmax.z(), pmin.x(), mat));
+    std::vector<hitable *> list;
+    list.push_back(new xy_rect(pmin.x(), pmax.x(), pmin.y(), pmax.y(), pmax.z(), mat));
+    list.push_back(new flip_normals(new xy_rect(pmin.x(), pmax.x(), pmin.y(), pmax.y(), pmin.z(), mat)));
+    list.push_back(new xz_rect(pmin.x(), pmax.x(), pmin.z(), pmax.z(), pmax.y(), mat));
+    list.push_back(new flip_normals(new xz_rect(pmin.x(), pmax.x(), pmin.z(), pmax.z(), pmin.y(), mat)));
+    list.push_back(new yz_rect(pmin.y(), pmax.y(), pmin.z(), pmax.z(), pmax.x(), mat));
+    list.push_back(new flip_normals(new yz_rect(pmin.y(), pmax.y(), pmin.z(), pmax.z(), pmin.x(), mat)));
     list_ptr = new hitable_list(list, 6);
 }
 

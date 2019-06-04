@@ -48,7 +48,7 @@ void glfw_error_callback(int, const char* err_str)
     std::cout << "GLFW Error: " << err_str << std::endl;
 }
 
-hitable *random_scene(camera &cam, const float &aspect)
+hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
     /* n == number of spheres */
     int n = 1100000;
@@ -91,7 +91,7 @@ hitable *random_scene(camera &cam, const float &aspect)
 
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj");
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj", lights);
     
     for (auto triangle : mesh)
     {
@@ -141,11 +141,11 @@ hitable *cornell_box(camera &cam, const float &aspect)
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
-hitable *cornell_box_obj(camera &cam, const float &aspect)
+hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj");
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -160,13 +160,11 @@ hitable *cornell_box_obj(camera &cam, const float &aspect)
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
    //return new hitable_list(list, i);
-   return new bvh_node(list, i, 0.0f, 0.0f);
-   //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+   //return new bvh_node(list, i, 0.0f, 0.0f);
+   return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
-
 // TODO
-// Do everything in solid angle measure
 // Use solid angle measure to make reference images
 // Then use the reference against other measures/methods
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
@@ -226,7 +224,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1000;
+    const int ns = 100;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -238,11 +236,12 @@ int main()
 	// Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
 	tf::Taskflow tf;
 
-    std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
-
     // Initialize scene
     camera cam;
-    std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny)));
+    std::vector<hitable *> lights;
+
+    std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
+    std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
@@ -308,12 +307,7 @@ int main()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // TODO: Find a better way to specify lights in the scene
-    hitable *light_shape = new xz_rect(213, 343, 227, 332, 554, 0);
-    hitable *glass_sphere = new sphere(Vector3f(190, 90, 190), 90, 0);
-    hitable *a[2];
-    a[0] = light_shape;
-    a[1] = glass_sphere;
-    hitable_list hlist(a, 2);
+    hitable_list hlist(lights, 2);
 
 	tf.parallel_for(ny-1, 0, -1, [&] (int j)
     {

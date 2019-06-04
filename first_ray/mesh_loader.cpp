@@ -46,27 +46,31 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			indices.push_back(face.mIndices[2]);
 		}
 
-        auto matt = scene->mMaterials[mesh->mMaterialIndex];
-        std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
-        std::unique_ptr<material> mati = std::make_unique<lambertian>(new image_texture(img));
 
+        //std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
+        //std::unique_ptr<material> mati = std::make_unique<lambertian>(new image_texture(img));
+
+        std::unique_ptr<material> mat;
+        auto matt = scene->mMaterials[mesh->mMaterialIndex];
         aiString name;
         matt->Get(AI_MATKEY_NAME, name);
 
         std::cout << "Loading " << name.C_Str() << std::endl;
 
         aiColor3D c(0.f, 0.f, 0.f);
-        matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
+        matt->Get(AI_MATKEY_COLOR_EMISSIVE, c);
 
-        std::unique_ptr<material> mat;
-        if (aiString("light") != name)
-            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+        if (c != aiColor3D(0, 0, 0))
+        {
+            mat = std::make_unique<diffuse_light>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+        }
         else
-            mat = std::make_unique<diffuse_light>(new constant_texture(Vector3f(40.0f, 40.0f, 40.0f)));
-        
-        //Push triangle mesh into vector
-        //if (name == aiString("rightWall"))
-            meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), true));
+        {
+            matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
+            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+        }
+
+        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), true));
 	}
 
     return meshes;
