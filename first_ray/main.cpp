@@ -182,8 +182,8 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
             }
             else
             {
-                //hitable_pdf plight(light_shape, hrec.p);
-                mixture_pdf p(srec.pdf_ptr.get(), srec.pdf_ptr.get());
+                hitable_pdf plight(light_shape, hrec.p);
+                mixture_pdf p(&plight, &plight);
                 ray scattered = ray(hrec.p, p.generate());
                 float pdf_val = p.value(scattered.direction());
                 return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
@@ -222,8 +222,8 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
 
 int main()
 {
-    const int nx = 1024;
-    const int ny = 768;
+    const int nx = 500;
+    const int ny = 500;
     const int ns = 100;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);

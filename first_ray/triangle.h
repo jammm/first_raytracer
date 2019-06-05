@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <cassert>
 #include "hitable.h"
 #include "material.h"
 
@@ -143,6 +144,8 @@ public:
         float su0 = std::sqrt(u.x);
         float b0 = 1 - su0;
         float b1 = u.y * su0;
+
+        assert((1 - b0 - b1) >= 0.0f);
 
         Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
         return random_point - o;
