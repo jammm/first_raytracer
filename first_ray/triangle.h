@@ -148,6 +148,8 @@ public:
         assert((1 - b0 - b1) >= 0.0f);
 
         Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
+        hit_record hrec;
+        std::cout << this->hit(ray(o, unit_vector(random_point - o)), 0.0001, FLT_MAX, hrec)<<std::endl;
         return random_point - o;
     }
 

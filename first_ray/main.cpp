@@ -18,9 +18,9 @@
 #include <chrono>
 
 #ifdef _WIN32
-    #define GLEW_STATIC
-    #include <GL/glew.h>
-    #define _CRT_SECURE_NO_DEPRECATE
+#define GLEW_STATIC
+#include <GL/glew.h>
+#define _CRT_SECURE_NO_DEPRECATE
 #endif
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -61,7 +61,7 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
 
     list[0] = new sphere(Vector3f(0, -1002, 0), 1000, new lambertian(checker));
     int i = 1;
-    for (int a = -11;a < 11; a++)
+    for (int a = -11; a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
         {
@@ -92,7 +92,7 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
     // Load mesh from obj file
     // TODO: Change list to std::shared_ptr
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj", lights);
-    
+
     for (auto triangle : mesh)
     {
         list[i++] = triangle.get();
@@ -145,7 +145,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -159,9 +159,9 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-   //return new hitable_list(list, i);
-   //return new bvh_node(list, i, 0.0f, 0.0f);
-   return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    //return new bvh_node(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 // TODO
@@ -173,21 +173,91 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
     if (world->hit(r, -FLT_MAX, FLT_MAX, hrec))
     {
         scatter_record srec;
-        Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
+        //Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
+        Vector3f emitted(0, 0, 0);
         if (depth < 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
-                return srec.attenuation*color(srec.specular_ray, world, light_shape, depth+1);
+                return srec.attenuation*color(srec.specular_ray, world, light_shape, depth + 1);
             }
             else
             {
+
+                /*
                 hitable_pdf plight(light_shape, hrec.p);
-                mixture_pdf p(&plight, &plight);
+                mixture_pdf p(srec.pdf_ptr.get(), srec.pdf_ptr.get());
                 ray scattered = ray(hrec.p, p.generate());
                 float pdf_val = p.value(scattered.direction());
                 return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
-                        * color(scattered, world, light_shape, depth + 1) / pdf_val;
+                    * color(scattered, world, light_shape, depth + 1) / pdf_val;
+                */
+
+                /*
+                hitable_pdf p(light_shape, hrec.p);
+                ray scattered = ray(hrec.p, p.generate());
+                float pdf_val = p.value(scattered.direction());
+                return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
+                    * color(scattered, world, light_shape, depth + 1) / pdf_val;
+                */
+
+                Vector3f on_light = Vector3f(-0.130704165, 1.97999990, 0.152881131);
+                Vector3f to_light = on_light - hrec.p;
+                float distance_squared = to_light.squared_length();
+                to_light.make_unit_vector();
+                float surface_cosine = std::max(0.0f, dot(to_light, hrec.normal));
+                float light_cosine = std::max(0.0f, -dot(to_light, Vector3f(0, -1, 0)));
+
+                ray shadow_ray = ray(hrec.p, to_light);
+                float Visibility = 1.0f;
+
+                hit_record lrec;
+                if (world->hit(shadow_ray, -FLT_MAX, FLT_MAX, lrec))
+                {
+                    Vector3f diff = lrec.p - on_light;
+                    if (std::abs(diff.x()) + std::abs(diff.y()) + std::abs(diff.z()) > 0.0001)
+                    {
+                        Visibility = 0.0f;
+                        std::cout << "lol visibility 0" << std::endl;
+                    }
+                    else
+                        Visibility = 1.0f;
+                }
+
+
+                float invPi = 1 / M_PI;
+                Vector3f BRDF = srec.attenuation * invPi;
+
+
+                Vector3f li_intensity(14, 12, 7);
+                //Vector3f a = li_intensity * light_cosine * surface_cosine * BRDF * Visibility / distance_squared;
+                Vector3f a = li_intensity * light_cosine * surface_cosine * Visibility;
+
+
+                ray scattered(hrec.p, srec.pdf_ptr->generate());
+
+                //return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
+                return a;
+
+
+
+                /*
+                Vector3f on_light = Vector3f(-0.130704165, 1.97999990, 0.152881131);
+                Vector3f to_light = on_light - hrec.p;
+                float distance_squared = to_light.squared_length();
+                to_light.make_unit_vector();
+                float light_cosine = dot(to_light, hrec.normal);
+                if (light_cosine < 0)
+                    return emitted;
+
+                float light_area = 2.04014993;
+                float pdf_light_area = 1 / light_area;
+                float pdf_jacobian = light_cosine / distance_squared;
+
+                ray scattered = ray(hrec.p, to_light);
+                return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
+                    * color(scattered, world, light_shape, depth + 1) * pdf_jacobian / pdf_light_area;
+                */
             }
         }
         return emitted;
@@ -200,30 +270,30 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
 {
-	while (!to_exit)
-	{
-		/* Poll for and process events */
-		glfwPollEvents();
-		/* Render here */
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
-		glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
-			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    while (!to_exit)
+    {
+        /* Poll for and process events */
+        glfwPollEvents();
+        /* Render here */
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
+        glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
+            GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-		/* Swap front and back buffers */
-		glfwSwapBuffers(window);
+        /* Swap front and back buffers */
+        glfwSwapBuffers(window);
 
-		if (glfwWindowShouldClose(window))
-		{
-			to_exit = true;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(3));
-	}
+        if (glfwWindowShouldClose(window))
+        {
+            to_exit = true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
+    }
 }
 
 int main()
 {
-    const int nx = 500;
-    const int ny = 500;
+    const int nx = 1024;
+    const int ny = 768;
     const int ns = 100;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
@@ -231,10 +301,10 @@ int main()
     memset(out_image.get(), 0, nx * ny * comp + 64);
     memset(fout_image.get(), 0.0f, nx * ny * comp + 64);
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
-	bool to_exit = false;
+    bool to_exit = false;
 
-	// Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
-	tf::Taskflow tf;
+    // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
+    tf::Taskflow tf;
 
     // Initialize scene
     camera cam;
@@ -309,65 +379,67 @@ int main()
     // TODO: Find a better way to specify lights in the scene
     hitable_list hlist(lights, 2);
 
-	tf.parallel_for(ny-1, 0, -1, [&] (int j)
+    tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
         for (int i = 0; i < nx; i++)
         {
-            if (to_exit) break;
-            Vector3f col(0.0f, 0.0f, 0.0f);
-            for (int s = 0; s < ns; s++)
+            if (i == 783 && j == 411)
             {
-                float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
-                float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
-                ray r = cam.get_ray(u, v);
-                col += de_nan(color(r, world.get(), &hlist, 0));
+                if (to_exit) break;
+                Vector3f col(0.0f, 0.0f, 0.0f);
+                for (int s = 0; s < ns; s++)
+                {
+                    float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
+                    float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
+                    ray r = cam.get_ray(u, v);
+                    col += de_nan(color(r, world.get(), &hlist, 0));
+                }
+                col /= float(ns);
+
+                float fr = col[0];
+                float fg = col[1];
+                float fb = col[2];
+
+                int ir = std::min(int(sqrt(fr) * 255.99), 255);
+                int ig = std::min(int(sqrt(fg) * 255.99), 255);
+                int ib = std::min(int(sqrt(fb) * 255.99), 255);
+                int index = (j * nx + i) * comp;
+
+                // Store output pixels
+                out_image[index] = (GLubyte)ir;
+                out_image[index + 1] = (GLubyte)ig;
+                out_image[index + 2] = (GLubyte)ib;
+
+                fout_image[index] = fr;
+                fout_image[index + 1] = fg;
+                fout_image[index + 2] = fb;
             }
-            col /= float(ns);
-
-            float fr = col[0];
-            float fg = col[1];
-            float fb = col[2];
-
-            int ir = std::min(int(sqrt(fr) * 255.99), 255);
-            int ig = std::min(int(sqrt(fg) * 255.99), 255);
-            int ib = std::min(int(sqrt(fb) * 255.99), 255);
-            int index = (j * nx + i) * comp;
-
-            // Store output pixels
-            out_image[index]     = (GLubyte)ir;
-            out_image[index + 1] = (GLubyte)ig;
-            out_image[index + 2] = (GLubyte)ib;
-
-            fout_image[index]     = fr;
-            fout_image[index + 1] = fg;
-            fout_image[index + 2] = fb;
-
         }
         std::cout << ".";
         //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
-	});
+    });
 
-	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
 
 
-	auto future = tf.dispatch();
+    auto future = tf.dispatch();
 
-	// Refresh window in background
-	background_thread(future, out_image.get(), window, nx, ny, to_exit);
+    // Refresh window in background
+    background_thread(future, out_image.get(), window, nx, ny, to_exit);
 
-	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+    std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
-	std::cout << "\nIt took me " << time_span.count() << " seconds to render."<<std::endl;
+    std::cout << "\nIt took me " << time_span.count() << " seconds to render." << std::endl;
 
     std::cout << "Saving BMP..." << std::endl;
-	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
+    image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
     std::cout << "Saving JPG..." << std::endl;
-	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
+    image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
     std::cout << "Saving PNG..." << std::endl;
-	image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
+    image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
     std::cout << "Saving PFM..." << std::endl;
     image_pfm(fout_image.get(), nx, ny, comp).save_image("out_test.pfm");
 
