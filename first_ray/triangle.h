@@ -75,30 +75,31 @@ public:
             return false;
         Vector3f q = cross(s, edge1);
         v = f * dot(r.d, q);
-        if (v < 0.0 || u + v > 1.0)
-            return false;
-        // At this stage we can compute t to find out where the intersection point is on the line.
-        float t = f * dot(edge2, q);
-
-        // Check if ray intersected successfully
-        if (t > EPSILON
-            && t > t_min
-            && t < t_max)
+        if (v >= 0.0f && u + v <= 1.0)
         {
-            rec.t = t;
-            rec.p = r.point_at_parameter(t);
-            rec.normal = cross(edge1, edge2);
-            rec.normal.make_unit_vector();
-            // Use u, v to find interpolated coordinates
-            // P = (1 - u - v) * V0 + u * V1 + v * V2 
-            Point2f uvhit = (1-u-v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
-            rec.u = uvhit.x;
-            rec.v = uvhit.y;
-            rec.mat_ptr = mat_ptr.get();
-            return true;
+            // At this stage we can compute t to find out where the intersection point is on the line.
+            float t = f * dot(edge2, q);
+
+            // Check if ray intersected successfully
+            if (t > EPSILON
+                && t > t_min
+                && t < t_max)
+            {
+                rec.t = t;
+                rec.p = r.point_at_parameter(t);
+                rec.normal = cross(edge1, edge2);
+                rec.normal.make_unit_vector();
+                // Use u, v to find interpolated coordinates
+                // P = (1 - u - v) * V0 + u * V1 + v * V2 
+                Point2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
+                rec.u = uvhit.x;
+                rec.v = uvhit.y;
+                rec.mat_ptr = mat_ptr.get();
+                return true;
+            }
         }
-        else // This means that there is a line intersection but not a ray intersection.
-            return false;
+        // This means that there is a line intersection but not a ray intersection.
+        return false;
     }
 
     virtual bool bounding_box(float t0, float t1, aabb &b) const
@@ -149,7 +150,7 @@ public:
 
         Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
         hit_record hrec;
-        std::cout << this->hit(ray(o, unit_vector(random_point - o)), 0.0001, FLT_MAX, hrec)<<std::endl;
+
         return random_point - o;
     }
 

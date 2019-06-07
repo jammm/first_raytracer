@@ -155,7 +155,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     Vector3f lookfrom(0, 1, 3.9f);
     Vector3f lookat(0, 1, 0);
     float dist_to_focus = 10.0f;
-    float aperture = 0.001f;
+    float aperture = 0.0f;
     float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
@@ -209,16 +209,15 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                 float light_cosine = std::max(0.0f, -dot(to_light, Vector3f(0, -1, 0)));
 
                 ray shadow_ray = ray(hrec.p, to_light);
-                float Visibility = 1.0f;
+                float Visibility = 0.0f;
 
                 hit_record lrec;
                 if (world->hit(shadow_ray, -FLT_MAX, FLT_MAX, lrec))
                 {
-                    Vector3f diff = lrec.p - on_light;
-                    if (std::abs(diff.x()) + std::abs(diff.y()) + std::abs(diff.z()) > 0.0001)
+                    if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) == nullptr)
                     {
                         Visibility = 0.0f;
-                        std::cout << "lol visibility 0" << std::endl;
+                        //std::cout << "lol visibility 0" << std::endl;
                     }
                     else
                         Visibility = 1.0f;
@@ -389,8 +388,8 @@ int main()
                 Vector3f col(0.0f, 0.0f, 0.0f);
                 for (int s = 0; s < ns; s++)
                 {
-                    float u = float(i + float(rand()) / float(RAND_MAX)) / float(nx);
-                    float v = float(j + float(rand()) / float(RAND_MAX)) / float(ny);
+                    float u = float(i + gen_cano_rand()) / float(nx);
+                    float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = cam.get_ray(u, v);
                     col += de_nan(color(r, world.get(), &hlist, 0));
                 }
