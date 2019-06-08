@@ -145,7 +145,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -159,9 +159,9 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    //return new hitable_list(std::vector<hitable *>(list, list + i), i);
     //return new bvh_node(list, i, 0.0f, 0.0f);
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 // TODO
@@ -170,11 +170,12 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 {
     hit_record hrec;
-    if (world->hit(r, -FLT_MAX, FLT_MAX, hrec))
+    if (world->hit(r, 1e-5, FLT_MAX, hrec))
     {
         scatter_record srec;
         //Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
-        Vector3f emitted(0, 0, 0);
+        Vector3f emitted = Vector3f(0, 0, 0);
+        
         if (depth < 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
@@ -204,39 +205,38 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                 Vector3f on_light = Vector3f(-0.130704165, 1.97999990, 0.152881131);
                 Vector3f to_light = on_light - hrec.p;
                 float distance_squared = to_light.squared_length();
+                float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
-                float surface_cosine = std::max(0.0f, dot(to_light, hrec.normal));
-                float light_cosine = std::max(0.0f, -dot(to_light, Vector3f(0, -1, 0)));
+                float surface_cosine = abs(dot(to_light, hrec.normal));
+                float light_cosine = -dot(to_light, Vector3f(0, -1, 0));
 
                 ray shadow_ray = ray(hrec.p, to_light);
-                float Visibility = 0.0f;
+
+                Vector3f li_intensity(0, 0, 0);
+                if (light_cosine >= 0)
+                    li_intensity = Vector3f(14, 12, 7);
+
+                light_cosine = abs(light_cosine);
 
                 hit_record lrec;
-                if (world->hit(shadow_ray, -FLT_MAX, FLT_MAX, lrec))
+                float Visibility = 1.0f;
+                if (world->hit(shadow_ray, 1e-5, dist_to_light - 1e-5, lrec))
                 {
-                    if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) == nullptr)
-                    {
-                        Visibility = 0.0f;
-                        //std::cout << "lol visibility 0" << std::endl;
-                    }
-                    else
-                        Visibility = 1.0f;
+                    Visibility = 0.0f;
                 }
 
 
                 float invPi = 1 / M_PI;
                 Vector3f BRDF = srec.attenuation * invPi;
 
-
-                Vector3f li_intensity(14, 12, 7);
-                //Vector3f a = li_intensity * light_cosine * surface_cosine * BRDF * Visibility / distance_squared;
-                Vector3f a = li_intensity * light_cosine * surface_cosine * Visibility;
+                Vector3f a = li_intensity * light_cosine * surface_cosine * BRDF * Visibility / distance_squared;
+                //Vector3f a = li_intensity * light_cosine * surface_cosine * Visibility;
 
 
                 ray scattered(hrec.p, srec.pdf_ptr->generate());
 
-                //return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
-                return a;
+                return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
+                //return a;
 
 
 
@@ -382,7 +382,7 @@ int main()
     {
         for (int i = 0; i < nx; i++)
         {
-            if (i == 783 && j == 411)
+            //if (i == 783 && j == 411)
             {
                 if (to_exit) break;
                 Vector3f col(0.0f, 0.0f, 0.0f);
