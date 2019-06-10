@@ -70,7 +70,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
             mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
         }
 
-        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), true));
+        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), name.C_Str(), true));
 	}
 
     return meshes;

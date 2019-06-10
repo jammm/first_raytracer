@@ -15,11 +15,11 @@ public:
 	triangle_mesh() {}
 
     triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
-        const int *indices, Vector3f *n, Point2f *_uv, std::unique_ptr<material> mat, const bool &shallow_copy = false)
+        const int *indices, Vector3f *n, Point2f *_uv, std::unique_ptr<material> mat, std::string name, const bool &shallow_copy = false)
         : nTriangles(nTriangles),
         nVertices(nVertices),
-        indices(indices, indices + 3 * nTriangles), mat(move(mat))
-
+        indices(indices, indices + 3 * nTriangles), mat(move(mat)),
+        name(name)
     {
 
         vertices.reset(shallow_copy ? v : new Vector3f[nVertices]);
@@ -42,6 +42,8 @@ public:
     std::unique_ptr<Vector3f[]> normals;
     std::unique_ptr<Point2f[]> uv;
     std::unique_ptr<material> mat;
+    // Name of the object this mesh belongs to
+    std::string name;
 };
 
 class triangle : public hitable
@@ -125,7 +127,7 @@ public:
     {
         hit_record rec;
 
-        if (this->hit(ray(o, v), 0.001, FLT_MAX, rec))
+        if (this->hit(ray(o, v), 1e-5, FLT_MAX, rec))
         {
             float area = 0.5f * cross(edge1, edge2).length();
             float distance_squared = rec.t*rec.t*v.squared_length();
@@ -160,7 +162,6 @@ public:
     const Vector3f edge1;
     const Vector3f edge2;
     std::shared_ptr<triangle_mesh> mesh;
-
     std::shared_ptr<material> mat_ptr;
 };
 

@@ -12,7 +12,7 @@ std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &fi
         {
             triangles.push_back(std::make_shared<triangle>(mesh, i));
             if (dynamic_cast<diffuse_light *>(mesh->mat.get()))
-                lights.push_back(triangles[i].get());
+                lights.push_back(triangles.back().get());
         }
     }
 

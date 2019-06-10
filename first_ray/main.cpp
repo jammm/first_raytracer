@@ -159,9 +159,9 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    //return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    return new hitable_list(std::vector<hitable *>(list, list + i), i);
     //return new bvh_node(list, i, 0.0f, 0.0f);
-    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 // TODO
@@ -173,10 +173,10 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
     if (world->hit(r, 1e-5, FLT_MAX, hrec))
     {
         scatter_record srec;
-        //Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
-        Vector3f emitted = Vector3f(0, 0, 0);
+        Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
+        //Vector3f emitted = Vector3f(0, 0, 0);
         
-        if (depth < 50 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -202,8 +202,9 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                     * color(scattered, world, light_shape, depth + 1) / pdf_val;
                 */
 
-                Vector3f on_light = Vector3f(-0.130704165, 1.97999990, 0.152881131);
-                Vector3f to_light = on_light - hrec.p;
+                hitable_pdf plight(light_shape, hrec.p);
+                //Vector3f on_light = Vector3f(0.129167, 1.98, 0.01882);
+                Vector3f to_light = plight.generate();
                 float distance_squared = to_light.squared_length();
                 float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
@@ -212,28 +213,25 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 
                 ray shadow_ray = ray(hrec.p, to_light);
 
-                Vector3f li_intensity(0, 0, 0);
-                if (light_cosine >= 0)
-                    li_intensity = Vector3f(14, 12, 7);
-
                 light_cosine = abs(light_cosine);
 
                 hit_record lrec;
-                float Visibility = 1.0f;
-                if (world->hit(shadow_ray, 1e-5, dist_to_light - 1e-5, lrec))
+                float Visibility = 0.0f;
+                if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-5, lrec))
                 {
-                    Visibility = 0.0f;
+                    Visibility = 1.0f;
+                    emitted += lrec.mat_ptr->emitted(shadow_ray, lrec);
                 }
 
 
                 float invPi = 1 / M_PI;
                 Vector3f BRDF = srec.attenuation * invPi;
+                ray scattered(hrec.p, srec.pdf_ptr->generate());
 
-                Vector3f a = li_intensity * light_cosine * surface_cosine * BRDF * Visibility / distance_squared;
+                Vector3f a = emitted * light_cosine * surface_cosine * BRDF * Visibility / (distance_squared);
                 //Vector3f a = li_intensity * light_cosine * surface_cosine * Visibility;
 
 
-                ray scattered(hrec.p, srec.pdf_ptr->generate());
 
                 return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
                 //return a;
