@@ -186,7 +186,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         Li += hrec.mat_ptr->emitted(r, hrec);
         //Vector3f emitted = Vector3f(0, 0, 0);
         
-        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -209,25 +209,26 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                 hit_record lrec;
 
                 // Calculate surface BSDF * cos(theta)
-                float light_cosine = abs(dot(shadow_ray.d, hrec.normal));
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec) * light_cosine;
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                 if (world->hit(shadow_ray, 1e-5, dist_to_light - 1e-5, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
-                        const float surface_bsdf_pdf = srec.pdf_ptr->value(srec.pdf_ptr->generate());
-                        const float light_pdf = light_shape->pdf_direct_sampling(shadow_ray.o, shadow_ray.d);
-                        const float weight = miWeight(surface_bsdf_pdf, light_pdf);
+                        //const float surface_bsdf_pdf = srec.pdf_ptr->value(srec.pdf_ptr->generate());
+                        const float light_pdf = light_shape->pdf_direct_sampling(lrec.normal, to_light);
+                        const float light_cosine = abs(dot(hrec.normal, to_light));
+                        //const float weight = miWeight(surface_bsdf_pdf, light_pdf);
 
-                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * weight;
+                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * light_cosine / light_pdf;
                     }
                 }
 
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 ray wo(hrec.p, srec.pdf_ptr->generate());
+                const float surface_cosine = abs(dot(hrec.normal, wo.d));
 
                 // srec.attenuation = bsdf weight == throughput
-                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1);
+                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1) * surface_cosine;
 
 
                 //float invPi = 1 / M_PI;

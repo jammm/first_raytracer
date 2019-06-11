@@ -123,19 +123,13 @@ public:
         return true;
     }
 
-    virtual float pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
+    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
-        hit_record rec;
+        float area = 0.5f * cross(edge1, edge2).length();
+        float distance_squared = lrec.t*lrec.t*to_light.squared_length();
+        float cosine = fabs(dot(-lrec.normal, to_light));
 
-        if (this->hit(ray(o, v), 1e-5, FLT_MAX, rec))
-        {
-            float area = 0.5f * cross(edge1, edge2).length();
-            float distance_squared = rec.t*rec.t*v.squared_length();
-            float cosine = fabs(dot(v, rec.normal) / v.length());
-
-            return distance_squared / (cosine * area);
-        }
-        return 0;
+        return distance_squared / (cosine * area);
     }
     virtual Vector3f random(const Vector3f &o) const
     {
