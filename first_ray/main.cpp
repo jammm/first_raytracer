@@ -43,6 +43,13 @@ inline Vector3f de_nan(const Vector3f &c)
     return temp;
 }
 
+inline float miWeight(float pdf1, float pdf2)
+{
+    pdf1 *= pdf1;
+    pdf2 *= pdf2;
+    return pdf1 / (pdf1 + pdf2);
+}
+
 void glfw_error_callback(int, const char* err_str)
 {
     std::cout << "GLFW Error: " << err_str << std::endl;
@@ -173,7 +180,10 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
     if (world->hit(r, 1e-5, FLT_MAX, hrec))
     {
         scatter_record srec;
-        Vector3f emitted = hrec.mat_ptr->emitted(r, hrec);
+        Vector3f Li(0, 0, 0);
+        const float invPi = 1 / M_PI;
+        // Start with checking if the object hit is an emitter
+        Li += hrec.mat_ptr->emitted(r, hrec);
         //Vector3f emitted = Vector3f(0, 0, 0);
         
         if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
@@ -184,56 +194,52 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
             }
             else
             {
-
-                /*
-                hitable_pdf plight(light_shape, hrec.p);
-                mixture_pdf p(srec.pdf_ptr.get(), srec.pdf_ptr.get());
-                ray scattered = ray(hrec.p, p.generate());
-                float pdf_val = p.value(scattered.direction());
-                return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
-                    * color(scattered, world, light_shape, depth + 1) / pdf_val;
-                */
-
-                /*
-                hitable_pdf p(light_shape, hrec.p);
-                ray scattered = ray(hrec.p, p.generate());
-                float pdf_val = p.value(scattered.direction());
-                return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
-                    * color(scattered, world, light_shape, depth + 1) / pdf_val;
-                */
-
                 hitable_pdf plight(light_shape, hrec.p);
                 //Vector3f on_light = Vector3f(0.129167, 1.98, 0.01882);
                 Vector3f to_light = plight.generate();
-                float distance_squared = to_light.squared_length();
+                //float distance_squared = to_light.squared_length();
                 float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
-                float surface_cosine = abs(dot(to_light, hrec.normal));
-                float light_cosine = -dot(to_light, Vector3f(0, -1, 0));
 
+                //float light_cosine = -dot(to_light, Vector3f(0, -1, 0));
+                //light_cosine = abs(light_cosine);
+
+                /* Direct light sampling */
                 ray shadow_ray = ray(hrec.p, to_light);
-
-                light_cosine = abs(light_cosine);
-
                 hit_record lrec;
-                float Visibility = 0.0f;
-                if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-5, lrec))
+
+                // Calculate surface BSDF * cos(theta)
+                float light_cosine = abs(dot(shadow_ray.d, hrec.normal));
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec) * light_cosine;
+                if (world->hit(shadow_ray, 1e-5, dist_to_light - 1e-5, lrec))
                 {
-                    Visibility = 1.0f;
-                    emitted += lrec.mat_ptr->emitted(shadow_ray, lrec);
+                    if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
+                    {
+                        const float surface_bsdf_pdf = srec.pdf_ptr->value(srec.pdf_ptr->generate());
+                        const float light_pdf = light_shape->pdf_direct_sampling(shadow_ray.o, shadow_ray.d);
+                        const float weight = miWeight(surface_bsdf_pdf, light_pdf);
+
+                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * weight;
+                    }
                 }
 
+                /* Sample BSDF to generate next ray direction for indirect lighting */
+                ray wo(hrec.p, srec.pdf_ptr->generate());
 
-                float invPi = 1 / M_PI;
-                Vector3f BRDF = srec.attenuation * invPi;
-                ray scattered(hrec.p, srec.pdf_ptr->generate());
+                // srec.attenuation = bsdf weight == throughput
+                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1);
 
-                Vector3f a = emitted * light_cosine * surface_cosine * BRDF * Visibility / (distance_squared);
+
+                //float invPi = 1 / M_PI;
+                //Vector3f BRDF = srec.attenuation * invPi;
+                //ray scattered(hrec.p, srec.pdf_ptr->generate());
+
+                //Vector3f a = emitted * light_cosine * surface_cosine * BRDF * Visibility / (distance_squared);
                 //Vector3f a = li_intensity * light_cosine * surface_cosine * Visibility;
 
 
 
-                return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
+                //return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
                 //return a;
 
 
@@ -252,12 +258,12 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                 float pdf_jacobian = light_cosine / distance_squared;
 
                 ray scattered = ray(hrec.p, to_light);
-                return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
+                return emitted + srec.attenuation * hrec.mat_ptr->eval_bsdf(r, hrec, scattered)
                     * color(scattered, world, light_shape, depth + 1) * pdf_jacobian / pdf_light_area;
                 */
             }
         }
-        return emitted;
+        return Li;
     }
     //Vector3f unit_direction = unit_vector(r.direction());
     //float t = 0.5f * (unit_direction.y() + 1.0f);

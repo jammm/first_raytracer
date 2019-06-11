@@ -13,7 +13,7 @@ public:
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
     virtual bool bounding_box(float t0, float t1, aabb &b) const;
-    virtual float pdf_value(const Vector3f &o, const Vector3f &v) const;
+    virtual float pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const;
     virtual Vector3f random(const Vector3f &o) const;
     std::vector<hitable *> list;
     int list_size;
@@ -61,12 +61,12 @@ bool hitable_list::bounding_box(float t0, float t1, aabb &box) const
 	return true;
 }
 
-float hitable_list::pdf_value(const Vector3f &o, const Vector3f &v) const
+float hitable_list::pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
 {
     float weight = 1.0/list_size;
     float sum = 0;
     for (int i = 0; i < list_size; i++)
-        sum += weight * list[i]->pdf_value(o, v);
+        sum += weight * list[i]->pdf_direct_sampling(o, v);
 
     return sum;
 }

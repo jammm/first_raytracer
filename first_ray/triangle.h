@@ -123,7 +123,7 @@ public:
         return true;
     }
 
-    virtual float pdf_value(const Vector3f &o, const Vector3f &v) const
+    virtual float pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
     {
         hit_record rec;
 
@@ -143,7 +143,7 @@ public:
         const Vector3f &v1 = mesh->vertices[V[1]];
         const Vector3f &v2 = mesh->vertices[V[2]];
 
-        Point2f u(gen_cano_rand(), gen_cano_rand());
+        Point2f u(gen_cano_rand(), 1 - gen_cano_rand());
         float su0 = std::sqrt(u.x);
         float b0 = 1 - su0;
         float b1 = u.y * su0;

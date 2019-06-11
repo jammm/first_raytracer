@@ -63,7 +63,7 @@ public:
     hitable_pdf(hitable *p, const Vector3f &origin) : ptr(p), o(origin) {}
     virtual float value(const Vector3f &direction) const
     {
-        return ptr->pdf_value(o, direction);
+        return ptr->pdf_direct_sampling(o, direction);
     }
     virtual Vector3f generate() const
     {

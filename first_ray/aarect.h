@@ -61,7 +61,7 @@ public:
         return true;
     }
 
-    virtual float pdf_value(const Vector3f &o, const Vector3f &v) const
+    virtual float pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
     {
         hit_record rec;
         if (this->hit(ray(o, v), 0.001, FLT_MAX, rec))

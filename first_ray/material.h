@@ -43,7 +43,7 @@ class material
 {
 public:
     virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const { return false; }
-    virtual float scattering_pdf(const ray &r_in, const hit_record &rec, const ray &scattered) const { return false; }
+    virtual Vector3f eval_bsdf(const hit_record &rec) const { return Vector3f(0, 0, 0); }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
 };
 
@@ -60,13 +60,9 @@ public:
         return true;
     }
 
-    virtual float scattering_pdf(const ray &r_in, const hit_record &rec, const ray &scattered) const
+    virtual Vector3f eval_bsdf(const hit_record &rec) const
     {
-        float cosine = dot(rec.normal, unit_vector(scattered.direction()));
-        if (cosine < 0.0f)
-            cosine = 0.0f;
-
-        return cosine / M_PI;
+        return albedo->value(rec) / M_PI;
     }
 
     texture *albedo;
