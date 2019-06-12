@@ -125,11 +125,14 @@ public:
 
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
-        float area = 0.5f * cross(edge1, edge2).length();
-        float distance_squared = lrec.t*lrec.t*to_light.squared_length();
-        float cosine = fabs(dot(-lrec.normal, to_light));
+        const float area = 0.5f * cross(edge1, edge2).length();
+        const float distance_squared = lrec.t*lrec.t*to_light.squared_length();
+        const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
 
-        return distance_squared / (cosine * area);
+        // This is explicitly converting to solid angle measure
+        // TODO: Allow switching between solid angle/area measure
+        const float lol = distance_squared / (cos_wo * area);
+        return distance_squared / (cos_wo * area);
     }
     virtual Vector3f random(const Vector3f &o) const
     {
@@ -137,12 +140,10 @@ public:
         const Vector3f &v1 = mesh->vertices[V[1]];
         const Vector3f &v2 = mesh->vertices[V[2]];
 
-        Point2f u(gen_cano_rand(), 1 - gen_cano_rand());
+        Point2f u(gen_cano_rand(), gen_cano_rand());
         float su0 = std::sqrt(u.x);
         float b0 = 1 - su0;
         float b1 = u.y * su0;
-
-        assert((1 - b0 - b1) >= 0.0f);
 
         Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
         hit_record hrec;

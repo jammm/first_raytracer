@@ -34,7 +34,7 @@ inline Vector3f random_to_sphere(const float &radius, const float &distance_squa
 class pdf
 {
 public:
-    virtual float value(const Vector3f &direction) const = 0;
+    virtual float value(const hit_record &lrec, const Vector3f &to_light) const = 0;
     virtual Vector3f generate() const = 0;
 };
 
@@ -42,7 +42,7 @@ class cosine_pdf : public pdf
 {
 public:
     cosine_pdf(const Vector3f &w) { uvw.build_from_w(w); }
-    virtual float value(const Vector3f &direction) const
+    virtual float value(const hit_record &hrec, const Vector3f &direction) const
     {
         float cosine = dot(unit_vector(direction), uvw.w());
         
@@ -57,21 +57,24 @@ public:
 };
 
 // hitable_pdf is used to generate random directions and to generate a pdf for the corresponding hitable object
+// currently used *only* for sampling on a light source
 class hitable_pdf : public pdf
 {
 public:
-    hitable_pdf(hitable *p, const Vector3f &origin) : ptr(p), o(origin) {}
-    virtual float value(const Vector3f &direction) const
+    hitable_pdf(hitable *p, const hit_record &hrec) : ptr(p), origin(hrec.p) {}
+    virtual float value(const hit_record &lrec, const Vector3f &to_light) const
     {
-        return ptr->pdf_direct_sampling(o, direction);
+        return ptr->pdf_direct_sampling(lrec, to_light);
     }
     virtual Vector3f generate() const
     {
-        return ptr->random(o);
+        return ptr->random(origin);
     }
 
-    Vector3f o;
+    // hitable object on which sample is generated
     hitable *ptr;
+    // origin from where direction towards light is sampled
+    Vector3f origin;
 };
 
 class mixture_pdf : public pdf
@@ -83,9 +86,9 @@ public:
         p[1] = p1;
     }
 
-    virtual float value(const Vector3f &direction) const
+    virtual float value(const hit_record &rec, const Vector3f &direction) const
     {
-        return 0.5f*p[0]->value(direction) + 0.5f*p[1]->value(direction);
+        return 0.5f*p[0]->value(rec, direction) + 0.5f*p[1]->value(rec, direction);
     }
 
     virtual Vector3f generate() const

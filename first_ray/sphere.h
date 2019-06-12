@@ -12,7 +12,7 @@ public:
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
     virtual bool bounding_box(float t0, float t1, aabb &b) const;
-    virtual float pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const;
+    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const;
     virtual Vector3f random(const Vector3f &o) const;
 
     Vector3f center;
@@ -61,17 +61,12 @@ bool sphere::bounding_box(float t0, float t1, aabb &box) const
 	return true;
 }
 
-float sphere::pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
+float sphere::pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
 {
-    hit_record rec;
-    if (this->hit(ray(o, v), 0.001f, FLT_MAX, rec))
-    {
-        float cos_theta_max = sqrt(1 - radius*radius / (center-o).squared_length());
-        float solid_angle = 2 * M_PI * (1-cos_theta_max);
-        return 1 / solid_angle;
-    }
-    else
-        return 0;
+    const Vector3f o = ray(lrec.p, to_light).point_at_parameter(-lrec.t);
+    float cos_theta_max = sqrt(1 - radius*radius / (center-o).squared_length());
+    float solid_angle = 2 * M_PI * (1-cos_theta_max);
+    return 1 / solid_angle;
 }
 
 Vector3f sphere::random(const Vector3f &o) const

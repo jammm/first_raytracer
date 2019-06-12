@@ -194,7 +194,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
             }
             else
             {
-                hitable_pdf plight(light_shape, hrec.p);
+                hitable_pdf plight(light_shape, hrec);
                 //Vector3f on_light = Vector3f(0.129167, 1.98, 0.01882);
                 Vector3f to_light = plight.generate();
                 //float distance_squared = to_light.squared_length();
@@ -210,58 +210,26 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 
                 // Calculate surface BSDF * cos(theta)
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                if (world->hit(shadow_ray, 1e-5, dist_to_light - 1e-5, lrec))
+                if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-3f, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
-                        //const float surface_bsdf_pdf = srec.pdf_ptr->value(srec.pdf_ptr->generate());
-                        const float light_pdf = light_shape->pdf_direct_sampling(lrec.normal, to_light);
-                        const float light_cosine = abs(dot(hrec.normal, to_light));
-                        //const float weight = miWeight(surface_bsdf_pdf, light_pdf);
+                        const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
+                        const float light_pdf = light_shape->pdf_direct_sampling(lrec, to_light);
+                        const float surface_cosine = abs(dot(hrec.normal, to_light));
+                        //const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * light_cosine / light_pdf;
+                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf / light_pdf;
                     }
                 }
 
+                return Li;
+
                 /* Sample BSDF to generate next ray direction for indirect lighting */
-                ray wo(hrec.p, srec.pdf_ptr->generate());
-                const float surface_cosine = abs(dot(hrec.normal, wo.d));
+                //ray wo(hrec.p, srec.pdf_ptr->generate());
 
-                // srec.attenuation = bsdf weight == throughput
-                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1) * surface_cosine;
-
-
-                //float invPi = 1 / M_PI;
-                //Vector3f BRDF = srec.attenuation * invPi;
-                //ray scattered(hrec.p, srec.pdf_ptr->generate());
-
-                //Vector3f a = emitted * light_cosine * surface_cosine * BRDF * Visibility / (distance_squared);
-                //Vector3f a = li_intensity * light_cosine * surface_cosine * Visibility;
-
-
-
-                //return a + srec.attenuation * color(scattered, world, light_shape, depth + 1);
-                //return a;
-
-
-
-                /*
-                Vector3f on_light = Vector3f(-0.130704165, 1.97999990, 0.152881131);
-                Vector3f to_light = on_light - hrec.p;
-                float distance_squared = to_light.squared_length();
-                to_light.make_unit_vector();
-                float light_cosine = dot(to_light, hrec.normal);
-                if (light_cosine < 0)
-                    return emitted;
-
-                float light_area = 2.04014993;
-                float pdf_light_area = 1 / light_area;
-                float pdf_jacobian = light_cosine / distance_squared;
-
-                ray scattered = ray(hrec.p, to_light);
-                return emitted + srec.attenuation * hrec.mat_ptr->eval_bsdf(r, hrec, scattered)
-                    * color(scattered, world, light_shape, depth + 1) * pdf_jacobian / pdf_light_area;
-                */
+                // srec.attenuation == bsdf weight == throughput
+                //return Li + srec.attenuation * color(wo, world, light_shape, depth + 1);
             }
         }
         return Li;
