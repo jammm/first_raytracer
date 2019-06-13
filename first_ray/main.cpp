@@ -182,13 +182,15 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
         const float invPi = 1 / M_PI;
 
+        /*
         if (depth == 0 && ((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
             // Start with checking if camera ray hits a light source
             return Li;
         }
         Li = Vector3f(0, 0, 0);
-        
+        */
+
         if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
@@ -206,8 +208,9 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                 ray shadow_ray = ray(hrec.p, to_light);
                 hit_record lrec;
 
+
                 // Calculate surface BSDF * cos(theta)
-                if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-5f, lrec))
+                /*if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-5f, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
@@ -220,14 +223,18 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                         Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * surface_cosine / light_pdf;
                     }
                 }
+                */
 
-                //return Li;
 
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 ray wo(hrec.p, srec.pdf_ptr->generate());
+                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                const float surface_cosine = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
                 // srec.attenuation == bsdf weight == throughput
-                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1);
+                assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
+                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
             }
         }
         return Li;
@@ -264,7 +271,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 100;
+    const int ns = 1000;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
