@@ -271,7 +271,7 @@ int main()
 {
     const int nx = 1024;
     const int ny = 768;
-    const int ns = 1000;
+    const int ns = 100;
     const int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);

@@ -9,14 +9,13 @@
 
 inline Vector3f random_cosine_direction()
 {
-    float r1 = gen_cano_rand();
-    float r2 = gen_cano_rand();
-    float z = sqrt(1 - r2);
-    float phi = 2 * M_PI*r1;
-    float x = cos(phi) * 2 * sqrt(r2);
-    float y = sin(phi) * 2 * sqrt(r2);
+    float r0 = gen_cano_rand(), r1 = gen_cano_rand();
+    float r = sqrt(r0);
+    float phi = 2 * M_PI * r1;
+    float x = r * cos(phi);
+    float y = r * sin(phi);
 
-    return Vector3f(x, y, z);
+    return Vector3f(x, y, sqrt(1 - r0));
 }
 
 inline Vector3f random_to_sphere(const float &radius, const float &distance_squared)
@@ -44,7 +43,7 @@ public:
     cosine_pdf(const Vector3f &w) { uvw.build_from_w(w); }
     virtual float value(const hit_record &hrec, const Vector3f &direction) const
     {
-        float cosine = std::max<float>(dot(unit_vector(direction), uvw.w()), 0.0f);
+        float cosine = std::max<float>(dot(uvw.w(), unit_vector(direction)), 0.0f);
         
         return cosine / (float) M_PI;
     }
