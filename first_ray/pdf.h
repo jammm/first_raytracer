@@ -44,9 +44,9 @@ public:
     cosine_pdf(const Vector3f &w) { uvw.build_from_w(w); }
     virtual float value(const hit_record &hrec, const Vector3f &direction) const
     {
-        float cosine = dot(unit_vector(direction), uvw.w());
+        float cosine = std::max<float>(dot(unit_vector(direction), uvw.w()), 0.0f);
         
-        return std::max<float>(0, cosine / (float) M_PI);
+        return cosine / (float) M_PI;
     }
     virtual Vector3f generate() const
     {

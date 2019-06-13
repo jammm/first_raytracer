@@ -172,21 +172,24 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 }
 
 // TODO
-// Use solid angle measure to make reference images
-// Then use the reference against other measures/methods
+// Convert from recursive to iterative
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 {
     hit_record hrec;
     if (world->hit(r, 1e-5, FLT_MAX, hrec))
     {
         scatter_record srec;
-        Vector3f Li(0, 0, 0);
+        Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
         const float invPi = 1 / M_PI;
-        // Start with checking if the object hit is an emitter
-        Li += hrec.mat_ptr->emitted(r, hrec);
-        //Vector3f emitted = Vector3f(0, 0, 0);
+
+        if (depth == 0 && ((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
+        {
+            // Start with checking if camera ray hits a light source
+            return Li;
+        }
+        Li = Vector3f(0, 0, 0);
         
-        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -195,41 +198,36 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
             else
             {
                 hitable_pdf plight(light_shape, hrec);
-                //Vector3f on_light = Vector3f(0.129167, 1.98, 0.01882);
                 Vector3f to_light = plight.generate();
-                //float distance_squared = to_light.squared_length();
                 float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
-
-                //float light_cosine = -dot(to_light, Vector3f(0, -1, 0));
-                //light_cosine = abs(light_cosine);
 
                 /* Direct light sampling */
                 ray shadow_ray = ray(hrec.p, to_light);
                 hit_record lrec;
 
                 // Calculate surface BSDF * cos(theta)
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-3f, lrec))
+                if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-5f, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
+                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
                         const float light_pdf = light_shape->pdf_direct_sampling(lrec, to_light);
                         const float surface_cosine = abs(dot(hrec.normal, to_light));
                         //const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf / light_pdf;
+                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * surface_cosine / light_pdf;
                     }
                 }
 
-                return Li;
+                //return Li;
 
                 /* Sample BSDF to generate next ray direction for indirect lighting */
-                //ray wo(hrec.p, srec.pdf_ptr->generate());
+                ray wo(hrec.p, srec.pdf_ptr->generate());
 
                 // srec.attenuation == bsdf weight == throughput
-                //return Li + srec.attenuation * color(wo, world, light_shape, depth + 1);
+                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1);
             }
         }
         return Li;
