@@ -182,14 +182,12 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
         const float invPi = 1 / M_PI;
 
-        /*
         if (depth == 0 && ((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
             // Start with checking if camera ray hits a light source
             return Li;
         }
         Li = Vector3f(0, 0, 0);
-        */
 
         if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
@@ -210,7 +208,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 
 
                 // Calculate surface BSDF * cos(theta)
-                /*if (world->hit(shadow_ray, 1e-5, dist_to_light + 1e-5f, lrec))
+                if (world->hit(shadow_ray, 1e-5, FLT_MAX, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
@@ -223,8 +221,6 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                         Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * surface_cosine / light_pdf;
                     }
                 }
-                */
-
 
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 ray wo(hrec.p, srec.pdf_ptr->generate());
@@ -233,8 +229,8 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                 const float surface_cosine = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
                 // srec.attenuation == bsdf weight == throughput
-                assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + srec.attenuation * color(wo, world, light_shape, depth + 1) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
+                //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
+                return Li + color(wo, world, light_shape, depth + 1) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
             }
         }
         return Li;

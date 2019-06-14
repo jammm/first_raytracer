@@ -46,6 +46,11 @@ inline int box_y_compare(const void *a, const void *b)
         return 1;
 }
 
+static inline float FromSrgb(const float v)
+{
+    if (v <= 0.04045) return v * (1.0 / 12.92);
+    return std::pow((v + 0.055) * (1.0 / 1.055), 2.4);
+}
 
 inline int box_z_compare(const void *a, const void *b)
 {

@@ -89,7 +89,7 @@ public:
         int &height = ny;
 
         // write PFM header
-        std::ofstream os(filename, std::ios::binary);
+        std::ofstream os(filename, std::ios::binary | std::ios::trunc);
         if (!os.is_open()) throw std::runtime_error("cannot open file");
         os << "PF" << std::endl;
         os << width << " " << height << std::endl;

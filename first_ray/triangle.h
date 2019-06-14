@@ -131,7 +131,6 @@ public:
 
         // This is explicitly converting to solid angle measure
         // TODO: Allow switching between solid angle/area measure
-        const float lol = distance_squared / (cos_wo * area);
         return distance_squared / (cos_wo * area);
     }
     virtual Vector3f random(const Vector3f &o) const

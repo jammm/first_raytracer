@@ -67,7 +67,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
         else
         {
             matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
-            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))));
         }
 
         meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), name.C_Str(), true));
