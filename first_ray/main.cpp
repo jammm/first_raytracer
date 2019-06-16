@@ -107,9 +107,9 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
 
     Vector3f lookfrom(12, 2, 3);
     Vector3f lookat(0, 0, 0);
-    float dist_to_focus = 10.0f;
-    float aperture = 0.001f;
-    float vfov = 40.0f;
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.001f;
+    constexpr float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -138,9 +138,9 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
     Vector3f lookfrom(278, 278, -800);
     Vector3f lookat(278, 278, 0);
-    float dist_to_focus = 10.0f;
-    float aperture = 0.0f;
-    float vfov = 40.0f;
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 40.0f;
 
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
@@ -161,9 +161,9 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 
     Vector3f lookfrom(0, 1, 3.9f);
     Vector3f lookat(0, 1, 0);
-    float dist_to_focus = 10.0f;
-    float aperture = 0.0f;
-    float vfov = 40.0f;
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new hitable_list(std::vector<hitable *>(list, list + i), i);
@@ -180,7 +180,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
     {
         scatter_record srec;
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
-        const float invPi = 1 / M_PI;
+        constexpr float invPi = 1 / M_PI;
 
         if (depth == 0 && ((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
@@ -215,10 +215,21 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
                         const float light_pdf = light_shape->pdf_direct_sampling(lrec, to_light);
-                        const float surface_cosine = abs(dot(hrec.normal, to_light));
+                        // Calculate geometry term
+                        const float G = [&]()
+                        {
+                            const float cos_wi = abs(dot(hrec.normal, to_light));
+                            const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
+                            const float distance_squared = (lrec.p - hrec.p).squared_length();
+                            // Visibility is always 1
+                            // because of the invariant imposed on these objects by the if above.
+                            const float V = 1.0f;
+
+                            return cos_wi * cos_wo / distance_squared;
+                        }();
                         //const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * surface_cosine / light_pdf;
+                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G / light_pdf;
                     }
                 }
 
@@ -235,6 +246,9 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         }
         return Li;
     }
+
+    //TODO : Environment map sampling
+
     //Vector3f unit_direction = unit_vector(r.direction());
     //float t = 0.5f * (unit_direction.y() + 1.0f);
     //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
@@ -265,10 +279,10 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
 
 int main()
 {
-    const int nx = 1024;
-    const int ny = 768;
-    const int ns = 100;
-    const int comp = 3; //RGB
+    constexpr int nx = 1024;
+    constexpr int ny = 768;
+    constexpr int ns = 100;
+    constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
     memset(out_image.get(), 0, nx * ny * comp + 64);
@@ -389,7 +403,6 @@ int main()
             }
         }
         std::cout << ".";
-        //std::cout << (float(ny - 1 - j) / float(ny)) * 100.0f << "%\r\r\r\r";
     });
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

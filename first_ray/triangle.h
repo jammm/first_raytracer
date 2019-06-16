@@ -126,12 +126,10 @@ public:
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
         const float area = 0.5f * cross(edge1, edge2).length();
-        const float distance_squared = lrec.t*lrec.t*to_light.squared_length();
-        const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
 
-        // This is explicitly converting to solid angle measure
+        // This is explicitly converting to area measure
         // TODO: Allow switching between solid angle/area measure
-        return distance_squared / (cos_wo * area);
+        return 1.0f / area;
     }
     virtual Vector3f random(const Vector3f &o) const
     {
