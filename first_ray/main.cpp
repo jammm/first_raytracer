@@ -173,7 +173,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 
 // TODO
 // Convert from recursive to iterative
-Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
+Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &depth, const Vector3f &sampled_bsdf, const float &sampled_bsdf_pdf)
 {
     hit_record hrec;
     if (world->hit(r, 1e-5, FLT_MAX, hrec))
@@ -182,18 +182,25 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
         constexpr float invPi = 1 / M_PI;
 
-        if (depth == 0 && ((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
+        if (((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
+            if (depth == 0)
+                return Li;
             // Start with checking if camera ray hits a light source
-            return Li;
+            const float light_pdf = light_shape->pdf_direct_sampling(hrec, r.direction());
+            const float weight = miWeight(sampled_bsdf_pdf, light_pdf);
+
+            Li *= weight * sampled_bsdf / sampled_bsdf_pdf;
         }
-        Li = Vector3f(0, 0, 0);
+        //Li = Vector3f(0, 0, 0);
 
         if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
-                return srec.attenuation*color(srec.specular_ray, world, light_shape, depth + 1);
+                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                return srec.attenuation*color(srec.specular_ray, world, light_shape, depth + 1, surface_bsdf, surface_bsdf_pdf);
             }
             else
             {
@@ -227,9 +234,9 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 
                             return cos_wi * cos_wo / distance_squared;
                         }();
-                        //const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+                        const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += 2.0f * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G / light_pdf;
+                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
                 }
 
@@ -241,7 +248,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, light_shape, depth + 1) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
+                return Li + color(wo, world, light_shape, depth + 1, surface_bsdf, surface_bsdf_pdf) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
             }
         }
         return Li;
@@ -379,7 +386,7 @@ int main()
                     float u = float(i + gen_cano_rand()) / float(nx);
                     float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = cam.get_ray(u, v);
-                    col += de_nan(color(r, world.get(), &hlist, 0));
+                    col += de_nan(color(r, world.get(), &hlist, 0, Vector3f(0, 0, 0), 0.0f));
                 }
                 col /= float(ns);
 
@@ -387,9 +394,9 @@ int main()
                 float fg = col[1];
                 float fb = col[2];
 
-                int ir = std::min(int(sqrt(fr) * 255.99), 255);
-                int ig = std::min(int(sqrt(fg) * 255.99), 255);
-                int ib = std::min(int(sqrt(fb) * 255.99), 255);
+                int ir = std::min(int(pow(fr, 1.0f/2.2f) * 255.9999), 255);
+                int ig = std::min(int(pow(fg, 1.0f/2.2f) * 255.9999), 255);
+                int ib = std::min(int(pow(fb, 1.0f/2.2f) * 255.9999), 255);
                 int index = (j * nx + i) * comp;
 
                 // Store output pixels
