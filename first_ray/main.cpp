@@ -229,7 +229,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, int depth)
                         }();
                         //const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G / light_pdf;
+                        Li += 2.0f * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G / light_pdf;
                     }
                 }
 
