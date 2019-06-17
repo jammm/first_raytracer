@@ -213,8 +213,6 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
                 ray shadow_ray = ray(hrec.p, to_light);
                 hit_record lrec;
 
-
-                // Calculate surface BSDF * cos(theta)
                 if (world->hit(shadow_ray, 1e-5, FLT_MAX, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
