@@ -234,7 +234,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
                         }();
                         const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                        Li += dynamic_cast<hitable_list *>(light_shape)->list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
                 }
 
