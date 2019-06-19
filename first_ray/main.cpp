@@ -171,6 +171,41 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
+hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lights)
+{
+    hitable **list = new hitable*[300];
+    int i = 0;
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("veach_mi/veach_mi.obj", lights);
+
+    for (auto triangle : mesh)
+    {
+        list[i++] = triangle.get();
+    }
+
+    list[i++] = new sphere(Vector3f(10, 10, 4), 0.5f, new diffuse_light(new constant_texture(Vector3f(800, 800, 800))));
+    list[i++] = new sphere(Vector3f(-1.25f, 0, 0), 0.1f, new diffuse_light(new constant_texture(Vector3f(100, 100, 100))));
+    list[i++] = new sphere(Vector3f(-3.75f, 0, 0), 0.03333f, new diffuse_light(new constant_texture(Vector3f(901.803f, 901.803f, 901.803f))));
+    list[i++] = new sphere(Vector3f(1.25f, 0, 0), 0.3f, new diffuse_light(new constant_texture(Vector3f(11.1111f, 11.1111f, 11.1111f))));
+    list[i++] = new sphere(Vector3f(3.75f, 0, 0), 0.9f, new diffuse_light(new constant_texture(Vector3f(1.23457, 1.23457, 1.23457))));
+
+    lights.push_back(new sphere(Vector3f(10, 10, 4), 0.5f, new diffuse_light(new constant_texture(Vector3f(800, 800, 800)))));
+    lights.push_back(new sphere(Vector3f(-1.25f, 0, 0), 0.1f, new diffuse_light(new constant_texture(Vector3f(100, 100, 100)))));
+    lights.push_back(new sphere(Vector3f(-3.75f, 0, 0), 0.03333f, new diffuse_light(new constant_texture(Vector3f(901.803f, 901.803f, 901.803f)))));
+    lights.push_back(new sphere(Vector3f(1.25f, 0, 0), 0.3f, new diffuse_light(new constant_texture(Vector3f(11.1111f, 11.1111f, 11.1111f)))));
+    lights.push_back(new sphere(Vector3f(3.75f, 0, 0), 0.9f, new diffuse_light(new constant_texture(Vector3f(1.23457, 1.23457, 1.23457)))));
+
+    Vector3f lookfrom(0, 2, 15);
+    Vector3f lookat(0, -2, 2.5);
+    constexpr float dist_to_focus = 50.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 28.0f;
+    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    //return new bvh_node(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+}
+
 // TODO
 // Convert from recursive to iterative
 Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &depth, const Vector3f &sampled_bsdf, const float &sampled_bsdf_pdf)
