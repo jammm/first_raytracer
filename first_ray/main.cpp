@@ -309,7 +309,7 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
-        if (glfwWindowShouldClose(window))
+        if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready || glfwWindowShouldClose(window))
         {
             to_exit = true;
         }
@@ -321,7 +321,7 @@ int main()
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    constexpr int ns = 1000;
+    constexpr int ns = 10;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);

@@ -42,6 +42,5 @@ RUN g++ -O3 -std=c++17 *.cpp -o main -I./deps/cpp-taskflow-2.1.0 -lGLEW -lassimp
 
 
 ### configure headless X server
-### this allows the Mitsba scene importer "mtsimport" to use OpenGL for triagle computations
 COPY xorg.conf /etc/X11/xorg.conf
 ENV DISPLAY :0
