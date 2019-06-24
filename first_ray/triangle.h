@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <cstring>
 #include "hitable.h"
 #include "material.h"
 
@@ -28,9 +29,9 @@ public:
 
         if (!shallow_copy)
         {
-            memcpy(vertices.get(), v, sizeof(Vector3f) * nVertices);
-            memcpy(normals.get(), v, sizeof(Vector3f) * nVertices);
-            memcpy(uv.get(), v, sizeof(Point2f) * nVertices);
+            std::memcpy(vertices.get(), v, sizeof(Vector3f) * nVertices);
+            std::memcpy(normals.get(), v, sizeof(Vector3f) * nVertices);
+            std::memcpy(uv.get(), v, sizeof(Point2f) * nVertices);
         }
 
     }

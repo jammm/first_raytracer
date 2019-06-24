@@ -8,6 +8,10 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
     // If the import failed, report it
+    if (!scene)
+    {
+        std::cout << "Failed to load scene! Error: " << importer.GetErrorString();
+    }
     assert(scene);
 
 	for (unsigned int i = 0; i < scene->mNumMeshes; ++i)

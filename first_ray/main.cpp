@@ -17,7 +17,7 @@
 #include <taskflow/taskflow.hpp>
 #include <chrono>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
 #define GLEW_STATIC
 #include <GL/glew.h>
 #define _CRT_SECURE_NO_DEPRECATE
@@ -321,7 +321,7 @@ int main()
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    constexpr int ns = 100;
+    constexpr int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -358,7 +358,9 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+#ifdef __APPLE__
     glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
+#endif
 
 #ifdef __APPLE__
     /* OSX requires forward compatibility for some reason */
@@ -374,7 +376,7 @@ int main()
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
     /* Initialize GLEW */
     GLenum err = glewInit();
     if (err != GLEW_OK) {
