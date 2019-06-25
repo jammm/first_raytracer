@@ -39,6 +39,7 @@ RUN cd first_raytracer/first_ray \
     && cmake -DBUILD_SHARED_LIBS=ON . \
     && make \ 
     && make install \
+    && ldconfig \
     && cd ../ \
     && rm -rf ../3.3.tar.gz glfw-3.3
 
