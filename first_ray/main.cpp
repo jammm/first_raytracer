@@ -225,7 +225,8 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
             const float light_pdf = light_shape->pdf_direct_sampling(hrec, r.direction());
             const float weight = miWeight(sampled_bsdf_pdf, light_pdf);
 
-            Li *= weight * sampled_bsdf / sampled_bsdf_pdf;
+            //Li *= weight * sampled_bsdf / sampled_bsdf_pdf;
+            return Li * weight * sampled_bsdf / sampled_bsdf_pdf;
         }
         //Li = Vector3f(0, 0, 0);
 
@@ -313,7 +314,7 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
         {
             to_exit = true;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -321,7 +322,7 @@ int main()
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    constexpr int ns = 10;
+    constexpr int ns = 5000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -354,8 +355,13 @@ int main()
 
     /* Create a windowed mode window and its OpenGL context */
     /* Also specify the OpenGL version (seems like this is sensitive to many potential issues) */
+#if defined(__APPLE__) || defined(_WIN32)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#else
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#endif
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 #ifdef __APPLE__
