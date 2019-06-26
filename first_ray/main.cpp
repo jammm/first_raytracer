@@ -318,11 +318,11 @@ void background_thread(const std::shared_future<void> &future, GLubyte *out_imag
     }
 }
 
-int main()
+int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    constexpr int ns = 5000;
+    int ns = 10;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -330,6 +330,19 @@ int main()
     memset(fout_image.get(), 0.0f, nx * ny * comp + 64);
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     bool to_exit = false;
+
+    /* Parse command line args */
+    if (argc == 3)
+    {
+        const std::string arg = argv[1];
+        if (arg == "--ns")
+        {
+            ns = std::atoi(argv[2]);
+        }
+    }
+
+    std::cout<<"Resoliution: "<<nx<<"x"<<ny<<std::endl;
+    std::cout<<"Setting number of samples to "<<ns<<std::endl;
 
     // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
     tf::Taskflow tf;
