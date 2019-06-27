@@ -242,14 +242,16 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
             {
                 hitable_pdf plight(light_shape, hrec);
                 Vector3f to_light = plight.generate();
-                float dist_to_light = to_light.length();
+                const float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
+                constexpr float shadow_epsilon = 1e-5;
+
 
                 /* Direct light sampling */
-                ray shadow_ray = ray(hrec.p, to_light);
+                ray shadow_ray = ray(hrec.p + (shadow_epsilon * hrec.normal), to_light);
                 hit_record lrec;
 
-                if (world->hit(shadow_ray, 1e-5, FLT_MAX, lrec))
+                if (world->hit(shadow_ray, shadow_epsilon, dist_to_light + 1e-4, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
@@ -322,7 +324,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 10;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
