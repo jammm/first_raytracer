@@ -61,7 +61,6 @@ public:
     //Use M�ller�Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
     {
-        //const float EPSILON = 0.0000001;
         float a, f, u, v;
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f &v1 = mesh->vertices[V[1]];
@@ -69,7 +68,7 @@ public:
         const Vector3f h = cross(r.d, edge2);
         a = dot(edge1, h);
         // Check if this ray is parallel to this triangle's plane.
-        if (a == 0)
+        if (a > -EPSILON && a < EPSILON)
             return false;    
         f = 1.0f / a;
         Vector3f s = r.o - v0;

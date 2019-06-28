@@ -244,14 +244,13 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
                 Vector3f to_light = plight.generate();
                 const float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
-                constexpr float shadow_epsilon = 5e-5;
 
 
                 /* Direct light sampling */
-                ray shadow_ray = ray(hrec.p + (shadow_epsilon * to_light), to_light);
+                ray shadow_ray = ray(hrec.p + (SHADOW_EPSILON * to_light), to_light);
                 hit_record lrec;
 
-                if (world->hit(shadow_ray, shadow_epsilon, FLT_MAX, lrec))
+                if (world->hit(shadow_ray, SHADOW_EPSILON, FLT_MAX, lrec))
                 {
                     if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
