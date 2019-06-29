@@ -230,7 +230,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
         }
         //Li = Vector3f(0, 0, 0);
 
-        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -323,7 +323,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 10000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
