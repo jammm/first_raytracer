@@ -20,6 +20,12 @@ int image::save_image(formats type)
     // Flip output image vertically
     stbi_flip_vertically_on_write(true);
 
+#ifdef __linux__
+    filename.insert(0, "/");
+    filename.insert(0, std::getenv("HOME"));
+    std::cout<<"Filename is now "<<filename<<std::endl;
+#endif
+
     switch (type)
     {
     case formats::STBI_JPG:

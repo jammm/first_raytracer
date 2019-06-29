@@ -29,6 +29,8 @@ RUN apt-get update \
 
 WORKDIR /first_raytracer
 
+ENV RENDERERR 999
+
 RUN git clone https://github.com/jammm/first_raytracer.git
 
 RUN cd first_raytracer/first_ray \
@@ -51,10 +53,10 @@ WORKDIR /first_raytracer/first_raytracer/first_ray
 
 RUN g++ -O3 -std=c++17 *.cpp -o main -I./deps/cpp-taskflow-2.1.0 -lGLEW -lassimp -lglfw -lGL -pthread
 
-
 ### configure headless X server
 COPY xorg.conf /etc/X11/xorg.conf
 ENV DISPLAY :0
-COPY entrypoint.sh /
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod 777 /entrypoint.sh
 
-ENTRYPOINT "/entrypoint.sh"
+ENTRYPOINT ["/entrypoint.sh"]

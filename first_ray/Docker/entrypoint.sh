@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -eux
 
 # xpra start :0 --no-pulseaudio

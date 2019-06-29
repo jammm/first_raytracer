@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iostream>
 
 
 enum class formats
@@ -87,6 +88,12 @@ public:
     {
         int &width = nx;
         int &height = ny;
+
+#ifdef __linux__
+        filename.insert(0, "/");
+        filename.insert(0, std::getenv("HOME"));
+        std::cout<<"Filename is now "<<filename<<std::endl;
+#endif
 
         // write PFM header
         std::ofstream os(filename, std::ios::binary | std::ios::trunc);
