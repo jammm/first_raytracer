@@ -276,7 +276,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
                 }
 
                 /* Sample BSDF to generate next ray direction for indirect lighting */
-                ray wo(hrec.p, srec.pdf_ptr->generate());
+                ray wo(hrec.p + (EPSILON * hrec.normal), srec.pdf_ptr->generate());
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                 const float surface_cosine = abs(dot(hrec.normal, unit_vector(wo.direction())));
@@ -323,7 +323,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 10000;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
