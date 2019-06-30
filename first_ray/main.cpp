@@ -231,7 +231,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
         }
         //Li = Vector3f(0, 0, 0);
 
-        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -261,7 +261,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                         const float G = [&]()
                         {
                             const float cos_wi = abs(dot(hrec.normal, to_light));
-                            const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
+                            const float cos_wo = abs(dot(lrec.normal, -to_light));
                             const float distance_squared = (lrec.p - hrec.p).squared_length();
                             // Visibility is always 1
                             // because of the invariant imposed on these objects by the if above.
