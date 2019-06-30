@@ -208,10 +208,11 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
 
 // TODO
 // Convert from recursive to iterative
-Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &depth, const Vector3f &sampled_bsdf, const float &sampled_bsdf_pdf)
+Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const int &depth, const Vector3f &sampled_bsdf,
+                const float &sampled_bsdf_pdf)
 {
     hit_record hrec;
-    if (world->hit(r, 1e-5, FLT_MAX, hrec))
+    if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec;
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
@@ -222,7 +223,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
             if (depth == 0)
                 return Li;
             // Start with checking if camera ray hits a light source
-            const float light_pdf = light_shape->pdf_direct_sampling(hrec, r.direction());
+            const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
             const float weight = miWeight(sampled_bsdf_pdf, light_pdf);
 
             //Li *= weight * sampled_bsdf / sampled_bsdf_pdf;
@@ -236,27 +237,26 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                return srec.attenuation*color(srec.specular_ray, world, light_shape, depth + 1, surface_bsdf, surface_bsdf_pdf);
+                return srec.attenuation*color(srec.specular_ray, world, lights, depth + 1, surface_bsdf, surface_bsdf_pdf);
             }
             else
             {
-                hitable_pdf plight(light_shape, hrec);
-                Vector3f to_light = plight.generate();
+                /* Direct light sampling */
+                const int index = lights.pick_sample();
+                Vector3f to_light = lights[index]->random(hrec.p);
                 const float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
 
-
-                /* Direct light sampling */
-                ray shadow_ray = ray(hrec.p + (SHADOW_EPSILON * to_light), to_light);
+                ray shadow_ray = ray(hrec.p + (SHADOW_EPSILON * hrec.normal), to_light);
                 hit_record lrec;
 
-                if (world->hit(shadow_ray, SHADOW_EPSILON, FLT_MAX, lrec))
+                if (!world->hit(shadow_ray, SHADOW_EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
                 {
-                    if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
+                    if (lights[index]->hit(shadow_ray, SHADOW_EPSILON, FLT_MAX, lrec))
                     {
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
-                        const float light_pdf = light_shape->pdf_direct_sampling(lrec, to_light);
+                        const float light_pdf = lights.pdf_direct_sampling(lrec, to_light);
                         // Calculate geometry term
                         const float G = [&]()
                         {
@@ -271,7 +271,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
                         }();
                         const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Li += dynamic_cast<hitable_list *>(light_shape)->list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                        Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
                 }
 
@@ -283,7 +283,7 @@ Vector3f color(const ray &r, hitable *world, hitable *light_shape, const int &de
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, light_shape, depth + 1, surface_bsdf, surface_bsdf_pdf) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
+                return Li + color(wo, world, lights, depth + 1, surface_bsdf, surface_bsdf_pdf) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
             }
         }
         return Li;
@@ -323,7 +323,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -425,6 +425,7 @@ int main(int argc, const char **argv)
     /* Clear the window */
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Fill lights inside a hitable_list and pass it to the integrator
     // TODO: Find a better way to specify lights in the scene
     hitable_list hlist(lights, 2);
 
@@ -432,7 +433,7 @@ int main(int argc, const char **argv)
     {
         for (int i = 0; i < nx; i++)
         {
-            //if (i == 783 && j == 411)
+            //if (i == 593 && j == 504)
             {
                 if (to_exit) break;
                 Vector3f col(0.0f, 0.0f, 0.0f);
@@ -441,7 +442,7 @@ int main(int argc, const char **argv)
                     float u = float(i + gen_cano_rand()) / float(nx);
                     float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = cam.get_ray(u, v);
-                    col += de_nan(color(r, world.get(), &hlist, 0, Vector3f(0, 0, 0), 0.0f));
+                    col += de_nan(color(r, world.get(), hlist, 0, Vector3f(0, 0, 0), 0.0f));
                 }
                 col /= float(ns);
 

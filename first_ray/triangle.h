@@ -142,7 +142,6 @@ public:
         float b1 = u.y * su0;
 
         Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
-        hit_record hrec;
 
         return random_point - o;
     }
