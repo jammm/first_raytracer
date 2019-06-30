@@ -250,9 +250,9 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 ray shadow_ray = ray(hrec.p + (SHADOW_EPSILON * hrec.normal), to_light);
                 hit_record lrec;
 
-                if (!world->hit(shadow_ray, SHADOW_EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
+                if (!world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
                 {
-                    if (lights[index]->hit(shadow_ray, SHADOW_EPSILON, FLT_MAX, lrec))
+                    if (lights[index]->hit(shadow_ray, EPSILON, FLT_MAX, lrec))
                     {
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
@@ -269,7 +269,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                             return cos_wi * cos_wo / distance_squared;
                         }();
-                        const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+                        const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
 
                         Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }

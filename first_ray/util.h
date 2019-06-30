@@ -3,8 +3,8 @@
 
 #include <random>
 
-constexpr float EPSILON = 1e-4;
-constexpr float SHADOW_EPSILON = 1e-3;
+constexpr float EPSILON = 1e-5;
+constexpr float SHADOW_EPSILON = 1e-4;
 
 // Generates the canonical uniform random variable ξ
 inline float gen_cano_rand()
