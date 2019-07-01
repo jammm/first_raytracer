@@ -247,7 +247,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 const float dist_to_light = to_light.length();
                 to_light.make_unit_vector();
 
-                ray shadow_ray = ray(hrec.p + (SHADOW_EPSILON * hrec.normal), to_light);
+                ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
                 hit_record lrec;
 
                 if (!world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
@@ -279,11 +279,11 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 ray wo(hrec.p, srec.pdf_ptr->generate());
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                const float surface_cosine = abs(dot(hrec.normal, unit_vector(wo.direction())));
+                const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, lights, depth + 1, surface_bsdf, surface_bsdf_pdf) * surface_bsdf * surface_cosine / surface_bsdf_pdf;
+                return Li + color(wo, world, lights, depth + 1, surface_bsdf, surface_bsdf_pdf) * surface_bsdf * cos_wi / surface_bsdf_pdf;
             }
         }
         return Li;
@@ -323,7 +323,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
