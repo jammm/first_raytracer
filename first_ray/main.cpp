@@ -166,9 +166,9 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     constexpr float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    //return new hitable_list(std::vector<hitable *>(list, list + i), i);
     //return new bvh_node(list, i, 0.0f, 0.0f);
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -226,7 +226,6 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
             const float weight = miWeight(sampled_bsdf_pdf, light_pdf);
 
-            //Li *= weight * sampled_bsdf / sampled_bsdf_pdf;
             return Li * weight * sampled_bsdf / sampled_bsdf_pdf;
         }
         //Li = Vector3f(0, 0, 0);
@@ -264,9 +263,8 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                             const float cos_wi = abs(dot(hrec.normal, to_light));
                             const float cos_wo = abs(dot(lrec.normal, -to_light));
                             const float distance_squared = (lrec.p - hrec.p).squared_length();
-                            // Visibility is always 1
+                            // Visibility term is always 1
                             // because of the invariant imposed on these objects by the if above.
-                            const float V = 1.0f;
 
                             return cos_wi * cos_wo / distance_squared;
                         }();
@@ -329,7 +327,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 5000;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
