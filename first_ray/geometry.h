@@ -6,6 +6,7 @@
 #include <math.h>
 #include <iostream>
 #include <stdlib.h>
+#include <cassert>
 
 template <typename T>
 
@@ -13,7 +14,16 @@ template <typename T>
 struct Vector3
 {
     Vector3() {}
-    Vector3(const float e1, const float e2, const float &e3) { e[0] = e1; e[1] = e2; e[2] = e3; }
+    Vector3(const float e1, const float e2, const float &e3) 
+    { 
+        e[0] = e1;
+        e[1] = e2;
+        e[2] = e3;
+
+        assert(std::isfinite(e[0])
+            && std::isfinite(e[1])
+            && std::isfinite(e[2]));
+    }
 
     template<typename U>
     explicit Vector3(const Vector3<U> &v)
@@ -21,6 +31,10 @@ struct Vector3
         e[0] = (T)v[0];
         e[1] = (T)v[1];
         e[2] = (T)v[2];
+
+        assert(std::isfinite(e[0])
+            && std::isfinite(e[1])
+            && std::isfinite(e[2]));
     }
 
     inline float x() const { return e[0]; }

@@ -68,7 +68,7 @@ public:
         const Vector3f h = cross(r.d, edge2);
         a = dot(edge1, h);
         // Check if this ray is parallel to this triangle's plane.
-        if (a > -EPSILON && a < EPSILON)
+        if (a > -1e-7 && a < 1e-7)
             return false;    
         f = 1.0f / a;
         Vector3f s = r.o - v0;

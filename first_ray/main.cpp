@@ -256,6 +256,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                     {
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
+
                         const float light_pdf = lights.pdf_direct_sampling(lrec, to_light);
                         // Calculate geometry term
                         const float G = [&]()
@@ -279,6 +280,11 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 ray wo(hrec.p, srec.pdf_ptr->generate());
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
+                if (surface_bsdf_pdf == 0)
+                {
+                    return Vector3f(0, 0, 0);
+                }
                 const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
                 // srec.attenuation == bsdf weight == throughput
@@ -323,7 +329,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 5000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -442,7 +448,11 @@ int main(int argc, const char **argv)
                     float u = float(i + gen_cano_rand()) / float(nx);
                     float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = cam.get_ray(u, v);
-                    col += de_nan(color(r, world.get(), hlist, 0, Vector3f(0, 0, 0), 0.0f));
+                    const Vector3f sample = color(r, world.get(), hlist, 0, Vector3f(0, 0, 0), 0.0f);
+                    assert(std::isfinite(sample[0])
+                           && std::isfinite(sample[1])
+                           && std::isfinite(sample[2]));
+                    col += de_nan(sample);
                 }
                 col /= float(ns);
 

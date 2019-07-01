@@ -6,7 +6,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
     std::vector<std::shared_ptr<triangle_mesh>> meshes;
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
+    const aiScene *scene = importer.ReadFile(file, aiProcessPreset_TargetRealtime_Fast);
     // If the import failed, report it
     if (!scene)
     {
