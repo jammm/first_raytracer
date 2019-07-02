@@ -58,7 +58,7 @@ void glfw_error_callback(int, const char* err_str)
 hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
     /* n == number of spheres */
-    int n = 1100000;
+    constexpr int n = 1100000;
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)));
@@ -146,6 +146,32 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
     //return new hitable_list(list, i);
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+}
+
+hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
+{
+    /* n == number of spheres */
+    constexpr int n = 2;
+    int i = 0;
+    hitable **list = new hitable*[n + 1];
+    material *grey = new lambertian(new constant_texture(Vector3f(0.18f, 0.18f, 0.18f)));
+    material *light = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+
+    list[i++] = new sphere(Vector3f(0, 0, 0), 3, grey);
+    //list[i++] = new sphere(Vector3f(0, 0, 0), 1000, light);
+
+    //lights.push_back(new sphere(Vector3f(0, 0, 0), 50, light));
+
+    Vector3f lookfrom(12, 2, 3);
+    Vector3f lookat(0, 0, 0);
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.001f;
+    constexpr float vfov = 40.0f;
+    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new bvh_node(list, i, 0.0f, 0.0f);
+    return new hitable_list(std::vector<hitable *>(list, list + i), i);
 }
 
 hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -242,35 +268,39 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             {
                 /* Direct light sampling */
                 const int index = lights.pick_sample();
-                Vector3f to_light = lights[index]->random(hrec.p);
-                const float dist_to_light = to_light.length();
-                to_light.make_unit_vector();
-
-                ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
-                hit_record lrec;
-
-                if (!world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
+                if (index == -1) Li += Vector3f(0, 0, 0);
+                else
                 {
-                    if (lights[index]->hit(shadow_ray, EPSILON, FLT_MAX, lrec))
+                    Vector3f to_light = lights[index]->random(hrec.p);
+                    const float dist_to_light = to_light.length();
+                    to_light.make_unit_vector();
+
+                    ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
+                    hit_record lrec;
+
+                    if (!world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
                     {
-                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                        const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
-
-                        const float light_pdf = lights.pdf_direct_sampling(lrec, to_light);
-                        // Calculate geometry term
-                        const float G = [&]()
+                        if (lights[index]->hit(shadow_ray, EPSILON, FLT_MAX, lrec))
                         {
-                            const float cos_wi = abs(dot(hrec.normal, to_light));
-                            const float cos_wo = abs(dot(lrec.normal, -to_light));
-                            const float distance_squared = (lrec.p - hrec.p).squared_length();
-                            // Visibility term is always 1
-                            // because of the invariant imposed on these objects by the if above.
+                            const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
 
-                            return cos_wi * cos_wo / distance_squared;
-                        }();
-                        const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
+                            const float light_pdf = lights.pdf_direct_sampling(lrec, to_light);
+                            // Calculate geometry term
+                            const float G = [&]()
+                            {
+                                const float cos_wi = abs(dot(hrec.normal, to_light));
+                                const float cos_wo = abs(dot(lrec.normal, -to_light));
+                                const float distance_squared = (lrec.p - hrec.p).squared_length();
+                                // Visibility term is always 1
+                                // because of the invariant imposed on these objects by the if above.
 
-                        Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                                return cos_wi * cos_wo / distance_squared;
+                            }();
+                            const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
+
+                            Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                        }
                     }
                 }
 
@@ -298,7 +328,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
     //Vector3f unit_direction = unit_vector(r.direction());
     //float t = 0.5f * (unit_direction.y() + 1.0f);
     //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
-    return Vector3f(0, 0, 0);
+    return Vector3f(1, 1, 1);
 }
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
@@ -357,7 +387,8 @@ int main(int argc, const char **argv)
     std::vector<hitable *> lights;
 
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
-    std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
+    //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
+    std::unique_ptr<hitable> world(furnace_test_scene(cam, float(nx) / float(ny), lights));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
@@ -431,7 +462,7 @@ int main(int argc, const char **argv)
 
     // Fill lights inside a hitable_list and pass it to the integrator
     // TODO: Find a better way to specify lights in the scene
-    hitable_list hlist(lights, 2);
+    hitable_list hlist(lights, lights.size());
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
