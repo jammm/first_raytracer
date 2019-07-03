@@ -178,7 +178,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-MIS-Test.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -244,6 +244,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
         constexpr float invPi = 1 / M_PI;
 
+        /* If we hit a light source, weight its contribution */
         if (((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
             if (depth == 0)
@@ -254,7 +255,6 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
             return Li * weight * sampled_bsdf / sampled_bsdf_pdf;
         }
-        //Li = Vector3f(0, 0, 0);
 
         if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
@@ -324,11 +324,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
     }
 
     //TODO : Environment map sampling
-
-    //Vector3f unit_direction = unit_vector(r.direction());
-    //float t = 0.5f * (unit_direction.y() + 1.0f);
-    //return (1.0f - t)*Vector3f(1.0f, 1.0f, 1.0f) + t*Vector3f(0.5f, 0.7f, 1.0f);
-    return Vector3f(1, 1, 1);
+    return Vector3f(0, 0, 0);
 }
 
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
@@ -357,7 +353,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -388,7 +384,7 @@ int main(int argc, const char **argv)
 
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<hitable> world(furnace_test_scene(cam, float(nx) / float(ny), lights));
+    std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
