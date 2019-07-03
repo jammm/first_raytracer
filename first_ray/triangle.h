@@ -68,7 +68,7 @@ public:
         const Vector3f h = cross(r.d, edge2);
         a = dot(edge1, h);
         // Check if this ray is parallel to this triangle's plane.
-        if (a > -1e-7 && a < 1e-7)
+        if (a >= -EPSILON && a <= EPSILON)
             return false;    
         f = 1.0f / a;
         Vector3f s = r.o - v0;
@@ -96,6 +96,7 @@ public:
                 rec.u = uvhit.x;
                 rec.v = uvhit.y;
                 rec.mat_ptr = mat_ptr.get();
+                rec.obj_name = mesh->name;
                 return true;
             }
         }
@@ -130,7 +131,7 @@ public:
         // TODO: Allow switching between solid angle/area measure
         return 1.0f / area;
     }
-    virtual Vector3f random(const Vector3f &o) const
+    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const
     {
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f &v1 = mesh->vertices[V[1]];
@@ -142,6 +143,17 @@ public:
         float b1 = u.y * su0;
 
         Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
+
+        rec.t = 1.0f;
+        rec.p = random_point;
+        rec.normal = cross(edge1, edge2);
+        rec.normal.make_unit_vector();
+        rec.mat_ptr = mat_ptr.get();
+        rec.obj_name = mesh->name;
+        Point2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
+        rec.u = uvhit.x;
+        rec.v = uvhit.y;
+
 
         return random_point - o;
     }

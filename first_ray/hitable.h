@@ -24,6 +24,7 @@ struct hit_record
     Vector3f p;
     Vector3f normal;
     material *mat_ptr;
+    std::string obj_name;
 };
 
 class hitable
@@ -32,7 +33,7 @@ public:
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const = 0;
 	virtual bool bounding_box(float t0, float t1, aabb &box) const = 0;
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const { return 0.0f; }
-    virtual Vector3f random(const Vector3f &o) const { return Vector3f(1, 0, 0); }
+    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const { return Vector3f(1, 0, 0); }
 };
 
 class flip_normals : public hitable

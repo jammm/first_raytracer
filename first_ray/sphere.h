@@ -13,7 +13,7 @@ public:
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
     virtual bool bounding_box(float t0, float t1, aabb &b) const;
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const;
-    virtual Vector3f random(const Vector3f &o) const;
+    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const;
 
     Vector3f center;
     float radius;
@@ -69,7 +69,7 @@ float sphere::pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_lig
     return 1 / solid_angle;
 }
 
-Vector3f sphere::random(const Vector3f &o) const
+Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o) const
 {
     const Vector3f direction = center - o;
     const float distance_squared = direction.squared_length();

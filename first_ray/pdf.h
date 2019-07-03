@@ -65,9 +65,9 @@ public:
     {
         return ptr->pdf_direct_sampling(lrec, to_light);
     }
-    virtual Vector3f generate() const
+    virtual Vector3f generate(hit_record &rec) const
     {
-        return ptr->random(origin);
+        return ptr->sample_direct(rec, origin);
     }
 
     // hitable object on which sample is generated

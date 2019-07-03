@@ -14,7 +14,7 @@ public:
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
     virtual bool bounding_box(float t0, float t1, aabb &b) const;
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const;
-    virtual Vector3f random(const Vector3f &o) const;
+    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const;
     inline hitable *operator[](const int &i) const { return list[i]; }
 
     /* Picks a random object from the list and returns its index (used for light sampling) */
@@ -75,12 +75,12 @@ float hitable_list::pdf_direct_sampling(const hit_record &lrec, const Vector3f &
     return sum;
 }
 
-Vector3f hitable_list::random(const Vector3f &o) const
+Vector3f hitable_list::sample_direct(hit_record &rec, const Vector3f &o) const
 {
     float rand = gen_cano_rand();
     int index = int(rand * list_size);
     if (index == list_size) index -= 1;
-    return list[index]->random(o);
+    return list[index]->sample_direct(rec, o);
 }
 
 int hitable_list::pick_sample() const

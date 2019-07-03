@@ -178,7 +178,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-MIS-Test.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -238,7 +238,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 const float &sampled_bsdf_pdf)
 {
     hit_record hrec;
-    if (world->hit(r, EPSILON, FLT_MAX, hrec))
+    if (depth <= 0 && world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec;
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
@@ -256,7 +256,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             return Li * weight * sampled_bsdf / sampled_bsdf_pdf;
         }
 
-        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -271,36 +271,39 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 if (index == -1) Li += Vector3f(0, 0, 0);
                 else
                 {
-                    Vector3f to_light = lights[index]->random(hrec.p);
+                    /* Sample a random light source */
+                    hit_record lrec;
+                    Vector3f to_light = lights[index]->sample_direct(lrec, hrec.p);
                     const float dist_to_light = to_light.length();
                     to_light.make_unit_vector();
 
                     ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
-                    hit_record lrec;
 
-                    if (!world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), lrec))
+                    hit_record dummy;
+                    if (world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), dummy))
                     {
-                        if (lights[index]->hit(shadow_ray, EPSILON, FLT_MAX, lrec))
+                        return Vector3f(0, 0, 0);
+                    }
+                    else
+                    {
+                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                        const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light);
+
+                        const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
+                        // Calculate geometry term
+                        const float G = [&]()
                         {
-                            const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.pdf_ptr->generate());
+                            const float cos_wi = std::abs(dot(hrec.normal, to_light));
+                            const float cos_wo = std::abs(dot(lrec.normal, -to_light));
+                            const float distance_squared = dist_to_light * dist_to_light;
+                            // Visibility term is always 1
+                            // because of the invariant imposed on these objects by the if above.
 
-                            const float light_pdf = lights.pdf_direct_sampling(lrec, to_light);
-                            // Calculate geometry term
-                            const float G = [&]()
-                            {
-                                const float cos_wi = abs(dot(hrec.normal, to_light));
-                                const float cos_wo = abs(dot(lrec.normal, -to_light));
-                                const float distance_squared = (lrec.p - hrec.p).squared_length();
-                                // Visibility term is always 1
-                                // because of the invariant imposed on these objects by the if above.
+                            return cos_wi * cos_wo / distance_squared;
+                        }();
+                        const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
 
-                                return cos_wi * cos_wo / distance_squared;
-                            }();
-                            const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
-
-                            Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
-                        }
+                        Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
                 }
 
@@ -353,7 +356,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
