@@ -178,7 +178,7 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
 {
     hitable **list = new hitable*[300];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-MIS-Test.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -291,16 +291,14 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                         const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
                         // Calculate geometry term
-                        const float G = [&]()
-                        {
-                            const float cos_wi = std::abs(dot(hrec.normal, to_light));
-                            const float cos_wo = std::abs(dot(lrec.normal, -to_light));
-                            const float distance_squared = dist_to_light * dist_to_light;
-                            // Visibility term is always 1
-                            // because of the invariant imposed on these objects by the if above.
+                        const float cos_wi = std::abs(dot(hrec.normal, to_light));
+                        const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
+                        const float distance_squared = dist_to_light * dist_to_light;
+                        // Visibility term is always 1
+                        // because of the invariant imposed on these objects by the if above.
 
-                            return cos_wi * cos_wo / distance_squared;
-                        }();
+                        const float G = cos_wi * cos_wo / distance_squared;
+
                         const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
 
                         Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
@@ -356,7 +354,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
