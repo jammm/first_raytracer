@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include "hitable_list.h"
 #include "sphere.h"
@@ -299,7 +298,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                         const float G = cos_wi * cos_wo / distance_squared;
 
-                        const float weight = miWeight(light_pdf, sampled_bsdf_pdf);
+                        const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
                         Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
