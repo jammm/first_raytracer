@@ -4,6 +4,9 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#if defined(_WIN32)
+#include <math.h>
+#endif
 #include <iostream>
 #include <stdlib.h>
 #include <cassert>

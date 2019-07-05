@@ -233,15 +233,14 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
 
 // TODO
 // Convert from recursive to iterative
-Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const int &depth, const Vector3f &sampled_bsdf,
-                const float &sampled_bsdf_pdf)
+Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const int &depth, const hit_record &prev_hrec,
+                const float &prev_bsdf_pdf)
 {
     hit_record hrec;
-    if (depth <= 0 && world->hit(r, EPSILON, FLT_MAX, hrec))
+    if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec;
         Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
-        constexpr float invPi = 1 / M_PI;
 
         /* If we hit a light source, weight its contribution */
         if (((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
@@ -249,19 +248,27 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             if (depth == 0)
                 return Li;
             // Start with checking if camera ray hits a light source
-            const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
-            const float weight = miWeight(sampled_bsdf_pdf, light_pdf);
+            const float cos_wi = std::abs(dot(prev_hrec.normal, r.direction()));
+            const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
+            const float distance_squared = (hrec.p - prev_hrec.p).squared_length();
+            const Vector3f surface_bsdf = prev_hrec.mat_ptr->eval_bsdf(prev_hrec);
 
-            return Li * weight * sampled_bsdf / sampled_bsdf_pdf;
+            const float surface_bsdf_pdf = prev_bsdf_pdf;
+            const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction()) * distance_squared / cos_wo;
+            //const float G = cos_wi * cos_wo / distance_squared;
+
+            const float weight = miWeight(surface_bsdf_pdf, light_pdf);
+
+            return Li * weight;
         }
 
-        if (hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                return srec.attenuation*color(srec.specular_ray, world, lights, depth + 1, surface_bsdf, surface_bsdf_pdf);
+                return srec.attenuation*color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf);
             }
             else
             {
@@ -287,20 +294,23 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                     {
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light);
-
-                        const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
                         // Calculate geometry term
                         const float cos_wi = std::abs(dot(hrec.normal, to_light));
                         const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
-                        const float distance_squared = dist_to_light * dist_to_light;
-                        // Visibility term is always 1
-                        // because of the invariant imposed on these objects by the if above.
+                        if (cos_wo != 0)
+                        {
+                            const float distance_squared = dist_to_light * dist_to_light;
 
-                        const float G = cos_wi * cos_wo / distance_squared;
+                            const float light_pdf = lights.pdf_direct_sampling(hrec, to_light) * distance_squared / cos_wo;
+                            // Visibility term is always 1
+                            // because of the invariant imposed on these objects by the if above.
 
-                        const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+                            //const float G = cos_wi * cos_wo / distance_squared;
 
-                        Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                            const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+
+                            Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * cos_wi * weight / light_pdf;
+                        }
                     }
                 }
 
@@ -317,7 +327,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, lights, depth + 1, surface_bsdf, surface_bsdf_pdf) * surface_bsdf * cos_wi / surface_bsdf_pdf;
+                return Li + color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * surface_bsdf * cos_wi / surface_bsdf_pdf;
             }
         }
         return Li;
@@ -473,7 +483,8 @@ int main(int argc, const char **argv)
                     float u = float(i + gen_cano_rand()) / float(nx);
                     float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = cam.get_ray(u, v);
-                    const Vector3f sample = color(r, world.get(), hlist, 0, Vector3f(0, 0, 0), 0.0f);
+                    hit_record hrec;
+                    const Vector3f sample = color(r, world.get(), hlist, 0, hrec, 0.0f);
                     assert(std::isfinite(sample[0])
                            && std::isfinite(sample[1])
                            && std::isfinite(sample[2]));
