@@ -259,7 +259,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
             const float weight = miWeight(surface_bsdf_pdf, light_pdf);
 
-            return Li * weight;
+            return Li * weight * cos_wi;
         }
 
         if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
@@ -327,7 +327,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * surface_bsdf * cos_wi / surface_bsdf_pdf;
+                return Li + color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * surface_bsdf / surface_bsdf_pdf;
             }
         }
         return Li;
