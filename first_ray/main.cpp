@@ -248,18 +248,18 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             if (depth == 0)
                 return Li;
             // Start with checking if camera ray hits a light source
-            //const float cos_wi = std::abs(dot(prev_hrec.normal, r.direction()));
+            const float cos_wi = std::abs(dot(prev_hrec.normal, r.direction()));
             const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
             const float distance_squared = (hrec.p - prev_hrec.p).squared_length();
-            //const Vector3f surface_bsdf = prev_hrec.mat_ptr->eval_bsdf(prev_hrec);
+            const Vector3f surface_bsdf = prev_hrec.mat_ptr->eval_bsdf(prev_hrec);
 
-            const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
+            const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wi / distance_squared;
             const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
-            //const float G = cos_wi * cos_wo / distance_squared;
+            const float G = cos_wi * cos_wo / distance_squared;
 
             const float weight = miWeight(surface_bsdf_pdf, light_pdf);
 
-            return Li * weight * cos_wo / (surface_bsdf_pdf * distance_squared);
+            return Li * weight * surface_bsdf * G  / (surface_bsdf_pdf);
         }
 
         if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
@@ -303,7 +303,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                             const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
                             // Visibility term is always 1
                             // because of the invariant imposed on these objects by the if above.
-                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
+                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wi / distance_squared;
 
                             const float G = cos_wi * cos_wo / distance_squared;
 
@@ -327,7 +327,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * surface_bsdf * cos_wi;
+                return Li + color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf);
             }
         }
         return Li;
