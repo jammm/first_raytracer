@@ -260,10 +260,10 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
             const float weight = miWeight(surface_bsdf_pdf, light_pdf);
 
-            return Li * weight * surface_bsdf * G  / (surface_bsdf_pdf);
+            return Li * weight;
         }
 
-        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -282,36 +282,33 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                     hit_record lrec;
                     Vector3f to_light = lights[index]->sample_direct(lrec, hrec.p);
                     const float dist_to_light = to_light.length();
-                    to_light.make_unit_vector();
+                    //to_light.make_unit_vector();
 
                     ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
 
                     hit_record dummy;
-                    if (world->hit(shadow_ray, EPSILON, FLT_MAX, lrec))
+                    if (world->hit(shadow_ray, EPSILON, FLT_MAX, lrec) && dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                     {
-                        if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
+                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                        // Calculate geometry term
+                        const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
+                        const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
+                        if (cos_wo != 0)
                         {
-                            const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                            // Calculate geometry term
-                            const float cos_wi = std::abs(dot(hrec.normal, to_light));
-                            const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
-                            if (cos_wo != 0)
-                            {
-                                float distance_squared = dist_to_light * dist_to_light;
+                            float distance_squared = dist_to_light * dist_to_light;
 
-                                const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
-                                // Visibility term is always 1
-                                // because of the invariant imposed on these objects by the if above.
-                                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
+                            const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
+                            // Visibility term is always 1
+                            // because of the invariant imposed on these objects by the if above.
+                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
 
-                                if (distance_squared <= EPSILON) distance_squared = EPSILON;
+                            if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                                const float G = cos_wi * cos_wo / distance_squared;
+                            const float G = cos_wi * cos_wo / distance_squared;
 
-                                const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+                            const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                                Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
-                            }
+                            Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                         }
                     }
                 }
@@ -329,7 +326,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                 // srec.attenuation == bsdf weight == throughput
                 //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
-                return Li + color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf);
+                return Li + surface_bsdf * color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
             }
         }
         return Li;
@@ -365,7 +362,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -476,7 +473,7 @@ int main(int argc, const char **argv)
     {
         for (int i = 0; i < nx; i++)
         {
-            //if (i == 593 && j == 504)
+            //if (i >= 340 && i <= 520)
             {
                 if (to_exit) break;
                 Vector3f col(0.0f, 0.0f, 0.0f);
