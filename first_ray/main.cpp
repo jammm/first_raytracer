@@ -250,10 +250,11 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             // Start with checking if camera ray hits a light source
             const float cos_wi = std::abs(dot(prev_hrec.normal, r.direction()));
             const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
-            const float distance_squared = (hrec.p - prev_hrec.p).squared_length();
+            float distance_squared = (hrec.p - prev_hrec.p).squared_length();
+            if (distance_squared <= EPSILON) distance_squared = EPSILON;
             const Vector3f surface_bsdf = prev_hrec.mat_ptr->eval_bsdf(prev_hrec);
 
-            const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wi / distance_squared;
+            const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
             const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
             const float G = cos_wi * cos_wo / distance_squared;
 
@@ -286,30 +287,31 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                     ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
 
                     hit_record dummy;
-                    if (world->hit(shadow_ray, EPSILON, dist_to_light * (1 - SHADOW_EPSILON), dummy))
+                    if (world->hit(shadow_ray, EPSILON, FLT_MAX, lrec))
                     {
-                        return Vector3f(0, 0, 0);
-                    }
-                    else
-                    {
-                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
-                        // Calculate geometry term
-                        const float cos_wi = std::abs(dot(hrec.normal, to_light));
-                        const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
-                        if (cos_wo != 0)
+                        if (dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
                         {
-                            const float distance_squared = dist_to_light * dist_to_light;
+                            const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                            // Calculate geometry term
+                            const float cos_wi = std::abs(dot(hrec.normal, to_light));
+                            const float cos_wo = std::max(dot(lrec.normal, -to_light), 0.0f);
+                            if (cos_wo != 0)
+                            {
+                                float distance_squared = dist_to_light * dist_to_light;
 
-                            const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
-                            // Visibility term is always 1
-                            // because of the invariant imposed on these objects by the if above.
-                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wi / distance_squared;
+                                const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
+                                // Visibility term is always 1
+                                // because of the invariant imposed on these objects by the if above.
+                                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
 
-                            const float G = cos_wi * cos_wo / distance_squared;
+                                if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                            const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+                                const float G = cos_wi * cos_wo / distance_squared;
 
-                            Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                                const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+
+                                Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                            }
                         }
                     }
                 }

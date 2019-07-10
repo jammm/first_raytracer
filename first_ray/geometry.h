@@ -127,6 +127,7 @@ inline Vector3<T> operator*(const float &t, const Vector3<T>&v)
 template <typename T>
 inline Vector3<T>operator*(const Vector3<T>&v, const float &t)
 {
+    assert(std::isfinite(t));
     return t * v;
 }
 
@@ -139,6 +140,9 @@ inline Vector3<T>operator/(const Vector3<T>&v, float t)
 template <typename T>
 inline float dot(const Vector3<T>&v1, const Vector3<T>&v2)
 {
+    assert(std::isfinite(v2[0])
+        && std::isfinite(v2[1])
+        && std::isfinite(v2[2]));
     return v1.e[0] * v2.e[0] + v1.e[1] * v2.e[1] + v1.e[2] * v2.e[2];
 }
 
@@ -170,6 +174,11 @@ inline Vector3<T>& Vector3<T>::operator+=(const Vector3<T>& v2)
     e[0] += v2.e[0];
     e[1] += v2.e[1];
     e[2] += v2.e[2];
+
+    assert(std::isfinite(e[0])
+        && std::isfinite(e[1])
+        && std::isfinite(e[2]));
+
     return *this;
 }
 
@@ -179,6 +188,11 @@ inline Vector3<T>& Vector3<T>::operator-=(const Vector3<T>& v2)
     e[0] -= v2.e[0];
     e[1] -= v2.e[1];
     e[2] -= v2.e[2];
+
+    assert(std::isfinite(e[0])
+        && std::isfinite(e[1])
+        && std::isfinite(e[2]));
+
     return *this;
 }
 
@@ -188,6 +202,11 @@ inline Vector3<T>& Vector3<T>::operator*=(const Vector3<T>& v2)
     e[0] *= v2.e[0];
     e[1] *= v2.e[1];
     e[2] *= v2.e[2];
+
+    assert(std::isfinite(e[0])
+        && std::isfinite(e[1])
+        && std::isfinite(e[2]));
+
     return *this;
 }
 
@@ -197,6 +216,11 @@ inline Vector3<T>& Vector3<T>::operator/=(const Vector3<T>& v2)
     e[0] /= v2.e[0];
     e[1] /= v2.e[1];
     e[2] /= v2.e[2];
+
+    assert(std::isfinite(e[0])
+        && std::isfinite(e[1])
+        && std::isfinite(e[2]));
+
     return *this;
 }
 
@@ -206,6 +230,11 @@ inline Vector3<T>& Vector3<T>::operator*=(const T &t)
     e[0] *= t;
     e[1] *= t;
     e[2] *= t;
+
+    assert(std::isfinite(e[0])
+        && std::isfinite(e[1])
+        && std::isfinite(e[2]));
+
     return *this;
 }
 
@@ -217,6 +246,11 @@ inline Vector3<T>& Vector3<T>::operator/=(const T &t)
     e[0] *= k;
     e[1] *= k;
     e[2] *= k;
+
+    assert(std::isfinite(e[0])
+        && std::isfinite(e[1])
+        && std::isfinite(e[2]));
+
     return *this;
 }
 
