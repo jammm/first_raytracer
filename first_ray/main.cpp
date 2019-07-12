@@ -263,7 +263,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             return Li * weight;
         }
 
-        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
@@ -280,14 +280,15 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 {
                     /* Sample a random light source */
                     hit_record lrec;
-                    Vector3f to_light = lights[index]->sample_direct(lrec, hrec.p);
+                    Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
+                    Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin);
                     const float dist_to_light = to_light.length();
                     //to_light.make_unit_vector();
 
-                    ray shadow_ray = ray(hrec.p + (EPSILON * hrec.normal), to_light);
+                    ray shadow_ray = ray(offset_origin, to_light);
 
                     hit_record dummy;
-                    if (world->hit(shadow_ray, EPSILON, FLT_MAX, lrec) && dynamic_cast<diffuse_light *>(lrec.mat_ptr) != nullptr)
+                    if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                     {
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
                         // Calculate geometry term
