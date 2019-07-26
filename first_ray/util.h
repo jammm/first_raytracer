@@ -72,5 +72,10 @@ inline int box_z_compare(const void *a, const void *b)
         return 1;
 }
 
+inline Vector3f reflect(const Vector3f &v, const Vector3f &n)
+{
+    return v - 2 * dot(v, n)*n;
+}
+
 #endif
 

@@ -43,7 +43,7 @@ class material
 {
 public:
     virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const { return false; }
-    virtual Vector3f eval_bsdf(const hit_record &rec) const { return Vector3f(0, 0, 0); }
+    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const { return Vector3f(0, 0, 0); }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
 };
 
@@ -60,7 +60,7 @@ public:
         return true;
     }
 
-    virtual Vector3f eval_bsdf(const hit_record &rec) const
+    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
     {
         return albedo->value(rec) / M_PI;
     }
@@ -68,10 +68,33 @@ public:
     texture *albedo;
 };
 
-static Vector3f reflect(const Vector3f &v, const Vector3f &n)
+class modified_phong : public material
 {
-    return v - 2 * dot(v, n)*n;
-}
+public:
+    modified_phong(texture *a, const float &specular_exponent) : diffuse_reflectance(a), specular_exponent(specular_exponent) {}
+
+    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
+    {
+        srec.is_specular = false;
+        srec.attenuation = diffuse_reflectance ->value(hrec);
+        srec.pdf_ptr = std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent);
+
+        return true;
+    }
+
+    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    {
+        const Vector3f reflected = reflect(unit_vector(r_in.direction()), rec.normal);
+        const float cos_alpha = dot(reflected, r_in.direction());
+        return (diffuse_reflectance->value(rec) / M_PI) + specular_reflectance->value(rec)
+                * ((specular_exponent + 2) / (2 * M_PI)) * pow(dot(reflected, wo), specular_exponent);
+    }
+
+    texture *diffuse_reflectance;
+    texture *specular_reflectance;
+    const float specular_exponent;
+    Vector3f wo;
+};
 
 class metal : public material
 {

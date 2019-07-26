@@ -248,15 +248,12 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             if (depth == 0)
                 return Li;
             // Start with checking if camera ray hits a light source
-            const float cos_wi = std::abs(dot(prev_hrec.normal, r.direction()));
             const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
             float distance_squared = (hrec.p - prev_hrec.p).squared_length();
             if (distance_squared <= EPSILON) distance_squared = EPSILON;
-            const Vector3f surface_bsdf = prev_hrec.mat_ptr->eval_bsdf(prev_hrec);
 
             const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
             const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
-            const float G = cos_wi * cos_wo / distance_squared;
 
             const float weight = miWeight(surface_bsdf_pdf, light_pdf);
 
@@ -268,7 +265,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             if (srec.is_specular)
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.pdf_ptr->generate());
                 return srec.attenuation*color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf);
             }
             else
@@ -290,7 +287,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                     hit_record dummy;
                     if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                     {
-                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                         // Calculate geometry term
                         const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
                         const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
@@ -317,7 +314,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 ray wo(hrec.p, srec.pdf_ptr->generate());
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(hrec);
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
                 if (surface_bsdf_pdf == 0)
                 {
