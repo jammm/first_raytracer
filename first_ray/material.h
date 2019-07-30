@@ -75,9 +75,15 @@ public:
 
     virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
     {
-        srec.is_specular = false;
-        srec.attenuation = diffuse_reflectance ->value(hrec);
-        srec.pdf_ptr = std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent);
+        const float rand_var = gen_cano_rand();
+        constexpr float specular_chance = 0.5f;
+
+        srec.is_specular = (rand_var >= specular_chance);
+
+        srec.pdf_ptr = std::make_unique<mixture_pdf>(std::make_unique<cosine_pdf>(hrec.normal),
+                       std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent), rand_var);
+        srec.attenuation = diffuse_reflectance->value(hrec);
+        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate());
 
         return true;
     }

@@ -265,8 +265,8 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             if (srec.is_specular)
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.pdf_ptr->generate());
-                return srec.attenuation*color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf);
+                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
+                return surface_bsdf * color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
             }
             else
             {
@@ -322,8 +322,6 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 }
                 const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
-                // srec.attenuation == bsdf weight == throughput
-                //assert((Li.r() == 0.0f) && (Li.g() == 0.0f) && (Li.b() == 0.0f));
                 return Li + surface_bsdf * color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
             }
         }

@@ -109,26 +109,28 @@ public:
 class mixture_pdf : public pdf
 {
 public:
-    mixture_pdf(pdf *p0, pdf *p1)
+    mixture_pdf(std::unique_ptr<pdf> p0, std::unique_ptr<pdf> p1, const float &prob_pdf, const float &rand_var = gen_cano_rand()) : prob_pdf(prob_pdf), rand_var(rand_var)
     {
-        p[0] = p0;
-        p[1] = p1;
+        p[0] = std::move(p0);
+        p[1] = std::move(p1);
     }
 
     virtual float value(const hit_record &rec, const Vector3f &direction) const
     {
-        return 0.5f*p[0]->value(rec, direction) + 0.5f*p[1]->value(rec, direction);
+        return prob_pdf*p[0]->value(rec, direction) + (1 - prob_pdf)*p[1]->value(rec, direction);
     }
 
     virtual Vector3f generate() const
     {
-        if (gen_cano_rand() < 0.5)
+        if (rand_var < prob_pdf)
             return p[0]->generate();
 
         return p[1]->generate();
     }
 
-    pdf *p[2];
+    std::unique_ptr<pdf> p[2];
+    const float prob_pdf;
+    const float rand_var;
 };
 
 #endif
