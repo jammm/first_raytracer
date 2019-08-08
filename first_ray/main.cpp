@@ -149,28 +149,27 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
 hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
-    /* n == number of spheres */
-    constexpr int n = 2;
+    hitable **list = new hitable*[300];
     int i = 0;
-    hitable **list = new hitable*[n + 1];
-    material *grey = new lambertian(new constant_texture(Vector3f(0.18f, 0.18f, 0.18f)));
-    material *light = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO_jam.obj", lights);
 
-    list[i++] = new sphere(Vector3f(0, 0, 0), 3, grey);
-    //list[i++] = new sphere(Vector3f(0, 0, 0), 1000, light);
+    for (auto triangle : mesh)
+    {
+        list[i++] = triangle.get();
+    }
+    material *grey = new modified_phong(new constant_texture(Vector3f(1, 1, 1)),
+                                        new constant_texture(Vector3f(1, 1, 1)), 1.0f);
 
-    //lights.push_back(new sphere(Vector3f(0, 0, 0), 50, light));
+    list[i++] = new sphere(Vector3f(0, 1, 0), 0.1, grey);
 
-    Vector3f lookfrom(12, 2, 3);
-    Vector3f lookat(0, 0, 0);
+    Vector3f lookfrom(0, 1, 1.95f);
+    Vector3f lookat(0, 1, 0);
     constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.001f;
+    constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
-    //return new bvh_node(list, i, 0.0f, 0.0f);
-    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -358,7 +357,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 10;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -389,7 +388,7 @@ int main(int argc, const char **argv)
 
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
+    std::unique_ptr<hitable> world(furnace_test_scene(cam, float(nx) / float(ny), lights));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);

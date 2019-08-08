@@ -71,7 +71,7 @@ public:
 class modified_phong : public material
 {
 public:
-    modified_phong(texture *a, const float &specular_exponent) : diffuse_reflectance(a), specular_exponent(specular_exponent) {}
+    modified_phong(texture *a, texture *b, const float &specular_exponent) : diffuse_reflectance(a), specular_reflectance(b), specular_exponent(specular_exponent) {}
 
     virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
     {
