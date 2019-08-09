@@ -71,7 +71,7 @@ public:
     // TODO: modify this stuff - modified phong BRDF paper
     virtual float value(const hit_record &hrec, const Vector3f &direction) const
     {
-        float cosine = std::max<float>(0.0f, dot(reflect(unit_vector(r_in.direction()), uvw.w()), direction));
+        const float cosine = std::max<float>(0.0f, dot(reflect(unit_vector(r_in.direction()), uvw.w()), direction));
 
         return ((specular_exponent + 1) / (2 * M_PI)) * pow(cosine, specular_exponent);
     }

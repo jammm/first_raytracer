@@ -157,12 +157,13 @@ hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitabl
     {
         list[i++] = triangle.get();
     }
-    material *grey = new modified_phong(new constant_texture(Vector3f(1, 1, 1)),
+    material *specular = new modified_phong(new constant_texture(Vector3f(0.78, 0.78, 0.78)),
                                         new constant_texture(Vector3f(1, 1, 1)), 1.0f);
+    material *mirror = new metal(Vector3f(1, 1, 1), 0.1f);
 
-    list[i++] = new sphere(Vector3f(0, 1, 0), 0.1, grey);
+    list[i++] = new sphere(Vector3f(0, 1, 0), 0.1, specular);
 
-    Vector3f lookfrom(0, 1, 1.95f);
+    Vector3f lookfrom(0, 1, 0.95f);
     Vector3f lookat(0, 1, 0);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
@@ -244,7 +245,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
         /* If we hit a light source, weight its contribution */
         if (((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
-            if (depth == 0)
+            if ((depth == 0) || (dynamic_cast<modified_phong *>(hrec.mat_ptr) != nullptr))
                 return Li;
             // Start with checking if camera ray hits a light source
             const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
@@ -259,13 +260,18 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
             return Li * weight;
         }
 
-        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec))
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
         {
             if (srec.is_specular)
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
-                return surface_bsdf * color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
+                if (surface_bsdf_pdf == 0)
+                {
+                    return Vector3f(0, 0, 0);
+                }
+                const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                return surface_bsdf * cos_wi * color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
             }
             else
             {
@@ -357,7 +363,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 10;
+    int ns = 200;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);

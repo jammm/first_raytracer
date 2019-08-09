@@ -78,10 +78,9 @@ public:
         const float rand_var = gen_cano_rand();
         constexpr float specular_chance = 0.5f;
 
-        srec.is_specular = (rand_var >= specular_chance);
+        srec.is_specular = true;
 
-        srec.pdf_ptr = std::make_unique<mixture_pdf>(std::make_unique<cosine_pdf>(hrec.normal),
-                       std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent), rand_var);
+        srec.pdf_ptr = std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent);
         srec.attenuation = diffuse_reflectance->value(hrec);
         srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate());
 

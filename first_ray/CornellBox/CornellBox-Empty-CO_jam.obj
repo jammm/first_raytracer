@@ -18,7 +18,7 @@ v   1.00  0.00  -1.04
 v  -0.99  0.00  -1.04
 
 g floor
-usemtl floor
+usemtl light
 f -4 -3 -2 -1
 
 # Object ceiling 
@@ -39,7 +39,17 @@ v   1.00  1.99  -1.04
 v  -1.02  1.99  -1.04
 
 g backWall
-usemtl backWall
+usemtl light
+f -4 -3 -2 -1
+
+# Object frontwall  
+v  -0.99  0.00  0.99 
+v   1.00  0.00  0.99
+v   1.00  1.99  0.99
+v  -1.02  1.99  0.99
+
+g frontWall
+usemtl light
 f -4 -3 -2 -1
 
 
@@ -50,7 +60,7 @@ v	1.00  1.99   0.99
 v	1.00  1.99  -1.04
 
 g rightWall
-usemtl rightWall
+usemtl light
 f -4 -3 -2 -1
 
 ## Object leftWall   
@@ -60,5 +70,5 @@ v  -1.02  1.99  -1.04
 v  -1.02  1.99   0.99
 
 g leftWall
-usemtl leftWall
+usemtl light
 f -4 -3 -2 -1
