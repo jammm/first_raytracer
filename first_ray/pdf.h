@@ -85,6 +85,22 @@ public:
     const ray r_in;
 };
 
+class constant_pdf : public pdf
+{
+public:
+    constant_pdf(const float &p) : p(p) { }
+    virtual float value(const hit_record &hrec, const Vector3f &direction) const
+    {
+        return p;
+    }
+    virtual Vector3f generate() const
+    {
+        throw std::runtime_error("Not implemented!");
+    }
+
+    const float p;
+};
+
 // hitable_pdf is used to generate random directions and to generate a pdf for the corresponding hitable object
 // currently used *only* for sampling on a light source
 class hitable_pdf : public pdf

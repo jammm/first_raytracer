@@ -111,8 +111,12 @@ public:
         srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere());
         srec.attenuation = albedo;
         srec.is_specular = true;
-        srec.pdf_ptr = nullptr;
+        srec.pdf_ptr = std::make_unique<constant_pdf>(1.0f);
         return true;
+    }
+    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    {
+        return albedo;
     }
 
     Vector3f albedo;

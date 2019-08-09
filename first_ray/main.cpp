@@ -149,28 +149,29 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
 hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
-    hitable **list = new hitable*[300];
+    hitable **list = new hitable*[10000];
     int i = 0;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO_jam.obj", lights);
+    //static std::vector <std::shared_ptr<hitable>> cbox_mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO_jam.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> teapot_mesh = create_triangle_mesh("cube/teapot.obj", lights);
+    //static std::vector <std::shared_ptr<hitable>> cbox_mesh = create_triangle_mesh("cube/sphere.obj", lights);
 
-    for (auto triangle : mesh)
-    {
-        list[i++] = triangle.get();
-    }
-    material *specular = new modified_phong(new constant_texture(Vector3f(0.78, 0.78, 0.78)),
-                                        new constant_texture(Vector3f(1, 1, 1)), 1.0f);
-    material *mirror = new metal(Vector3f(1, 1, 1), 0.1f);
+    Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
+                                        new constant_texture(reflectance), 128.0f);
+    material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
 
-    list[i++] = new sphere(Vector3f(0, 1, 0), 0.1, specular);
+    list[i++] = new sphere(Vector3f(0, 1, 0), 10.0f, specular);
 
-    Vector3f lookfrom(0, 1, 0.95f);
+    Vector3f lookfrom(0, 1, 40.0f);
     Vector3f lookat(0, 1, 0);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
 hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -270,15 +271,14 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 {
                     return Vector3f(0, 0, 0);
                 }
-                const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
-                return surface_bsdf * cos_wi * color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
+                //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                return surface_bsdf * color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
             }
             else
             {
                 /* Direct light sampling */
                 const int index = lights.pick_sample();
-                if (index == -1) Li += Vector3f(0, 0, 0);
-                else
+                if (index >= 0)
                 {
                     /* Sample a random light source */
                     hit_record lrec;
@@ -317,7 +317,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                 }
 
                 /* Sample BSDF to generate next ray direction for indirect lighting */
-                ray wo(hrec.p, srec.pdf_ptr->generate());
+                ray wo(hrec.p + (EPSILON * hrec.normal), srec.pdf_ptr->generate());
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -363,7 +363,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 200;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -382,7 +382,7 @@ int main(int argc, const char **argv)
         }
     }
 
-    std::cout<<"Resoliution: "<<nx<<"x"<<ny<<std::endl;
+    std::cout<<"Resolution: "<<nx<<"x"<<ny<<std::endl;
     std::cout<<"Setting number of samples to "<<ns<<std::endl;
 
     // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow

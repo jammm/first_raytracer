@@ -55,24 +55,34 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
         //std::unique_ptr<material> mati = std::make_unique<lambertian>(new image_texture(img));
 
         std::unique_ptr<material> mat;
-        auto matt = scene->mMaterials[mesh->mMaterialIndex];
         aiString name;
+        aiMaterial *matt = scene->mMaterials[mesh->mMaterialIndex];
         matt->Get(AI_MATKEY_NAME, name);
-
-        std::cout << "Loading " << name.C_Str() << std::endl;
-
-        aiColor3D c(0.f, 0.f, 0.f);
-        matt->Get(AI_MATKEY_COLOR_EMISSIVE, c);
-
-        if (c != aiColor3D(0, 0, 0))
+        if (name != aiString("DefaultMaterial"))
         {
-            mat = std::make_unique<diffuse_light>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+
+            std::cout << "Loading " << name.C_Str() << std::endl;
+
+            aiColor3D c(0.f, 0.f, 0.f);
+            matt->Get(AI_MATKEY_COLOR_EMISSIVE, c);
+
+            if (c != aiColor3D(0, 0, 0))
+            {
+                mat = std::make_unique<diffuse_light>(new constant_texture(Vector3f(c.r, c.g, c.b)));
+            }
+            else
+            {
+                matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
+                mat = std::make_unique<lambertian>(new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))));
+            }
         }
         else
         {
-            matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
-            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))));
+            // Use placeholder material (lambertian with white reflectance)
+            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)));
+            name = aiString("unknown");
         }
+
 
         meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), name.C_Str(), true));
 	}
