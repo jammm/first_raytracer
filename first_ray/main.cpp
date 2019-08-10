@@ -149,22 +149,25 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
 hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
-    hitable **list = new hitable*[10000];
+    hitable **list = new hitable*[2];
     int i = 0;
-    //static std::vector <std::shared_ptr<hitable>> cbox_mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO_jam.obj", lights);
-    static std::vector <std::shared_ptr<hitable>> teapot_mesh = create_triangle_mesh("cube/teapot.obj", lights);
-    //static std::vector <std::shared_ptr<hitable>> cbox_mesh = create_triangle_mesh("cube/sphere.obj", lights);
 
     Vector3f reflectance(1.0f, 1.0f, 1.0f);
     material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
-                                        new constant_texture(reflectance), 128.0f);
+                                        new constant_texture(reflectance), 100.0f);
     material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
     material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+    material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
-    list[i++] = new sphere(Vector3f(0, 1, 0), 10.0f, specular);
+    list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
+    list[i++] = new sphere(Vector3f(0, 0, 0), 0.1f, lambert);
+    list[i++] = new sphere(Vector3f(0.30f, 0, 0), 0.1f, lambert);
 
-    Vector3f lookfrom(0, 1, 40.0f);
-    Vector3f lookat(0, 1, 0);
+
+    lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
+
+    Vector3f lookfrom(0, 0, 0.95f);
+    Vector3f lookat(0, 0, 0);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
@@ -246,7 +249,9 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
         /* If we hit a light source, weight its contribution */
         if (((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
         {
-            if ((depth == 0) || (dynamic_cast<modified_phong *>(hrec.mat_ptr) != nullptr))
+            if ((depth == 0)
+                || (dynamic_cast<modified_phong *>(prev_hrec.mat_ptr) != nullptr)
+                || (dynamic_cast<metal *>(prev_hrec.mat_ptr) != nullptr))
                 return Li;
             // Start with checking if camera ray hits a light source
             const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
@@ -289,7 +294,6 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
 
                     ray shadow_ray = ray(offset_origin, to_light);
 
-                    hit_record dummy;
                     if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                     {
                         const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
@@ -315,9 +319,9 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
                         }
                     }
                 }
-
                 /* Sample BSDF to generate next ray direction for indirect lighting */
-                ray wo(hrec.p + (EPSILON * hrec.normal), srec.pdf_ptr->generate());
+                hrec.p = hrec.p + (EPSILON * hrec.normal);
+                ray wo(hrec.p, srec.pdf_ptr->generate());
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -363,7 +367,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 10;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -474,7 +478,7 @@ int main(int argc, const char **argv)
     {
         for (int i = 0; i < nx; i++)
         {
-            //if (i >= 340 && i <= 520)
+            //if (i == 512 && j == 384)
             {
                 if (to_exit) break;
                 Vector3f col(0.0f, 0.0f, 0.0f);

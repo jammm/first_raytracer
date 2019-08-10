@@ -43,10 +43,11 @@ usemtl light
 f -4 -3 -2 -1
 
 # Object frontwall  
-v  -0.99  0.00  0.99 
-v   1.00  0.00  0.99
-v   1.00  1.99  0.99
 v  -1.02  1.99  0.99
+v   1.00  1.99  0.99
+v   1.00  0.00  0.99
+v  -1.02  0.00  0.99 
+
 
 g frontWall
 usemtl light

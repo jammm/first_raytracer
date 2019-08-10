@@ -49,8 +49,8 @@ struct Vector3
 
     inline const Vector3<T>& operator+() const { return *this; }
     inline Vector3 operator-() const { return Vector3<T>(-e[0], -e[1], -e[2]); }
-    inline float operator[](int i) const { return e[i]; }
-    inline float& operator[](int i) { return e[i]; }
+    inline T operator[](int i) const { return e[i]; }
+    inline T& operator[](int i) { return e[i]; }
 
     inline Vector3& operator+=(const Vector3<T> &v2);
     inline Vector3& operator-=(const Vector3<T> &v2);
@@ -269,6 +269,16 @@ struct Point2
     }
 
     inline Point2<T>& operator*=(const Point2<T>& p2);
+    inline T operator[](int i) const
+    {
+        if (i == 0) return x;
+        return y;
+    }
+    inline T& operator[](int i)
+    {
+        if (i == 0) return x;
+        return y;
+    }
 
 
     // Point2 data

@@ -27,6 +27,14 @@ inline Vector3f hemisphere_to_cosine_power_direction()
     return Vector3f(sin_theta*cos(r), sin_theta * sin(r), sqrt(r1));
 }
 
+inline Vector3f uniform_sample_sphere() {
+    Point2f u(gen_cano_rand(), gen_cano_rand());
+    const float  z = 1 - 2 * u[0];
+    const float r = std::sqrt(std::max((float)0, (float)1 - z * z));
+    const float phi = 2 * M_PI * u[1];
+    return Vector3f(r * std::cos(phi), r * std::sin(phi), z);
+}
+
 inline Vector3f random_to_sphere(const float &radius, const float &distance_squared)
 {
     float r1 = gen_cano_rand();
