@@ -41,7 +41,7 @@ bool sphere::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
         rec.t = t;
         rec.p = r.point_at_parameter(rec.t);
         rec.normal = (rec.p - center) / radius;
-        if ((rec.p - r.origin()).length() < 2 * radius)
+        if ((r.origin() - center).squared_length() < radius * radius)
             rec.normal = -rec.normal;
         rec.mat_ptr = mat_ptr;
         get_sphere_uv((rec.p - center), rec.u, rec.v);
