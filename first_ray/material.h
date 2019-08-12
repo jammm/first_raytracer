@@ -190,6 +190,10 @@ public:
 
         return true;
     }
+    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    {
+        return Vector3f(1, 1, 1);
+    }
 
     float ref_idx;
 };

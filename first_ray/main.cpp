@@ -61,11 +61,8 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)));
-    // TODO: Avoid hardcoded texture filenames. Use assimp!
-    std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
-    texture *image_tex = new image_texture(img);
 
-    list[0] = new sphere(Vector3f(0, -1002, 0), 1000, new lambertian(checker));
+    list[0] = new sphere(Vector3f(0, -1000, 0), 1000, new lambertian(checker));
     int i = 1;
     for (int a = -11; a < 11; a++)
     {
@@ -95,15 +92,6 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
         }
     }
 
-    // Load mesh from obj file
-    // TODO: Change list to std::shared_ptr
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Empty-CO.obj", lights);
-
-    for (auto triangle : mesh)
-    {
-        list[i++] = triangle.get();
-    }
-
     Vector3f lookfrom(12, 2, 3);
     Vector3f lookat(0, 0, 0);
     constexpr float dist_to_focus = 10.0f;
@@ -112,7 +100,7 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
-    //return new bvh_node(list, i, 0.0f, 0.0f);
+    //return new hitable_list(std::vector<hitable *>(list, list + i), i);
 }
 
 hitable *cornell_box(camera &cam, const float &aspect)
@@ -270,7 +258,7 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
         {
             if (srec.is_specular)
             {
-                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, srec.specular_ray.direction());
+                const float surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0f;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 if (surface_bsdf_pdf == 0)
                 {
@@ -338,6 +326,9 @@ Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const i
     }
 
     //TODO : Environment map sampling
+    //Vector3f unit_direction = unit_vector(r.direction());
+    //float t = 0.5*(unit_direction.y() + 1.0);
+    //return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
     return Vector3f(0, 0, 0);
 }
 
@@ -367,7 +358,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 10;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
