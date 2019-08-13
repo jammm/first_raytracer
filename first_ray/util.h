@@ -15,6 +15,14 @@ inline float gen_cano_rand()
     return dist(engine);
 }
 
+// MIS weight using power heuristic
+inline float miWeight(float pdf1, float pdf2)
+{
+    pdf1 *= pdf1;
+    pdf2 *= pdf2;
+    return pdf1 / (pdf1 + pdf2);
+}
+
 inline int box_x_compare(const void *a, const void *b)
 {
     aabb box_left;

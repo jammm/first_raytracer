@@ -12,6 +12,7 @@
 #include "aarect.h"
 #include "box.h"
 #include "pdf.h"
+#include "path.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -40,13 +41,6 @@ inline Vector3f de_nan(const Vector3f &c)
     if (!(temp[2] == temp[2])) temp[2] = 0;
 
     return temp;
-}
-
-inline float miWeight(float pdf1, float pdf2)
-{
-    pdf1 *= pdf1;
-    pdf2 *= pdf2;
-    return pdf1 / (pdf1 + pdf2);
 }
 
 void glfw_error_callback(int, const char* err_str)
@@ -223,115 +217,6 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
-// TODO
-// Convert from recursive to iterative
-Vector3f color(const ray &r, hitable *world, const hitable_list &lights, const int &depth, const hit_record &prev_hrec,
-                const float &prev_bsdf_pdf)
-{
-    hit_record hrec;
-    if (world->hit(r, EPSILON, FLT_MAX, hrec))
-    {
-        scatter_record srec;
-        Vector3f Li = hrec.mat_ptr->emitted(r, hrec);
-
-        /* If we hit a light source, weight its contribution */
-        if (((Li.r() != 0.0f) || (Li.g() != 0.0f) || (Li.b() != 0.0f)))
-        {
-            if ((depth == 0)
-                || (dynamic_cast<modified_phong *>(prev_hrec.mat_ptr) != nullptr)
-                || (dynamic_cast<metal *>(prev_hrec.mat_ptr) != nullptr))
-                return Li;
-            // Start with checking if camera ray hits a light source
-            const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
-            float distance_squared = (hrec.p - prev_hrec.p).squared_length();
-            if (distance_squared <= EPSILON) distance_squared = EPSILON;
-
-            const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
-            const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
-
-            const float weight = miWeight(surface_bsdf_pdf, light_pdf);
-
-            return Li * weight;
-        }
-
-        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
-        {
-            if (srec.is_specular)
-            {
-                const float surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0f;
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
-                if (surface_bsdf_pdf == 0)
-                {
-                    return Vector3f(0, 0, 0);
-                }
-                //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
-                return surface_bsdf * color(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
-            }
-            else
-            {
-                /* Direct light sampling */
-                const int index = lights.pick_sample();
-                if (index >= 0)
-                {
-                    /* Sample a random light source */
-                    hit_record lrec;
-                    Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
-                    Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin);
-                    const float dist_to_light = to_light.length();
-                    //to_light.make_unit_vector();
-
-                    ray shadow_ray = ray(offset_origin, to_light);
-
-                    if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
-                    {
-                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
-                        // Calculate geometry term
-                        const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
-                        const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
-                        if (cos_wo != 0)
-                        {
-                            float distance_squared = dist_to_light * dist_to_light;
-
-                            const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
-                            // Visibility term is always 1
-                            // because of the invariant imposed on these objects by the if above.
-                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
-
-                            if (distance_squared <= EPSILON) distance_squared = EPSILON;
-
-                            const float G = cos_wi * cos_wo / distance_squared;
-
-                            const float weight = miWeight(light_pdf, surface_bsdf_pdf);
-
-                            Li += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
-                        }
-                    }
-                }
-                /* Sample BSDF to generate next ray direction for indirect lighting */
-                hrec.p = hrec.p + (EPSILON * hrec.normal);
-                ray wo(hrec.p, srec.pdf_ptr->generate());
-                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
-                const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
-                /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
-                if (surface_bsdf_pdf == 0)
-                {
-                    return Vector3f(0, 0, 0);
-                }
-                const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
-
-                return Li + surface_bsdf * color(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
-            }
-        }
-        return Li;
-    }
-
-    //TODO : Environment map sampling
-    //Vector3f unit_direction = unit_vector(r.direction());
-    //float t = 0.5*(unit_direction.y() + 1.0);
-    //return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
-    return Vector3f(0, 0, 0);
-}
-
 void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
 {
     while (!to_exit)
@@ -358,7 +243,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 10;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -465,6 +350,9 @@ int main(int argc, const char **argv)
     // TODO: Find a better way to specify lights in the scene
     hitable_list hlist(lights, lights.size());
 
+    // Use the renderer specified in template parameter
+    renderer<path> renderer;
+
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
         for (int i = 0; i < nx; i++)
@@ -479,7 +367,7 @@ int main(int argc, const char **argv)
                     float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = cam.get_ray(u, v);
                     hit_record hrec;
-                    const Vector3f sample = color(r, world.get(), hlist, 0, hrec, 0.0f);
+                    const Vector3f sample = renderer.Li(r, world.get(), hlist, 0, hrec, 0.0f);
                     assert(std::isfinite(sample[0])
                            && std::isfinite(sample[1])
                            && std::isfinite(sample[2]));
