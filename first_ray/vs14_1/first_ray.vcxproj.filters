@@ -98,5 +98,11 @@
     <ClInclude Include="..\path.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\path_prt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\prt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -13,6 +13,7 @@
 #include "box.h"
 #include "pdf.h"
 #include "path.h"
+#include "path_prt.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -142,7 +143,7 @@ hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitabl
     material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
     list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
-    list[i++] = new sphere(Vector3f(0, 0, 0), 0.1f, lambert);
+    list[i++] = new sphere(Vector3f(0, 0, 0), 0.1f, mirror);
     list[i++] = new sphere(Vector3f(0.30f, 0, 0), 0.1f, lambert);
 
 
