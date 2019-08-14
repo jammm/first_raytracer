@@ -14,6 +14,7 @@
 #include "pdf.h"
 #include "path.h"
 #include "path_prt.h"
+#include "prt.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>

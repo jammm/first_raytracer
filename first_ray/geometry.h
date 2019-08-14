@@ -17,7 +17,7 @@ template <typename T>
 struct Vector3
 {
     Vector3() {}
-    Vector3(const float e1, const float e2, const float &e3) 
+    constexpr Vector3(const float e1, const float e2, const float &e3) 
     { 
         e[0] = e1;
         e[1] = e2;

@@ -5,7 +5,7 @@
 #include "integrator.h"
 #include "util.h"
 
-/* Path tracer with MIS using power heuristic */
+/* Path tracer using Precomputed Radiance Transfer for environment mapping with MIS using power heuristic */
 
 struct path_prt
 {

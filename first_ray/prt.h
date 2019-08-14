@@ -4,21 +4,34 @@
 #include "util.h"
 #include "geometry.h"
 
+#include <gcem/gcem.hpp>
+#include <array>
+
 namespace PRT
 {
-    constexpr int n_bands = 3;
+
+    template<unsigned int n_bands = 3>
     struct SHSample {
         Vector3f sph;
         Vector3f vec;
-        double *coeff;
+
+        constexpr SHSample() = default;
+
+        std::array<double, n_bands> coeff;
     };
 
-    double P(int l, int m, double x)
+    constexpr unsigned int factorial(const unsigned int &n)
+    {
+        if (n < 2) return 1;
+        return n * factorial(n - 1);
+    }
+
+    constexpr double P(int l, int m, double x)
     {
         // evaluate an Associated Legendre Polynomial P(l,m,x) at x
         double pmm = 1.0;
         if (m > 0) {
-            double somx2 = sqrt((1.0 - x)*(1.0 + x));
+            double somx2 = gcem::sqrt((1.0 - x)*(1.0 + x));
             double fact = 1.0;
             for (int i = 1; i <= m; i++) {
                 pmm *= (-fact) * somx2;
@@ -37,41 +50,45 @@ namespace PRT
         return pll;
     }
 
-    double K(int l, int m)
+    constexpr double K(const int &l, const int m)
     {
         // renormalisation constant for SH function
-        double temp = ((2.0*l + 1.0)*factorial(l - m)) / (4.0*M_PI*factorial(l + m));
-        return sqrt(temp);
+        const double temp = ((2.0*l + 1.0)*factorial(l - m)) / (4.0*M_PI*factorial(l + m));
+        return gcem::sqrt(temp);
     }
-    double SH(int l, int m, double theta, double phi)
+
+    constexpr double SH(int l, int m, double theta, double phi)
     {
         // return a point sample of a Spherical Harmonic basis function
         // l is the band, range [0..N]
         // m in the range [-l..l]
         // theta in the range [0..Pi]
         // phi in the range [0..2*Pi]
-        const double sqrt2 = sqrt(2.0);
-        if (m == 0) return K(l, 0)*P(l, m, cos(theta));
-        else if (m > 0) return sqrt2 * K(l, m)*cos(m*phi)*P(l, m, cos(theta));
-        else return sqrt2 * K(l, -m)*sin(-m * phi)*P(l, -m, cos(theta));
-    }
-    void SH_setup_spherical_samples(std::vector<SHSample> samples, int sqrt_n_samples)
+        const double sqrt2 = gcem::sqrt(2.0);
+        if (m == 0) return K(l, 0)*P(l, m, gcem::cos(theta));
+        else if (m > 0) return sqrt2 * K(l, m)*gcem::cos(m*phi)*P(l, m, gcem::cos(theta));
+        else return sqrt2 * K(l, -m)*gcem::sin(-m * phi)*P(l, -m, gcem::cos(theta));
+    }
+
+    template<unsigned int n_bands, unsigned int n_samples>
+    constexpr auto SH_setup_spherical_samples() -> decltype(auto)
     {
+        std::array<SHSample<n_bands>, n_samples> samples;
+        const auto sqrt_n_samples = gcem::sqrt(n_samples);
         // fill an N*N*2 array with uniformly distributed
         // samples across the sphere using jittered stratification
-        int i = 0; // array index
         double oneoverN = 1.0 / sqrt_n_samples;
-        for (int a = 0; a < sqrt_n_samples; a++) {
-            for (int b = 0; b < sqrt_n_samples; b++) {
+        for (int a = 0, i = 0; a < sqrt_n_samples; a++) {
+            for (int b = 0; b < sqrt_n_samples; b++, i++) {
                 // generate unbiased distribution of spherical coords
-                const double x = (a + gen_cano_rand()) * oneoverN; // do not reuse results
-                const double y = (b + gen_cano_rand()) * oneoverN; // each sample must be random
-                const double theta = 2.0 * acos(sqrt(1.0 - x));
+                const double x = (a + 0) * oneoverN; // do not reuse results
+                const double y = (b + 0) * oneoverN; // each sample must be random
+                const double theta = 2.0 * gcem::acos(sqrt(1.0 - x));
                 const double phi = 2.0 * M_PI * y;
                 samples[i].sph = Vector3f(theta, phi, 1.0);
-                const double sin_theta = sin(theta);
+                const double sin_theta = gcem::sin(theta);
                 // convert spherical coords to unit vector
-                Vector3f vec(sin_theta*cos(phi), sin_theta*sin(phi), cos(theta));
+                Vector3f vec(sin_theta*gcem::cos(phi), sin_theta*gcem::sin(phi), gcem::cos(theta));
                 samples[i].vec = vec;
                 // precompute all SH coefficients for this sample
                 for (int l = 0; l < n_bands; ++l) {
@@ -80,10 +97,13 @@ namespace PRT
                         samples[i].coeff[index] = SH(l, m, theta, phi);
                     }
                 }
-                ++i;
             }
         }
+
+        return samples;
     }
+
+    constexpr auto __data = SH_setup_spherical_samples<3, 10000>();
 }
 
 
