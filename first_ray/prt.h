@@ -6,9 +6,33 @@
 
 #include <gcem/gcem.hpp>
 #include <array>
+#include <cstdint>
+#include <type_traits>
+#include <utility>
+
 
 namespace PRT
 {
+
+    template <class T, std::size_t... N>
+    constexpr std::array<T, sizeof...(N)> repeat(
+        const T &value_, std::index_sequence<N...>) noexcept(true)
+    {
+        // unpack N, repeating value_ sizeof...(N) times
+        // (N, value_) returns value
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-value"
+        return { {(N, value_)...} };
+#pragma GCC diagnostic pop
+    }
+
+    template <class T, std::size_t N>
+    constexpr std::array<T, N> make_array(const T &value_ = {}) noexcept(true)
+    {
+        // std::make_index_sequence<N> is 0, 1, 2, ... N-1
+        return repeat(value_, std::make_index_sequence<N>());
+    }
+
 
     template<unsigned int n_bands = 3>
     struct SHSample {
@@ -17,7 +41,7 @@ namespace PRT
 
         constexpr SHSample() = default;
 
-        std::array<double, n_bands> coeff;
+        std::array<double, n_bands> coeff = make_array<double, n_bands>(0.);
     };
 
     constexpr unsigned int factorial(const unsigned int &n)
@@ -73,7 +97,7 @@ namespace PRT
     template<unsigned int n_bands, unsigned int n_samples>
     constexpr auto SH_setup_spherical_samples() -> decltype(auto)
     {
-        std::array<SHSample<n_bands>, n_samples> samples;
+        auto samples = make_array<SHSample<n_bands>, n_samples>();
         const auto sqrt_n_samples = gcem::sqrt(n_samples);
         // fill an N*N*2 array with uniformly distributed
         // samples across the sphere using jittered stratification
