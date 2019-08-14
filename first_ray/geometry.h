@@ -11,21 +11,26 @@
 #include <stdlib.h>
 #include <cassert>
 
-template <typename T>
+template <class T>
+constexpr bool isfinite(const T& val) 
+{
+    return val != std::numeric_limits<T>::quiet_NaN();
+}
 
+template <typename T>
 // Vector stuff
 struct Vector3
 {
-    Vector3() {}
+    constexpr Vector3() = default;
     constexpr Vector3(const float e1, const float e2, const float &e3) 
     { 
         e[0] = e1;
         e[1] = e2;
         e[2] = e3;
 
-        assert(std::isfinite(e[0])
-            && std::isfinite(e[1])
-            && std::isfinite(e[2]));
+        static_assert(isfinite(e1)
+            && isfinite(e2)
+            && isfinite(e3));
     }
 
     template<typename U>
@@ -66,7 +71,7 @@ struct Vector3
     inline void make_unit_vector();
 
     // Vector3 data
-    T e[3];
+    T e[3] = {0, 0, 0};
 };
 
 typedef Vector3<float> Vector3f;
