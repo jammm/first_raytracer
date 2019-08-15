@@ -75,7 +75,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
 	for (unsigned int i = 1; i < n; ++i)
 	{
 		aabb new_box;
-		bool dummy = l[i]->bounding_box(time0, time1, new_box);
+		l[i]->bounding_box(time0, time1, new_box);
 		main_box = surrounding_box(new_box, main_box);
 	}
 
@@ -120,7 +120,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
 		left.reset(l[0]);
     else
     {
-        subflow.emplace([&left = left , l, n, time0, time1, min_SAH_idx, g_index](tf::SubflowBuilder& subflow2)
+        subflow.emplace([&left = left , l, time0, time1, min_SAH_idx, g_index](tf::SubflowBuilder& subflow2)
         {
             left = std::make_unique<parallel_bvh_node>(subflow2, l, min_SAH_idx + 1, g_index, time0, time1);
         }).name("left");

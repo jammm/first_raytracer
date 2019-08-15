@@ -11,10 +11,13 @@
 #include <stdlib.h>
 #include <cassert>
 
-template <class T>
-constexpr bool isfinite(const T& val) 
+namespace jam
 {
-    return val != std::numeric_limits<T>::quiet_NaN();
+    template <class T>
+    constexpr bool isfinite(const T& val)
+    {
+        return val != std::numeric_limits<T>::quiet_NaN();
+    }
 }
 
 template <typename T>
@@ -27,10 +30,6 @@ struct Vector3
         e[0] = e1;
         e[1] = e2;
         e[2] = e3;
-
-        static_assert(isfinite(e1)
-            && isfinite(e2)
-            && isfinite(e3));
     }
 
     template<typename U>

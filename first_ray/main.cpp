@@ -14,7 +14,6 @@
 #include "pdf.h"
 #include "path.h"
 #include "path_prt.h"
-#include "prt.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -245,7 +244,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 10;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -353,7 +352,7 @@ int main(int argc, const char **argv)
     hitable_list hlist(lights, lights.size());
 
     // Use the renderer specified in template parameter
-    renderer<path> renderer;
+    renderer<path_prt> renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {

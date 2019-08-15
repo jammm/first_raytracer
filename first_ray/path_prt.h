@@ -4,6 +4,7 @@
 
 #include "integrator.h"
 #include "util.h"
+#include "prt.h"
 
 /* Path tracer using Precomputed Radiance Transfer for environment mapping with MIS using power heuristic */
 
@@ -15,6 +16,7 @@ struct path_prt
         const float &prev_bsdf_pdf)
     {
         hit_record hrec;
+		constexpr auto &samples = PRT::samples;
         if (world->hit(r, EPSILON, FLT_MAX, hrec))
         {
             scatter_record srec;

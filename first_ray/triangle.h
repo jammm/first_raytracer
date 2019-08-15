@@ -63,8 +63,6 @@ public:
     {
         float a, f, u, v;
         const Vector3f &v0 = mesh->vertices[V[0]];
-        const Vector3f &v1 = mesh->vertices[V[1]];
-        const Vector3f &v2 = mesh->vertices[V[2]];
         const Vector3f h = cross(r.d, edge2);
         a = dot(edge1, h);
         // Check if this ray is parallel to this triangle's plane.

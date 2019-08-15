@@ -29,7 +29,7 @@ class checker_texture : public texture
 {
 public:
     checker_texture() {}
-    checker_texture(texture *t0, texture *t1) : even(t0), odd(t1) {}
+    checker_texture(texture *t0, texture *t1) : odd(t1), even(t0) {}
     virtual Vector3f value(const hit_record &rec) const
     {
         const Vector3f &p = rec.p;

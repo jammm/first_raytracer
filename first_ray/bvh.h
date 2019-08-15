@@ -55,7 +55,7 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
 	for (int i = 1; i < n; ++i)
 	{
 		aabb new_box;
-		bool dummy = l[i]->bounding_box(time0, time1, new_box);
+		l[i]->bounding_box(time0, time1, new_box);
 		main_box = surrounding_box(new_box, main_box);
 	}
 
@@ -68,7 +68,7 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
         qsort(l, n, sizeof(hitable *), box_z_compare);
 
 	for (int i = 0; i < n; ++i)
-		bool dummy = l[i]->bounding_box(time0, time1, boxes[i]);
+		l[i]->bounding_box(time0, time1, boxes[i]);
 
 	left_area[0] = boxes[0].area();
 	aabb left_box = boxes[0];

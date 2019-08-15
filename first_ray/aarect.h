@@ -7,7 +7,7 @@
 class xy_rect : public hitable
 {
 public:
-    xy_rect() {}
+	xy_rect() = default;
     xy_rect(const float &x0, const float &x1, const float &y0, const float &y1, const float &k, material *mat) : x0(x0), x1(x1), y0(y0), y1(y1), k(k), mat(mat) {}
 
 

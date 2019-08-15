@@ -11,7 +11,7 @@ inline Vector3f hemisphere_to_cosine_direction()
 {
     const float r0 = gen_cano_rand(), r1 = gen_cano_rand();
     const float r = sqrt(r0);
-    const float phi = 2 * M_PI * r1;
+    const float phi = 2 * (float)M_PI * r1;
     const float x = r * cos(phi);
     const float y = r * sin(phi);
 
@@ -22,7 +22,7 @@ inline Vector3f hemisphere_to_cosine_power_direction()
 {
     const float r0 = gen_cano_rand(), r1 = gen_cano_rand();
     const float sin_theta = sqrt(1 - r0);
-    const float r = 2 * M_PI*r1;
+    const float r = 2 * (float)M_PI *r1;
 
     return Vector3f(sin_theta*cos(r), sin_theta * sin(r), sqrt(r1));
 }
@@ -31,7 +31,7 @@ inline Vector3f uniform_sample_sphere() {
     Point2f u(gen_cano_rand(), gen_cano_rand());
     const float  z = 1 - 2 * u[0];
     const float r = std::sqrt(std::max((float)0, (float)1 - z * z));
-    const float phi = 2 * M_PI * u[1];
+    const float phi = 2 * (float)M_PI * u[1];
     return Vector3f(r * std::cos(phi), r * std::sin(phi), z);
 }
 
@@ -40,7 +40,7 @@ inline Vector3f random_to_sphere(const float &radius, const float &distance_squa
     float r1 = gen_cano_rand();
     float r2 = gen_cano_rand();
     float z = 1 + r2 * (sqrt(1 - radius*radius/distance_squared) - 1);
-    float phi = 2*M_PI*r1;
+    float phi = 2*(float)M_PI*r1;
     float x = cos(phi)*sqrt(1-z*z);
     float y = sin(phi)*sqrt(1-z*z);
 
@@ -62,7 +62,7 @@ public:
     {
         float cosine = std::max<float>(dot(uvw.w(), unit_vector(direction)), 0.0f);
         
-        return cosine / (float) M_PI;
+        return cosine / (float) (float)M_PI;
     }
     virtual Vector3f generate() const
     {
@@ -75,13 +75,13 @@ public:
 class cosine_power_pdf : public pdf
 {
 public:
-    cosine_power_pdf(const ray &r_in, const Vector3f &w, const float &specular_exponent) : r_in(r_in), specular_exponent(specular_exponent) { uvw.build_from_w(w); }
+    cosine_power_pdf(const ray &r_in, const Vector3f &w, const float &specular_exponent) : specular_exponent(specular_exponent), r_in(r_in) { uvw.build_from_w(w); }
     // TODO: modify this stuff - modified phong BRDF paper
     virtual float value(const hit_record &hrec, const Vector3f &direction) const
     {
         const float cosine = std::max<float>(0.0f, dot(reflect(unit_vector(r_in.direction()), uvw.w()), direction));
 
-        return ((specular_exponent + 1) / (2 * M_PI)) * pow(cosine, specular_exponent);
+        return ((specular_exponent + 1) / (2 * (float)M_PI)) * pow(cosine, specular_exponent);
     }
     virtual Vector3f generate() const
     {

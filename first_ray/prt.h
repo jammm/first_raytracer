@@ -3,6 +3,7 @@
 
 #include "util.h"
 #include "geometry.h"
+#include "rng_c.h"
 
 #include <gcem/gcem.hpp>
 #include <array>
@@ -13,6 +14,12 @@
 
 namespace PRT
 {
+	constexpr auto seed = RNG_SEED;
+	constexpr double gen_cano_rand_c()
+	{
+		constexpr double rand_val = LinearGenerator<seed>::next::value / (double)std::numeric_limits<uint32_t>::max();
+		return rand_val;
+	}
 
     template <class T, std::size_t... N>
     constexpr std::array<T, sizeof...(N)> repeat(
@@ -38,10 +45,9 @@ namespace PRT
     struct SHSample {
         Vector3f sph;
         Vector3f vec;
+		double rand_num;
 
-        constexpr SHSample() = default;
-
-        std::array<double, n_bands> coeff = make_array<double, n_bands>(0.);
+        std::array<double, n_bands*(n_bands+1)+n_bands> coeff = make_array<double, n_bands* (n_bands + 1) + n_bands>(0.);
     };
 
     constexpr unsigned int factorial(const unsigned int &n)
@@ -105,15 +111,16 @@ namespace PRT
         for (int a = 0, i = 0; a < sqrt_n_samples; a++) {
             for (int b = 0; b < sqrt_n_samples; b++, i++) {
                 // generate unbiased distribution of spherical coords
-                const double x = (a + 0) * oneoverN; // do not reuse results
-                const double y = (b + 0) * oneoverN; // each sample must be random
-                const double theta = 2.0 * gcem::acos(sqrt(1.0 - x));
+                const double x = (a + gen_cano_rand_c()) * oneoverN; // do not reuse results
+                const double y = (b + gen_cano_rand_c()) * oneoverN; // each sample must be random
+                const double theta = 2.0 * gcem::acos(gcem::sqrt(1.0 - x));
                 const double phi = 2.0 * M_PI * y;
                 samples[i].sph = Vector3f(theta, phi, 1.0);
                 const double sin_theta = gcem::sin(theta);
                 // convert spherical coords to unit vector
                 Vector3f vec(sin_theta*gcem::cos(phi), sin_theta*gcem::sin(phi), gcem::cos(theta));
                 samples[i].vec = vec;
+				samples[i].rand_num = gen_cano_rand_c();
                 // precompute all SH coefficients for this sample
                 for (int l = 0; l < n_bands; ++l) {
                     for (int m = -l; m <= l; ++m) {
@@ -127,7 +134,7 @@ namespace PRT
         return samples;
     }
 
-    constexpr auto __data = SH_setup_spherical_samples<3, 10000>();
+    constexpr auto samples = SH_setup_spherical_samples<2, 10000>();
 }
 
 
