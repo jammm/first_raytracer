@@ -167,7 +167,10 @@
     <ClCompile Include="../main.cpp" />
     <ClCompile Include="../mesh_loader.cpp" />
     <ClCompile Include="../triangle.cpp" />
+    <ClCompile Include="..\hitable_list.cpp" />
     <ClCompile Include="..\image.cpp" />
+    <ClCompile Include="..\path.cpp" />
+    <ClCompile Include="..\path_prt.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../camera.h" />
@@ -195,7 +198,6 @@
     <ClInclude Include="..\path_prt.h" />
     <ClInclude Include="..\pdf.h" />
     <ClInclude Include="..\prt.h" />
-    <ClInclude Include="..\rng_c.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

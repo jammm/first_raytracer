@@ -1,7 +1,6 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
-#include "util.h"
 #include "hitable_list.h"
 #include "geometry.h"
 
