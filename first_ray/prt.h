@@ -9,10 +9,21 @@
 
 namespace PRT
 {
-	struct SHSample {
+	constexpr int n_coeffs = 3;
+
+	struct SHSample
+	{
 		Vector3f  direction;
 		float   theta, phi;
-		float* Ylm;
+		std::array<float, n_coeffs> Ylm = {};
+	};
+
+	struct CubeMap
+	{
+		const unsigned int width;
+		const unsigned int height;
+		std::vector<Vector3f> data;
+		std::string file;
 	};
 
     constexpr unsigned int factorial(const unsigned int &n)
@@ -23,7 +34,7 @@ namespace PRT
 
 	// Renormalisation constant for SH function
 	double K(int l, int m) {
-		double temp = ((2.0 * l + 1.0) * factorial(l - m)) / (4.0 * PI * factorial(l + m));   // Here, you can use a precomputed table for factorials
+		double temp = ((2.0 * l + 1.0) * factorial(l - m)) / (4.0 * M_PI * factorial(l + m));   // Here, you can use a precomputed table for factorials
 		return sqrt(temp);
 	}
 
@@ -61,7 +72,7 @@ namespace PRT
 	// m in the range [-l..l]
 	// theta in the range [0..Pi]
 	// phi in the range [0..2*Pi]
-	double SH(int l, int m, double theta, double phi) {
+	double EstimateSH(int l, int m, double theta, double phi) {
 		const double sqrt2 = sqrt(2.0);
 		if (m == 0)        return K(l, 0) * P(l, m, cos(theta));
 		else if (m > 0)    return sqrt2 * K(l, m) * cos(m * phi) * P(l, m, cos(theta));
@@ -69,7 +80,7 @@ namespace PRT
 	}
 
 	// Fills an N*N*2 array with uniformly distributed samples across the sphere using jittered stratification
-	void PreComputeSamples(int sqrt_n_samples, int n_bands, SHSample samples[], float) {
+	void PreComputeSamples(int sqrt_n_samples, int n_bands, std::array<SHSample, n_coeffs*n_coeffs> samples, float) {
 		int i = 0; // array index
 		double oneoverN = 1.0 / sqrt_n_samples;
 		for (int a = 0; a < sqrt_n_samples; a++) {
@@ -96,30 +107,6 @@ namespace PRT
 			}
 		}
 	}
-
-	typedef double (*EstimateFunction)(double theta, double phi);
-
-	// Here, n_coeffs = n_bands*n_bands and n_samples = sqrt_n_samples*sqrt_n_samples
-	void SHProject(EstimateFunction estimator, int n_samples, int n_coeffs, const SHSample samples[], double result[]) {
-		for (int i = 0; i < n_coeff; ++i) {
-			result[i] = 0.0;
-
-			// For each sample
-			for (int i = 0; i < n_samples; ++i) {
-				double theta = samples[i].theta;
-				double phi = samples[i].phi;
-				for (int n = 0; n < n_coeff; ++n) {
-					result[n] += estimator(theta, phi) * samples[i].Ylm[n];
-				}
-			}
-			// Divide the result by weight and number of samples
-			double factor = 4.0 * M_PI / n_samples;
-			for (int i = 0; i < n_coeff; ++i) {
-				result[i] = result[i] * factor;
-			}
-		}
-
-    auto samples = PreComputeSamples();
 }
 
 

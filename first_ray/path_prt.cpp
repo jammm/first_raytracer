@@ -1,6 +1,30 @@
 #include "path_prt.h"
-#include "prt.h"
 #include "material.h"
+#include "image.h"
+
+using namespace PRT;
+
+// Here, n_coeffs = n_bands*n_bands and n_samples = sqrt_n_samples*sqrt_n_samples
+void path_prt::SHProject(int n_samples, int n_coeffs, const std::array<PRT::SHSample, PRT::n_coeffs> samples, double result[])
+{
+	for (int i = 0; i < n_coeffs; ++i) {
+		result[i] = 0.0;
+
+		// For each sample
+		for (int i = 0; i < n_samples; ++i) {
+			double theta = samples[i].theta;
+			double phi = samples[i].phi;
+			for (int n = 0; n < n_coeffs; ++n) {
+				result[n] += estimator(theta, phi) * samples[i].Ylm[n];
+			}
+		}
+		// Divide the result by weight and number of samples
+		double factor = 4.0 * M_PI / n_samples;
+		for (int i = 0; i < n_coeffs; ++i) {
+			result[i] = result[i] * factor;
+		}
+	}
+}
 
 // TODO
 // Convert from recursive to iterative
