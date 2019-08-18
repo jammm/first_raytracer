@@ -1,5 +1,5 @@
 #include <iostream>
-#include "hitable_list.h"
+#include "Scene.h"
 #include "sphere.h"
 #include "triangle.h"
 #include "material.h"
@@ -130,9 +130,9 @@ hitable *cornell_box(camera &cam, const float &aspect)
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
-hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
+Scene *furnace_test_scene(const float &aspect)
 {
-    hitable **list = new hitable*[2];
+    hitable **list = new hitable*[20000];
     int i = 0;
 
     Vector3f reflectance(1.0f, 1.0f, 1.0f);
@@ -142,28 +142,42 @@ hitable *furnace_test_scene(camera &cam, const float &aspect, std::vector<hitabl
     material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
     material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
-    list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
-    list[i++] = new sphere(Vector3f(0, 0, 0), 0.1f, mirror);
-    list[i++] = new sphere(Vector3f(0.30f, 0, 0), 0.1f, lambert);
+    //list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
+    //list[i++] = new sphere(Vector3f(0, 0, 0), 0.3f, lambert);
+    //list[i++] = new sphere(Vector3f(0.30f, 50, 0), 50.0f, mirror);
 
+	std::vector<hitable*> lights;
+    //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
+	
+	static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", lights);
 
-    lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
+	for (auto triangle : mesh)
+	{
+		list[i++] = triangle.get();
+	}
+	
 
-    Vector3f lookfrom(0, 0, 0.95f);
-    Vector3f lookat(0, 0, 0);
+    Vector3f lookfrom(0, 125, 175.0f);
+    Vector3f lookat(0, 50, 0);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
-    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+    camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    return new Scene(
+		parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+		new environment_map("data/ennis.hdr"),
+		cam, lights
+	);
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+	//return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *> &lights)
+Scene *cornell_box_obj(const float &aspect)
 {
     hitable **list = new hitable*[300];
     int i = 0;
+	std::vector<hitable*> lights;
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-MIS-Test.obj", lights);
 
     for (auto triangle : mesh)
@@ -176,11 +190,17 @@ hitable *cornell_box_obj(camera &cam, const float &aspect, std::vector<hitable *
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
+	camera cam;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     //return new hitable_list(std::vector<hitable *>(list, list + i), i);
     //return new bvh_node(list, i, 0.0f, 0.0f);
-    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+	return new Scene(
+		parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+		new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+		cam, lights
+	);
 }
 
 hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -269,13 +289,13 @@ int main(int argc, const char **argv)
     // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
     tf::Taskflow tf;
 
-    // Initialize scene
-    camera cam;
-    std::vector<hitable *> lights;
 
+	// Start performance timer
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
+
+	// Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<hitable> world(furnace_test_scene(cam, float(nx) / float(ny), lights));
+    std::unique_ptr<Scene> scene(furnace_test_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
@@ -347,18 +367,14 @@ int main(int argc, const char **argv)
     /* Clear the window */
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Fill lights inside a hitable_list and pass it to the integrator
-    // TODO: Find a better way to specify lights in the scene
-    hitable_list hlist(lights, lights.size());
-
     // Use the renderer specified in template parameter
-    renderer<path_prt> renderer;
+    renderer<path> renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
         for (int i = 0; i < nx; i++)
         {
-            //if (i == 512 && j == 384)
+            //if (i <= 512)
             {
                 if (to_exit) break;
                 Vector3f col(0.0f, 0.0f, 0.0f);
@@ -366,9 +382,9 @@ int main(int argc, const char **argv)
                 {
                     float u = float(i + gen_cano_rand()) / float(nx);
                     float v = float(j + gen_cano_rand()) / float(ny);
-                    ray r = cam.get_ray(u, v);
+                    ray r = scene->cam.get_ray(u, v);
                     hit_record hrec;
-                    const Vector3f sample = renderer.Li(r, world.get(), hlist, 0, hrec, 0.0f);
+                    const Vector3f sample = renderer.Li(r, scene.get(), 0, hrec, 0.0f);
                     assert(std::isfinite(sample[0])
                            && std::isfinite(sample[1])
                            && std::isfinite(sample[2]));

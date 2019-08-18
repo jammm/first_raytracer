@@ -2,8 +2,8 @@
 #define HITABLE_LIST_H_
 
 #include "hitable.h"
-#include "util.h"
 #include <assert.h>
+#include <vector>
 
 class hitable_list : public hitable
 {

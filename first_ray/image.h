@@ -12,6 +12,7 @@ enum class formats
     STBI_JPG,
     STBI_PNG,
     STBI_BMP,
+	STBI_HDR
 };
 
 class image

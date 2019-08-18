@@ -1,10 +1,12 @@
 #include "path.h"
 #include "material.h"
 
-Vector3f path::Li(const ray& r, hitable* world, const hitable_list& lights, const int& depth, const hit_record& prev_hrec,
-	const float& prev_bsdf_pdf)
+Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
+    const float &prev_bsdf_pdf)
 {
 	hit_record hrec;
+	auto &world = scene->world;
+	auto &lights = scene->lights;
 	if (world->hit(r, EPSILON, FLT_MAX, hrec))
 	{
 		scatter_record srec;
@@ -41,7 +43,7 @@ Vector3f path::Li(const ray& r, hitable* world, const hitable_list& lights, cons
 					return Vector3f(0, 0, 0);
 				}
 				//const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
-				return surface_bsdf * Li(srec.specular_ray, world, lights, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
+				return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
 			}
 			else
 			{
@@ -95,15 +97,14 @@ Vector3f path::Li(const ray& r, hitable* world, const hitable_list& lights, cons
 				}
 				const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
-				return Le + surface_bsdf * Li(wo, world, lights, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
+				return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
 			}
 		}
 		return Le;
 	}
 
-	//TODO : Environment map sampling
 	//Vector3f unit_direction = unit_vector(r.direction());
 	//float t = 0.5*(unit_direction.y() + 1.0);
 	//return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
-	return Vector3f(0, 0, 0);
+	return scene->env_map->eval(r, prev_hrec, depth);
 }

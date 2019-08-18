@@ -2,7 +2,57 @@
 #define BVH_H
 
 #include "hitable.h"
-#include "util.h"
+
+inline int box_x_compare(const void* a, const void* b)
+{
+	aabb box_left;
+	aabb box_right;
+
+	hitable* ah = *(hitable * *)a;
+	hitable* bh = *(hitable * *)b;
+
+	if (!ah->bounding_box(0.0f, 0.0f, box_left) || !bh->bounding_box(0.0f, 0.0f, box_right))
+		std::cerr << "no bounding box in parallel_bvh_node constructor!\n";
+
+	if (box_left.min.x() - box_right.min.x() < 0.0f)
+		return -1;
+	else
+		return 1;
+}
+
+inline int box_y_compare(const void* a, const void* b)
+{
+	aabb box_left;
+	aabb box_right;
+
+	hitable* ah = *(hitable * *)a;
+	hitable* bh = *(hitable * *)b;
+
+	if (!ah->bounding_box(0.0f, 0.0f, box_left) || !bh->bounding_box(0.0f, 0.0f, box_right))
+		std::cerr << "no bounding box in parallel_bvh_node constructor!\n";
+
+	if (box_left.min.y() - box_right.min.y() < 0.0f)
+		return -1;
+	else
+		return 1;
+}
+
+inline int box_z_compare(const void* a, const void* b)
+{
+	aabb box_left;
+	aabb box_right;
+
+	hitable* ah = *(hitable * *)a;
+	hitable* bh = *(hitable * *)b;
+
+	if (!ah->bounding_box(0.0f, 0.0f, box_left) || !bh->bounding_box(0.0f, 0.0f, box_right))
+		std::cerr << "no bounding box in parallel_bvh_node constructor!\n";
+
+	if (box_left.min.z() - box_right.min.z() < 0.0f)
+		return -1;
+	else
+		return 1;
+}
 
 class bvh_node : public hitable
 {
@@ -50,7 +100,7 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
 	std::unique_ptr<float[]> left_area(new float[n]);
 	std::unique_ptr<float[]> right_area(new float[n]);
 	aabb main_box;
-	bool dummy = l[0]->bounding_box(time0, time1, main_box);
+	l[0]->bounding_box(time0, time1, main_box);
 	
 	for (int i = 1; i < n; ++i)
 	{

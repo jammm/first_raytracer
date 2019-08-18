@@ -1,10 +1,10 @@
 #ifndef TEXTURE_H_
 #define TEXTURE_H_
 
+#include <cmath>
 #include "geometry.h"
 #include "hitable.h"
 #include "image.h"
-#include <cmath>
 
 class texture
 {
@@ -33,8 +33,8 @@ public:
     virtual Vector3f value(const hit_record &rec) const
     {
         const Vector3f &p = rec.p;
-        const float &u = rec.u;
-        const float &v = rec.v;
+        //const float &u = rec.u;
+        //const float &v = rec.v;
 
         float sines = sin(10*p.x()) * sin(10*p.y()) * sin(10*p.z());
         if (sines < 0.0f)
@@ -59,14 +59,15 @@ public:
         const int &nx = img->nx;
         const int &ny = img->ny;
         int i = (rec.u)*nx;
-        int j = (1 - rec.v)*ny - 0.001;
-        if (i < 0) i = 0;
-        if (j < 0) j = 0;
-        if (i > nx - 1) i = nx - 1;
-        if (j > ny - 1) j = ny - 1;
-        float r = int(img->data[3 * i + 3 * nx*j]) / 255.0f;
-        float g = int(img->data[3 * i + 3 * nx*j + 1]) / 255.0f;
-        float b = int(img->data[3 * i + 3 * nx*j + 2]) / 255.0f;
+        int j = (rec.v)*ny;
+		//std::cout << "i,j: " << i << " " << j << std::endl;
+        if (i < 0) return Vector3f(0, 0, 0);
+        if (j < 0) return Vector3f(0, 0, 0);
+        if (i > nx - 1) return Vector3f(0, 0, 0);
+        if (j > ny - 1) return Vector3f(0, 0, 0);
+        const float r = int(img->data[3 * i + 3 * nx*j]) / 255.0f;
+        const float g = int(img->data[3 * i + 3 * nx*j + 1]) / 255.0f;
+        const float b = int(img->data[3 * i + 3 * nx*j + 2]) / 255.0f;
 
         return Vector3f(r, g, b);
     }

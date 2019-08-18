@@ -70,7 +70,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
     float* const right_area = g_right_area.get() + g_index;
 
 	aabb main_box;
-	bool dummy = l[0]->bounding_box(time0, time1, main_box);
+	l[0]->bounding_box(time0, time1, main_box);
 
 	for (unsigned int i = 1; i < n; ++i)
 	{
@@ -88,7 +88,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
 		qsort(l, n, sizeof(hitable *), box_z_compare);
 
 	for (int i = 0; i < n; ++i)
-		bool dummy = l[i]->bounding_box(time0, time1, boxes[i]);
+		l[i]->bounding_box(time0, time1, boxes[i]);
 
 	left_area[0] = boxes[0].area();
 	aabb left_box = boxes[0];

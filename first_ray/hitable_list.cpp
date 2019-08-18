@@ -1,4 +1,5 @@
 #include "hitable_list.h"
+#include "util.h"
 
 bool hitable_list::hit(const ray& r, float t_min, float t_max, hit_record& rec) const
 {

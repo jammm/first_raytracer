@@ -113,5 +113,11 @@
     <ClInclude Include="..\prt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\SHSample.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,29 +3,11 @@
 
 #include "util.h"
 #include "geometry.h"
-#include <cmath>
-#include <array>
+#include "SHSample.h"
 
 
 namespace PRT
 {
-	constexpr int n_coeffs = 3;
-
-	struct SHSample
-	{
-		Vector3f  direction;
-		float   theta, phi;
-		std::array<float, n_coeffs> Ylm = {};
-	};
-
-	struct CubeMap
-	{
-		const unsigned int width;
-		const unsigned int height;
-		std::vector<Vector3f> data;
-		std::string file;
-	};
-
     constexpr unsigned int factorial(const unsigned int &n)
     {
         if (n < 2) return 1;

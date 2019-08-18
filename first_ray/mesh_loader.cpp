@@ -1,5 +1,6 @@
 #include "mesh_loader.h"
 #include "material.h"
+#include "util.h"
 
 std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string file)
 {
@@ -29,12 +30,8 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			vertices[j][1] = mesh->mVertices[j].y;
 			vertices[j][2] = mesh->mVertices[j].z;
 
-			normals[j][0] = mesh->mNormals[j].x;
-			normals[j][1] = mesh->mNormals[j].y;
-			normals[j][2] = mesh->mNormals[j].z;
-
             // Some meshes don't have texture coords
-            if (mesh->HasTextureCoords(j))
+            if (mesh->HasTextureCoords(0))
             {
                 uv[j].x = mesh->mTextureCoords[0][j].x;
                 uv[j].y = mesh->mTextureCoords[0][j].y;
@@ -79,9 +76,40 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
         else
         {
             // Use placeholder material (lambertian with white reflectance)
-            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)));
+            mat = std::make_unique<metal>(Vector3f(1.0f, 1.0f, 1.0f), 0.001f);
             name = aiString("unknown");
         }
+
+		memset(normals, 0, sizeof(Vector3f) * mesh->mNumVertices);
+		// Generate well-behaved normals
+		// Based on "Computing Vertex Normals from Polygonal Facets" - Grit Thuermer and Charles A. Wuethrich,
+		// JGT 1998, Vol 3
+		for (int j = 0; j < mesh->mNumFaces; ++j)
+		{
+			Vector3f n(0.0f, 0.0f, 0.0f);
+			for (int i = 0; i < 3; ++i)
+			{
+				const Vector3f& v0 = vertices[indices[3 * j + i]];
+				const Vector3f& v1 = vertices[indices[3 * j + (i+1)%3]];
+				const Vector3f& v2 = vertices[indices[3 * j + (i+2)%3]];
+				const Vector3f edge1 = v1 - v0;
+				const Vector3f edge2 = v2 - v0;
+
+				if (i == 0)
+				{
+					n = cross(edge1, edge2);
+					float length = n.length();
+					if (length == 0) break;
+					n /= length;
+				}
+				float angle = unit_angle(unit_vector(edge1), unit_vector(edge2));
+				normals[indices[3 * j + i]] += n * angle;
+			}
+
+		}
+		for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
+			normals[j].make_unit_vector();
+
 
 
         meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), name.C_Str(), true));

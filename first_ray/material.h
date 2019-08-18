@@ -6,6 +6,7 @@
 #include "texture.h"
 #include "onb.h"
 #include "pdf.h"
+#include "image.h"
 
 inline Vector3f random_in_unit_sphere()
 {
@@ -75,8 +76,8 @@ public:
 
     virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
     {
-        const float rand_var = gen_cano_rand();
-        constexpr float specular_chance = 0.5f;
+        //const float rand_var = gen_cano_rand();
+        //constexpr float specular_chance = 0.5f;
 
         srec.is_specular = true;
 
@@ -211,6 +212,38 @@ public:
             return Vector3f(0, 0, 0);
     }
     texture *emit;
+};
+
+class environment_map : public material
+{
+public:
+	environment_map(std::string env_map_filename) : env_map_filename(env_map_filename)
+	{
+		auto env_map_img = std::make_unique<image>(env_map_filename);
+		env_map_tex = std::make_unique<image_texture>(env_map_img);
+	}
+	environment_map(std::unique_ptr<texture> e)
+	{
+		env_map_tex = std::move(e);
+	}
+	virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const { return false; }
+	Vector3f eval(const ray& r_in, hit_record rec, const int &depth) const
+	{
+		const Vector3f direction = unit_vector(r_in.d);
+		float phi = std::atan2(direction.x(), -direction.z());
+		float theta = acos(direction.y());
+
+		phi = (phi < 0) ? (phi + M_PI * 2) : phi;
+		theta = (theta < 0) ? (theta + M_PI) : theta;
+
+		rec.u = phi / (2.0f * M_PI);
+		rec.v = theta / (M_PI);
+
+		return env_map_tex->value(rec);
+	}
+
+	std::string env_map_filename;
+	std::unique_ptr<texture> env_map_tex;
 };
 
 #endif

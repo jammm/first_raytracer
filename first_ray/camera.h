@@ -2,17 +2,7 @@
 #define CAMERA_H_
 
 #include "ray.h"
-
-Vector3f random_in_unit_disk()
-{
-    Vector3f p;
-    do
-    {
-        p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), 0.0f) - Vector3f(1.0f, 1.0f, 0.0f);
-    } while (dot(p, p) >= 1.0f);
-
-    return p;
-}
+#include "util.h"
 
 struct camera
 {

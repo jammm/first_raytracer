@@ -86,11 +86,10 @@ public:
             {
                 rec.t = t;
                 rec.p = r.point_at_parameter(t);
-                rec.normal = cross(edge1, edge2);
-                rec.normal.make_unit_vector();
-                // Use u, v to find interpolated coordinates
-                // P = (1 - u - v) * V0 + u * V1 + v * V2 
-                Point2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
+                // Use u, v to find interpolated normals and texture coords
+                // P = (1 - u - v) * V0 + u * V1 + v * V2
+				rec.normal = u * mesh->normals[V[0]] + v * mesh->normals[V[1]] + (1 - u - v) * mesh->normals[V[2]];
+                Point2f uvhit = u * mesh->uv[V[0]] + v * mesh->uv[V[1]] + (1 - u - v) * mesh->uv[V[2]];
                 rec.u = uvhit.x;
                 rec.v = uvhit.y;
                 rec.mat_ptr = mat_ptr.get();
