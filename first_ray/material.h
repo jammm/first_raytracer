@@ -244,6 +244,14 @@ public:
 
 		return env_map_tex->value(rec);
 	}
+	Vector3f eval(const double &theta, const double &phi) const
+	{
+		hit_record rec;
+		rec.u = phi / (2.0f * M_PI);
+		rec.v = theta / (M_PI);
+
+		return env_map_tex->value(rec);
+	}
 
 	std::string env_map_filename;
 	std::unique_ptr<texture> env_map_tex;

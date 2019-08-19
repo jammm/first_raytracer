@@ -369,7 +369,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    renderer<normals_renderer> renderer;
+    path renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
@@ -385,7 +385,7 @@ int main(int argc, const char **argv)
                     float v = float(j + gen_cano_rand()) / float(ny);
                     ray r = scene->cam.get_ray(u, v);
                     hit_record hrec;
-                    const Vector3f sample = renderer.Li(r, scene.get(), 0, hrec, 0.0f);
+                    const Vector3f sample = renderer.Li(r, scene.get(), 0, hrec, 0.0f, s);
                     assert(std::isfinite(sample[0])
                            && std::isfinite(sample[1])
                            && std::isfinite(sample[2]));

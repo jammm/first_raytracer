@@ -62,11 +62,14 @@ namespace PRT
 	}
 
 	// Fills an N*N*2 array with uniformly distributed samples across the sphere using jittered stratification
-	void PreComputeSamples(int sqrt_n_samples, int n_bands, std::array<SHSample, n_coeffs*n_coeffs> samples, float) {
-		int i = 0; // array index
+	std::unique_ptr<SHSample[]> PreComputeSamples(int sqrt_n_samples, int n_bands) {
 		double oneoverN = 1.0 / sqrt_n_samples;
-		for (int a = 0; a < sqrt_n_samples; a++) {
-			for (int b = 0; b < sqrt_n_samples; b++) {
+
+		// Create samples array
+		auto samples = std::make_unique<SHSample[]>(sqrt_n_samples * sqrt_n_samples);
+
+		for (int a = 0, i=0; a < sqrt_n_samples; a++) {
+			for (int b = 0; b < sqrt_n_samples; b++, i++) {
 				// Generate unbiased distribution of spherical coords
 				double x = (a + gen_cano_rand()) * oneoverN;           // Do not reuse results
 				double y = (b + gen_cano_rand()) * oneoverN;           // Each sample must be random!
@@ -85,9 +88,9 @@ namespace PRT
 						samples[i].Ylm[index] = EstimateSH(l, m, theta, phi);
 					}
 				}
-				++i;
 			}
 		}
+		return samples;
 	}
 }
 

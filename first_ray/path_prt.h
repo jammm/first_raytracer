@@ -9,21 +9,17 @@
 
 struct path_prt
 {
-    // TODO
-    // Convert from recursive to iterative
+	path_prt(Scene *scene, const int &n_samples);
+    
     Vector3f Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-		const float &prev_bsdf_pdf);
+		const float &prev_bsdf_pdf, const int &s);
 
-	// Here, n_coeffs = n_bands*n_bands and n_samples = sqrt_n_samples*sqrt_n_samples
-	void SHProject(int n_samples, int n_coeffs, const std::array<PRT::SHSample, PRT::n_coeffs> samples, double result[]);
+	void SH_project_environment();
 
-	path_prt()
-	{
-		env_map = std::make_unique<environment_map>("");
-	}
-
-	std::unique_ptr<environment_map> env_map;
-
+	const Scene *scene;
+	int n_samples;
+	std::unique_ptr<Vector3f[]> Li_coeffs;
+	std::unique_ptr<PRT::SHSample[]> samples;
 };
 
 #endif

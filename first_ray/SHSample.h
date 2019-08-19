@@ -7,11 +7,12 @@
 namespace PRT
 {
 
-	constexpr int n_coeffs = 3;
+	constexpr int n_bands = 3;
+	constexpr int n_coeffs = n_bands * n_bands;
 	struct SHSample
 	{
-		Vector3f  direction;
-		float   theta, phi;
+		Vector3f direction;
+		float theta, phi;
 		std::array<float, n_coeffs> Ylm;
 	};
 }
