@@ -119,5 +119,8 @@
     <ClInclude Include="..\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\debug_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

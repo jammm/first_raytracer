@@ -14,6 +14,7 @@
 #include "pdf.h"
 #include "path.h"
 #include "path_prt.h"
+#include "debug_renderer.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
@@ -368,7 +369,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    renderer<path> renderer;
+    renderer<normals_renderer> renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {

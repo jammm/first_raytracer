@@ -191,6 +191,7 @@
     <ClInclude Include="..\aarect.h" />
     <ClInclude Include="..\box.h" />
     <ClInclude Include="..\bvh.h" />
+    <ClInclude Include="..\debug_renderer.h" />
     <ClInclude Include="..\integrator.h" />
     <ClInclude Include="..\onb.h" />
     <ClInclude Include="..\parallel_bvh.h" />
