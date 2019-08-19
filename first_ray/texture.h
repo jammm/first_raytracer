@@ -55,7 +55,6 @@ public:
 
     virtual Vector3f value(const hit_record &rec) const
     {
-        int comp = img->nn;
         const int &nx = img->nx;
         const int &ny = img->ny;
         int i = (rec.u)*nx;

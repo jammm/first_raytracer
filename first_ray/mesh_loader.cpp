@@ -7,7 +7,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
     std::vector<std::shared_ptr<triangle_mesh>> meshes;
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(file, aiProcessPreset_TargetRealtime_Fast);
+    const aiScene *scene = importer.ReadFile(file, aiProcessPreset_TargetRealtime_Fast & ~aiProcess_GenNormals);
     // If the import failed, report it
     if (!scene)
     {
@@ -38,7 +38,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
             }
 		}
 		//Store indices
-		for (unsigned int k = 0; k < mesh->mNumFaces; k++)
+		for (unsigned int k = 0; k < mesh->mNumFaces; ++k)
 		{
 			const aiFace& face = mesh->mFaces[k];
 			assert(face.mNumIndices == 3);
@@ -76,7 +76,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
         else
         {
             // Use placeholder material (lambertian with white reflectance)
-            mat = std::make_unique<metal>(Vector3f(1.0f, 1.0f, 1.0f), 0.001f);
+            mat = std::make_unique<metal>(Vector3f(FromSrgb(1.0f), FromSrgb(1.0f), FromSrgb(1.0f)), 0.0f);
             name = aiString("unknown");
         }
 
@@ -87,11 +87,12 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 		for (int j = 0; j < mesh->mNumFaces; ++j)
 		{
 			Vector3f n(0.0f, 0.0f, 0.0f);
+			const int* V = &indices[3 * j];
 			for (int i = 0; i < 3; ++i)
 			{
-				const Vector3f& v0 = vertices[indices[3 * j + i]];
-				const Vector3f& v1 = vertices[indices[3 * j + (i+1)%3]];
-				const Vector3f& v2 = vertices[indices[3 * j + (i+2)%3]];
+				const Vector3f& v0 = vertices[V[i]];
+				const Vector3f& v1 = vertices[V[(i+1)%3]];
+				const Vector3f& v2 = vertices[V[(i+2)%3]];
 				const Vector3f edge1 = v1 - v0;
 				const Vector3f edge2 = v2 - v0;
 
@@ -103,7 +104,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 					n /= length;
 				}
 				float angle = unit_angle(unit_vector(edge1), unit_vector(edge2));
-				normals[indices[3 * j + i]] += n * angle;
+				normals[V[i]] += n * angle;
 			}
 
 		}

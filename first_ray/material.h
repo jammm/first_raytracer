@@ -239,6 +239,9 @@ public:
 		rec.u = phi / (2.0f * M_PI);
 		rec.v = theta / (M_PI);
 
+		if (depth == 0)
+			return FromSrgb(env_map_tex->value(rec));
+
 		return env_map_tex->value(rec);
 	}
 

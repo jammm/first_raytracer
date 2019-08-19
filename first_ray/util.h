@@ -45,10 +45,15 @@ inline float miWeight(float pdf1, float pdf2)
     return pdf1 / (pdf1 + pdf2);
 }
 
-static inline float FromSrgb(const float v)
+static inline float FromSrgb(const float &v)
 {
     if (v <= 0.04045) return v * (1.0 / 12.92);
     return std::pow((v + 0.055) * (1.0 / 1.055), 2.4);
+}
+
+static inline Vector3f FromSrgb(const Vector3f &v)
+{
+	return Vector3f(FromSrgb(v.e[0]), FromSrgb(v.e[1]), FromSrgb(v.e[2]));
 }
 
 inline Vector3f reflect(const Vector3f &v, const Vector3f &n)

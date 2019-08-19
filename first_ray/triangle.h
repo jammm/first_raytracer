@@ -88,8 +88,8 @@ public:
                 rec.p = r.point_at_parameter(t);
                 // Use u, v to find interpolated normals and texture coords
                 // P = (1 - u - v) * V0 + u * V1 + v * V2
-				rec.normal = u * mesh->normals[V[0]] + v * mesh->normals[V[1]] + (1 - u - v) * mesh->normals[V[2]];
-                Point2f uvhit = u * mesh->uv[V[0]] + v * mesh->uv[V[1]] + (1 - u - v) * mesh->uv[V[2]];
+				rec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+                Point2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 rec.u = uvhit.x;
                 rec.v = uvhit.y;
                 rec.mat_ptr = mat_ptr.get();
@@ -143,8 +143,7 @@ public:
 
         rec.t = 1.0f;
         rec.p = random_point;
-        rec.normal = cross(edge1, edge2);
-        rec.normal.make_unit_vector();
+        rec.normal = (1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]];
         rec.mat_ptr = mat_ptr.get();
         rec.obj_name = mesh->name;
         Point2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];

@@ -13,7 +13,7 @@ struct Scene
 	hitable_list lights;
 	camera cam;
 
-	Scene(hitable* world, environment_map* env_map, const camera& cam, const std::vector<hitable*> &lights) : world(world), env_map(env_map), cam(cam), lights(lights, lights.size())
+	Scene(hitable* world, environment_map* env_map, const camera& cam, const std::vector<hitable*> &lights) : world(world), env_map(env_map), lights(lights, lights.size()), cam(cam)
 	{}
 };
 
