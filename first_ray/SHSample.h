@@ -15,6 +15,7 @@ namespace PRT
 		float theta, phi;
 		std::array<float, n_coeffs> Ylm;
 	};
+	typedef std::array<Vector3f, n_coeffs> SHCoefficients;
 }
 
 #endif

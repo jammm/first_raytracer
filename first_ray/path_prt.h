@@ -9,12 +9,13 @@
 
 struct path_prt
 {
-	path_prt(Scene *scene, const int &n_samples);
+	path_prt(Scene *scene, int &n_samples);
     
     Vector3f Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-		const float &prev_bsdf_pdf, const int &s);
+		const float &prev_bsdf_pdf);
 
 	void SH_project_environment();
+	void SH_project_diffuse_transfer();
 
 	const Scene *scene;
 	int n_samples;

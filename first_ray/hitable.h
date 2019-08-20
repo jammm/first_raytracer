@@ -7,6 +7,7 @@
 
 
 class material;
+class hitable;
 
 inline void get_sphere_uv(const Vector3f &p, float &u, float &v)
 {
@@ -19,11 +20,15 @@ inline void get_sphere_uv(const Vector3f &p, float &u, float &v)
 struct hit_record
 {
     float t;
+	// Global texture coordinates
     float u;
     float v;
+	// Local barycentric coordinates
+	Point2f uv;
     Vector3f p;
     Vector3f normal;
     material *mat_ptr;
+	hitable *obj;
     std::string obj_name;
 };
 

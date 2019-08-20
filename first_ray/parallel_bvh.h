@@ -1,11 +1,11 @@
 #ifndef PARALLEL_BVH_H
 #define PARALLEL_BVH_H
 
-#include "hitable.h"
+#include "hitable_list.h"
 #include "util.h"
 #include <taskflow/taskflow.hpp>
 
-class parallel_bvh_node : public hitable
+class parallel_bvh_node : public hitable_list
 {
 public:
 	parallel_bvh_node() {}
@@ -56,7 +56,7 @@ bool parallel_bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &
 
 // Construct parallel_bvh using SAH method
 parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, const int &n, const int &g_index, float time0, float time1)
-    : left(nullptr), right(nullptr)
+    : hitable_list(std::vector<hitable*>(l, l + n), n), left(nullptr), right(nullptr)
 {
     if (!parallel_bvh_node::g_boxes)
     {

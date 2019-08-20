@@ -85,6 +85,7 @@ Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o) const
         rec.p = p;
         rec.mat_ptr = mat_ptr;
         rec.normal = unit_vector(center - p);
+		rec.obj = (hitable *)this;
 
         return p - o;
     }

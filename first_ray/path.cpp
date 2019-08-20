@@ -2,7 +2,7 @@
 #include "material.h"
 
 Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-    const float &prev_bsdf_pdf, const int &s)
+    const float &prev_bsdf_pdf)
 {
 	hit_record hrec;
 	auto &world = scene->world;
@@ -43,7 +43,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 					return Vector3f(0, 0, 0);
 				}
 				//const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
-				return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf, s) / surface_bsdf_pdf;
+				return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
 			}
 			else
 			{
@@ -97,7 +97,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 				}
 				const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
-				return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf, s) * cos_wi / surface_bsdf_pdf;
+				return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
 			}
 		}
 		return Le;

@@ -7,6 +7,7 @@
 #include <cstring>
 #include "hitable.h"
 #include "material.h"
+#include "SHSample.h"
 
 
 class triangle_mesh
@@ -92,8 +93,11 @@ public:
                 Point2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 rec.u = uvhit.x;
                 rec.v = uvhit.y;
+				rec.uv.x = u;
+				rec.uv.y = v;
                 rec.mat_ptr = mat_ptr.get();
                 rec.obj_name = mesh->name;
+				rec.obj = (hitable*)this;
                 return true;
             }
         }
@@ -149,7 +153,7 @@ public:
         Point2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
         rec.u = uvhit.x;
         rec.v = uvhit.y;
-
+		rec.obj = (hitable *)this;
 
         return random_point - o;
     }
@@ -161,6 +165,8 @@ public:
     const Vector3f edge2;
     std::shared_ptr<triangle_mesh> mesh;
     std::shared_ptr<material> mat_ptr;
+	// For PRT
+	PRT::SHCoefficients coeffs[3];
 };
 
 std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);

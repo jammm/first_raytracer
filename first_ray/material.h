@@ -45,6 +45,7 @@ class material
 public:
     virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const { return false; }
     virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const { return Vector3f(0, 0, 0); }
+	virtual Vector3f get_albedo(const hit_record& rec) const { return Vector3f(0, 0, 0); }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
 };
 
@@ -65,6 +66,11 @@ public:
     {
         return albedo->value(rec) / M_PI;
     }
+
+	virtual Vector3f get_albedo(const hit_record& rec) const
+	{
+		return albedo->value(rec);
+	}
 
     texture *albedo;
 };
