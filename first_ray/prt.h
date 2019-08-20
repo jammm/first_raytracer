@@ -15,18 +15,18 @@ namespace PRT
     }
 
 	// Renormalisation constant for SH function
-	double K(int l, int m) {
-		double temp = ((2.0 * l + 1.0) * factorial(l - m)) / (4.0 * M_PI * factorial(l + m));   // Here, you can use a precomputed table for factorials
+	float K(int l, int m) {
+		float temp = ((2.0 * l + 1.0) * factorial(l - m)) / (4.0 * M_PI * factorial(l + m));   // Here, you can use a precomputed table for factorials
 		return sqrt(temp);
 	}
 
 	// Evaluate an Associated Legendre Polynomial P(l,m,x) at x
 	// For more, see “Numerical Methods in C: The Art of Scientific Computing”, Cambridge University Press, 1992, pp 252-254 
-	double P(int l, int m, double x) {
-		double pmm = 1.0;
+	float P(int l, int m, float x) {
+		float pmm = 1.0;
 		if (m > 0) {
-			double somx2 = sqrt((1.0 - x) * (1.0 + x));
-			double fact = 1.0;
+			float somx2 = sqrt((1.0 - x) * (1.0 + x));
+			float fact = 1.0;
 			for (int i = 1; i <= m; i++) {
 				pmm *= (-fact) * somx2;
 				fact += 2.0;
@@ -35,11 +35,11 @@ namespace PRT
 		if (l == m)
 			return pmm;
 
-		double pmmp1 = x * (2.0 * m + 1.0) * pmm;
+		float pmmp1 = x * (2.0 * m + 1.0) * pmm;
 		if (l == m + 1)
 			return pmmp1;
 
-		double pll = 0.0;
+		float pll = 0.0;
 		for (int ll = m + 2; ll <= l; ++ll) {
 			pll = ((2.0 * ll - 1.0) * x * pmmp1 - (ll + m - 1.0) * pmm) / (ll - m);
 			pmm = pmmp1;
@@ -54,8 +54,8 @@ namespace PRT
 	// m in the range [-l..l]
 	// theta in the range [0..Pi]
 	// phi in the range [0..2*Pi]
-	double EstimateSH(int l, int m, double theta, double phi) {
-		const double sqrt2 = sqrt(2.0);
+	float EstimateSH(int l, int m, float theta, float phi) {
+		const float sqrt2 = sqrt(2.0);
 		if (m == 0)        return K(l, 0) * P(l, m, cos(theta));
 		else if (m > 0)    return sqrt2 * K(l, m) * cos(m * phi) * P(l, m, cos(theta));
 		else                return sqrt2 * K(l, -m) * sin(-m * phi) * P(l, -m, cos(theta));
@@ -63,7 +63,7 @@ namespace PRT
 
 	// Fills an N*N*2 array with uniformly distributed samples across the sphere using jittered stratification
 	std::unique_ptr<SHSample[]> PreComputeSamples(int sqrt_n_samples, int n_bands) {
-		double oneoverN = 1.0 / sqrt_n_samples;
+		float oneoverN = 1.0 / sqrt_n_samples;
 
 		// Create samples array
 		auto samples = std::make_unique<SHSample[]>(sqrt_n_samples * sqrt_n_samples);
@@ -71,10 +71,10 @@ namespace PRT
 		for (int a = 0, i=0; a < sqrt_n_samples; a++) {
 			for (int b = 0; b < sqrt_n_samples; b++, i++) {
 				// Generate unbiased distribution of spherical coords
-				double x = (a + gen_cano_rand()) * oneoverN;           // Do not reuse results
-				double y = (b + gen_cano_rand()) * oneoverN;           // Each sample must be random!
-				double theta = 2.0 * acos(sqrt(1.0 - x));   // Uniform sampling on theta
-				double phi = 2.0 * M_PI * y;                      // Uniform sampling on phi
+				float x = (a + gen_cano_rand()) * oneoverN;           // Do not reuse results
+				float y = (b + gen_cano_rand()) * oneoverN;           // Each sample must be random!
+				float theta = 2.0 * acos(sqrt(1.0 - x));   // Uniform sampling on theta
+				float phi = 2.0 * M_PI * y;                      // Uniform sampling on phi
 
 				// Convert spherical coords to unit vector
 				samples[i].direction = Vector3f(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));

@@ -8,7 +8,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 {
 	samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
 	SH_project_environment();
-	SH_project_shadowed_diffuse_transfer();
+	SH_project_unshadowed_diffuse_transfer();
 
 	// Acual rendering after PRT only needs 1spp
 	//n_samples = 1;
@@ -32,22 +32,22 @@ void path_prt::SH_project_unshadowed_diffuse_transfer()
 			for (int i = 0; i < n_samples; ++i)
 			{
 				const Vector3f& direction = samples[i].direction;
-				const double cosine = std::max(dot(n, direction), 0.0f);
+				const float cosine = std::max(dot(n, direction), 0.0f);
 				if (cosine == 0.0f) continue;
 				hit_record rec;
 				rec.p = v;
 				rec.u = uv.x;
 				rec.v = uv.y;
 				const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
-				double theta = samples[i].theta;
-				double phi = samples[i].phi;
+				float theta = samples[i].theta;
+				float phi = samples[i].phi;
 				for (int n = 0; n < n_coeffs; ++n) {
-					const double value = cosine * samples[i].Ylm[n];
+					const float value = cosine * samples[i].Ylm[n];
 					tri->coeffs[idx][n] += albedo * value / M_PI;
 				}
 			}
 			// Divide the result by weight and number of samples
-			const double factor = 4.0 * M_PI / n_samples;
+			const float factor = 4.0 * M_PI / n_samples;
 			for (int i = 0; i < n_coeffs; ++i) {
 				tri->coeffs[idx][i] *= factor;
 			}
@@ -76,22 +76,22 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
 				hit_record rec;
 				if (!scene->world->hit(r, EPSILON, FLT_MAX, rec))
 				{
-					const double cosine = std::max(dot(n, direction), 0.0f);
+					const float cosine = std::max(dot(n, direction), 0.0f);
 					if (cosine == 0.0f) continue;
 					rec.p = v;
 					rec.u = uv.x;
 					rec.v = uv.y;
 					const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
-					double theta = samples[i].theta;
-					double phi = samples[i].phi;
+					float theta = samples[i].theta;
+					float phi = samples[i].phi;
 					for (int n = 0; n < n_coeffs; ++n) {
-						const double value = cosine * samples[i].Ylm[n];
+						const float value = cosine * samples[i].Ylm[n];
 						tri->coeffs[idx][n] += albedo * value / M_PI;
 					}
 				}
 			}
 			// Divide the result by weight and number of samples
-			const double factor = 4.0 * M_PI / n_samples;
+			const float factor = 4.0 * M_PI / n_samples;
 			for (int i = 0; i < n_coeffs; ++i) {
 				tri->coeffs[idx][i] *= factor;
 			}
@@ -107,14 +107,14 @@ void path_prt::SH_project_environment()
 
 	// For each sample
 	for (int i = 0; i < n_samples; ++i) {
-		double theta = samples[i].theta;
-		double phi = samples[i].phi;
+		float theta = samples[i].theta;
+		float phi = samples[i].phi;
 		for (int n = 0; n < n_coeffs; ++n) {
 			Li_coeffs[n] += scene->env_map->eval(theta, phi) * samples[i].Ylm[n];
 		}
 	}
 	// Divide the result by weight and number of samples
-	const double factor = 4.0 * M_PI / n_samples;
+	const float factor = 4.0 * M_PI / n_samples;
 	for (int i = 0; i < n_coeffs; ++i) {
 		Li_coeffs[i] *= factor;
 	}

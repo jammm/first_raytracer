@@ -131,6 +131,44 @@ hitable *cornell_box(camera &cam, const float &aspect)
     return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
+Scene* prt_test(const float& aspect)
+{
+	hitable** list = new hitable * [20000];
+	int i = 0;
+
+	Vector3f reflectance(1.0f, 1.0f, 1.0f);
+	material* specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
+		new constant_texture(reflectance), 100.0f);
+	material* lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+	material* mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+	material* lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+
+	std::vector<hitable*> lights;
+	//lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
+	static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/plane.obj", lights);
+
+	for (auto triangle : mesh)
+	{
+		list[i++] = triangle.get();
+	}
+
+
+	Vector3f lookfrom(25, 25, 200.0f);
+	Vector3f lookat(25, 25, 0);
+	constexpr float dist_to_focus = 10.0f;
+	constexpr float aperture = 0.0f;
+	constexpr float vfov = 40.0f;
+	camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+	return new Scene(
+		new hitable_list(std::vector<hitable*>(list, list + i), i),
+		new environment_map("data/ennis.hdr"),
+		cam, lights
+	);
+	//return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+	//return new hitable_list(std::vector<hitable*>(list, list + i), i);
+}
+
 Scene *furnace_test_scene(const float &aspect)
 {
     hitable **list = new hitable*[20000];
@@ -265,7 +303,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1000;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -296,7 +334,7 @@ int main(int argc, const char **argv)
 
 	// Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(furnace_test_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(prt_test(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
