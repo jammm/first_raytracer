@@ -15,7 +15,8 @@ struct path_prt
 		const float &prev_bsdf_pdf);
 
 	void SH_project_environment();
-	void SH_project_diffuse_transfer();
+	void SH_project_unshadowed_diffuse_transfer();
+	void SH_project_shadowed_diffuse_transfer();
 
 	const Scene *scene;
 	int n_samples;

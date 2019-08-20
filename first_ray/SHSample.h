@@ -7,7 +7,7 @@
 namespace PRT
 {
 
-	constexpr int n_bands = 3;
+	constexpr int n_bands = 5;
 	constexpr int n_coeffs = n_bands * n_bands;
 	struct SHSample
 	{

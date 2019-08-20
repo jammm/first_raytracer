@@ -6,9 +6,9 @@ using namespace PRT;
 
 path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_samples)
 {
-	samples = PreComputeSamples(n_samples, n_bands);
+	samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
 	SH_project_environment();
-	SH_project_diffuse_transfer();
+	SH_project_shadowed_diffuse_transfer();
 
 	// Acual rendering after PRT only needs 1spp
 	//n_samples = 1;
@@ -16,7 +16,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 
 // Compute per-vertex coefficients for transfer function
 // Transfer function encodes clamped cosine and diffuse BRDF terms together
-void path_prt::SH_project_diffuse_transfer()
+void path_prt::SH_project_unshadowed_diffuse_transfer()
 {
 	hitable_list* world = dynamic_cast<hitable_list*>(scene->world.get());
 	assert(world != nullptr);
@@ -43,12 +43,50 @@ void path_prt::SH_project_diffuse_transfer()
 				double phi = samples[i].phi;
 				for (int n = 0; n < n_coeffs; ++n) {
 					const double value = cosine * samples[i].Ylm[n];
-					tri->coeffs[idx][n] += albedo * value;
-					const auto lol = albedo * value;
-					const auto lol1 = tri->coeffs[idx][n];
-					if (lol1.e[0] > 0.2f)
-					{
-						continue;
+					tri->coeffs[idx][n] += albedo * value / M_PI;
+				}
+			}
+			// Divide the result by weight and number of samples
+			const double factor = 4.0 * M_PI / n_samples;
+			for (int i = 0; i < n_coeffs; ++i) {
+				tri->coeffs[idx][i] *= factor;
+			}
+		}
+	}
+}
+
+// Compute per-vertex coefficients for shadowed transfer function
+void path_prt::SH_project_shadowed_diffuse_transfer()
+{
+	hitable_list* world = dynamic_cast<hitable_list*>(scene->world.get());
+	assert(world != nullptr);
+	for (auto& i : world->list)
+	{
+		triangle* tri = dynamic_cast<triangle*>(i);
+		if (tri == nullptr) continue;
+		for (int idx = 0; idx < 3; ++idx)
+		{
+			const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
+			const Vector3f& n = tri->mesh->normals[tri->V[idx]];
+			const Point2f uv = tri->mesh->uv[tri->V[idx]];
+			for (int i = 0; i < n_samples; ++i)
+			{
+				const Vector3f& direction = samples[i].direction;
+				const ray r(v, direction);
+				hit_record rec;
+				if (!scene->world->hit(r, EPSILON, FLT_MAX, rec))
+				{
+					const double cosine = std::max(dot(n, direction), 0.0f);
+					if (cosine == 0.0f) continue;
+					rec.p = v;
+					rec.u = uv.x;
+					rec.v = uv.y;
+					const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
+					double theta = samples[i].theta;
+					double phi = samples[i].phi;
+					for (int n = 0; n < n_coeffs; ++n) {
+						const double value = cosine * samples[i].Ylm[n];
+						tri->coeffs[idx][n] += albedo * value / M_PI;
 					}
 				}
 			}
