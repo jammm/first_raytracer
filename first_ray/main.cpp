@@ -152,7 +152,6 @@ Scene* prt_test(const float& aspect)
 		list[i++] = triangle.get();
 	}
 
-
 	Vector3f lookfrom(25, 25, 200.0f);
 	Vector3f lookat(25, 25, 0);
 	constexpr float dist_to_focus = 10.0f;
@@ -162,7 +161,7 @@ Scene* prt_test(const float& aspect)
 
 	return new Scene(
 		new hitable_list(std::vector<hitable*>(list, list + i), i),
-		new environment_map("data/ennis.hdr"),
+		new environment_map("data/test.hdr"),
 		cam, lights
 	);
 	//return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -303,7 +302,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 1024;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -407,7 +406,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path_prt renderer(scene.get(), ns);
+    path renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {

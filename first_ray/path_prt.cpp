@@ -8,7 +8,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 {
 	samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
 	SH_project_environment();
-	SH_project_unshadowed_diffuse_transfer();
+	SH_project_shadowed_diffuse_transfer();
 
 	// Acual rendering after PRT only needs 1spp
 	//n_samples = 1;
@@ -109,8 +109,11 @@ void path_prt::SH_project_environment()
 	for (int i = 0; i < n_samples; ++i) {
 		float theta = samples[i].theta;
 		float phi = samples[i].phi;
+		hit_record rec;
+		ray r(Vector3f(0, 0, 0), samples[i].direction);
 		for (int n = 0; n < n_coeffs; ++n) {
-			Li_coeffs[n] += scene->env_map->eval(theta, phi) * samples[i].Ylm[n];
+
+			Li_coeffs[n] += scene->env_map->eval(r, rec, -1) * samples[i].Ylm[n];
 		}
 	}
 	// Divide the result by weight and number of samples

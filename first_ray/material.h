@@ -245,16 +245,16 @@ public:
 		rec.u = phi / (2.0f * M_PI);
 		rec.v = theta / (M_PI);
 
-		if (depth == 0)
-			return FromSrgb(env_map_tex->value(rec));
+        if (depth == 0)
+            return FromSrgb(env_map_tex->value(rec));
 
 		return env_map_tex->value(rec);
 	}
-	Vector3f eval(const double &theta, const double &phi) const
+	Vector3f eval(const float &theta, const float &phi) const
 	{
 		hit_record rec;
-		rec.u = phi / (2.0f * M_PI);
-		rec.v = theta / (M_PI);
+		rec.u = phi / 2*M_PI;
+		rec.v = theta / M_PI;
 
 		return env_map_tex->value(rec);
 	}
