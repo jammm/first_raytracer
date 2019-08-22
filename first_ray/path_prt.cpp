@@ -119,7 +119,7 @@ void path_prt::SH_project_environment()
         for (int n = 0; n < n_coeffs; ++n)
         {
 
-            Li_coeffs[n] += scene->env_map->eval(r, rec, -1) * samples[i].Ylm[n];
+            Li_coeffs[n] += scene->env_map->eval(r, rec, -1, (theta + M_PI)/(M_PI), (phi+M_PI/2)/(2.0f*M_PI)) * samples[i].Ylm[n];
         }
     }
     // Divide the result by weight and number of samples

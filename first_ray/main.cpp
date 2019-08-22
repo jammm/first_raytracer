@@ -327,7 +327,6 @@ int main(int argc, const char **argv)
     // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
     tf::Taskflow tf;
 
-
     // Start performance timer
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
@@ -406,7 +405,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path renderer;
+    path_prt renderer(scene.get(), ns);
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
@@ -453,8 +452,6 @@ int main(int argc, const char **argv)
     });
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-
 
     auto future = tf.dispatch();
 
