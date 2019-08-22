@@ -112,14 +112,12 @@ void path_prt::SH_project_environment()
     // For each sample
     for (int i = 0; i < n_samples; ++i)
     {
-        float theta = samples[i].theta;
-        float phi = samples[i].phi;
-        hit_record rec;
+        hit_record envmap_rec;
         ray r(Vector3f(0, 0, 0), samples[i].direction);
         for (int n = 0; n < n_coeffs; ++n)
         {
 
-            Li_coeffs[n] += scene->env_map->eval(r, rec, -1, (theta + M_PI)/(M_PI), (phi+M_PI/2)/(2.0f*M_PI)) * samples[i].Ylm[n];
+            Li_coeffs[n] += scene->env_map->eval(r, envmap_rec, -1) * samples[i].Ylm[n];
         }
     }
     // Divide the result by weight and number of samples
