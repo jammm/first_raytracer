@@ -133,39 +133,39 @@ hitable *cornell_box(camera &cam, const float &aspect)
 
 Scene* prt_test(const float& aspect)
 {
-	hitable** list = new hitable * [20000];
-	int i = 0;
+    hitable** list = new hitable * [20000];
+    int i = 0;
 
-	Vector3f reflectance(1.0f, 1.0f, 1.0f);
-	material* specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
-		new constant_texture(reflectance), 100.0f);
-	material* lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
-	material* mirror = new metal(Vector3f(1, 1, 1), 0.0f);
-	material* lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+    Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    material* specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
+        new constant_texture(reflectance), 100.0f);
+    material* lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    material* mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+    material* lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
-	std::vector<hitable*> lights;
-	//lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
-	static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/plane.obj", lights);
+    std::vector<hitable*> lights;
+    //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/plane.obj", lights);
 
-	for (auto triangle : mesh)
-	{
-		list[i++] = triangle.get();
-	}
+    for (auto triangle : mesh)
+    {
+        list[i++] = triangle.get();
+    }
 
-	Vector3f lookfrom(25, 25, 200.0f);
-	Vector3f lookat(25, 25, 0);
-	constexpr float dist_to_focus = 10.0f;
-	constexpr float aperture = 0.0f;
-	constexpr float vfov = 40.0f;
-	camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+    Vector3f lookfrom(25, 25, 200.0f);
+    Vector3f lookat(25, 25, 0);
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 40.0f;
+    camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-	return new Scene(
-		new hitable_list(std::vector<hitable*>(list, list + i), i),
-		new environment_map("data/test.hdr"),
-		cam, lights
-	);
-	//return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
-	//return new hitable_list(std::vector<hitable*>(list, list + i), i);
+    return new Scene(
+        new hitable_list(std::vector<hitable*>(list, list + i), i),
+        new environment_map("data/test.hdr"),
+        cam, lights
+    );
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
 Scene *furnace_test_scene(const float &aspect)
@@ -184,16 +184,16 @@ Scene *furnace_test_scene(const float &aspect)
     //list[i++] = new sphere(Vector3f(0, 0, 0), 0.3f, lambert);
     //list[i++] = new sphere(Vector3f(0.30f, 50, 0), 50.0f, mirror);
 
-	std::vector<hitable*> lights;
+    std::vector<hitable*> lights;
     //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
-	
-	static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", lights);
+    
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", lights);
 
-	for (auto triangle : mesh)
-	{
-		list[i++] = triangle.get();
-	}
-	
+    for (auto triangle : mesh)
+    {
+        list[i++] = triangle.get();
+    }
+    
 
     Vector3f lookfrom(0, 125, 175.0f);
     Vector3f lookat(0, 50, 0);
@@ -203,19 +203,19 @@ Scene *furnace_test_scene(const float &aspect)
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-		parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-		new environment_map("data/ennis.hdr"),
-		cam, lights
-	);
+        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        new environment_map("data/ennis.hdr"),
+        cam, lights
+    );
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
-	//return new hitable_list(std::vector<hitable*>(list, list + i), i);
+    //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
 Scene *cornell_box_obj(const float &aspect)
 {
     hitable **list = new hitable*[300];
     int i = 0;
-	std::vector<hitable*> lights;
+    std::vector<hitable*> lights;
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-MIS-Test.obj", lights);
 
     for (auto triangle : mesh)
@@ -228,17 +228,17 @@ Scene *cornell_box_obj(const float &aspect)
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
-	camera cam;
+    camera cam;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     //return new hitable_list(std::vector<hitable *>(list, list + i), i);
     //return new bvh_node(list, i, 0.0f, 0.0f);
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
-	return new Scene(
-		parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-		new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
-		cam, lights
-	);
+    return new Scene(
+        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+        cam, lights
+    );
 }
 
 hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -328,10 +328,10 @@ int main(int argc, const char **argv)
     tf::Taskflow tf;
 
 
-	// Start performance timer
+    // Start performance timer
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
-	// Initialize scene
+    // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
     std::unique_ptr<Scene> scene(prt_test(float(nx) / float(ny)));
 
