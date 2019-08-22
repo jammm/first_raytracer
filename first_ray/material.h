@@ -225,7 +225,7 @@ class environment_map : public material
 public:
     environment_map(std::string env_map_filename) : env_map_filename(env_map_filename)
     {
-        auto env_map_img = std::make_unique<image>(env_map_filename);
+        auto env_map_img = std::make_unique<image>(env_map_filename, formats::STBI_HDR);
         env_map_tex = std::make_unique<image_texture>(env_map_img);
     }
     environment_map(std::unique_ptr<texture> e)
@@ -233,7 +233,7 @@ public:
         env_map_tex = std::move(e);
     }
     virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const { return false; }
-    Vector3f eval(const ray& r_in, hit_record rec, const int &depth) const
+    Vector3f eval(const ray& r_in, hit_record rec, const int &depth, const float theeta=0, const float phii=06) const
     {
         const Vector3f direction = unit_vector(r_in.d);
         float phi = std::atan2(direction.x(), -direction.z());
@@ -245,8 +245,13 @@ public:
         rec.u = phi / (2.0f * M_PI);
         rec.v = theta / (M_PI);
 
-        if (depth == 0)
-            return FromSrgb(env_map_tex->value(rec));
+        return env_map_tex->value(rec);
+    }
+    Vector3f eval(const float &theta, const float &phi) const
+    {
+        hit_record rec;
+        rec.u = (phi + M_PI*2) / (2.0f*M_PI);
+        rec.v = (theta + M_PI) / M_PI;
 
         return env_map_tex->value(rec);
     }

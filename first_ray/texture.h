@@ -64,9 +64,19 @@ public:
         if (j < 0) return Vector3f(0, 0, 0);
         if (i > nx - 1) return Vector3f(0, 0, 0);
         if (j > ny - 1) return Vector3f(0, 0, 0);
-        const float r = int(img->data[3 * i + 3 * nx*j]) / 255.0f;
-        const float g = int(img->data[3 * i + 3 * nx*j + 1]) / 255.0f;
-        const float b = int(img->data[3 * i + 3 * nx*j + 2]) / 255.0f;
+        float r, g, b;
+        if (img->type == formats::STBI_HDR)
+        {
+            r = img->dataf[3 * i + 3 * nx * j];
+            g = img->dataf[3 * i + 3 * nx * j + 1];
+            b = img->dataf[3 * i + 3 * nx * j + 2];
+        }
+        else
+        {
+            r = int(img->data[3 * i + 3 * nx * j]) / 255.0f;
+            g = int(img->data[3 * i + 3 * nx * j + 1]) / 255.0f;
+            b = int(img->data[3 * i + 3 * nx * j + 2]) / 255.0f;
+        }
 
         return Vector3f(r, g, b);
     }

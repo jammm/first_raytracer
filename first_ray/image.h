@@ -20,7 +20,7 @@ class image
     bool loaded_from_stbi;
 public:
     image() {}
-    image(const std::string &filename);
+    image(const std::string &filename, const formats &format);
 
     image(unsigned char *data, const int &nx, const int &ny, const int &nn) : data(data), nx(nx), ny(ny), nn(nn),
 																			  filename("out_test"), loaded_from_stbi(false)
@@ -32,6 +32,8 @@ public:
 
     std::string filename;
     unsigned char *data;
+    formats type;
+    float *dataf;
     int nx;
     int ny;
     // number of channels

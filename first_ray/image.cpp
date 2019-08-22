@@ -8,9 +8,16 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
-image::image(const std::string &filename) : filename(filename), loaded_from_stbi(true)
+image::image(const std::string &filename, const formats &format = formats::STBI_JPG) : filename(filename), loaded_from_stbi(true), type(format)
 {
-    data = stbi_load(filename.c_str(), &nx, &ny, &nn, 0);
+    switch (format)
+    {
+    case formats::STBI_HDR:
+        dataf = stbi_loadf(filename.c_str(), &nx, &ny, &nn, 0);
+        break;
+    default:
+        data = stbi_load(filename.c_str(), &nx, &ny, &nn, 0);
+    }
 }
 
 int image::save_image(formats type)
@@ -51,5 +58,10 @@ int image::save_image(formats type)
 image::~image()
 {
     if (loaded_from_stbi)
-        stbi_image_free(data);
+    {
+        if (type == formats::STBI_HDR)
+            stbi_image_free(dataf);
+        else
+            stbi_image_free(data);
+    }
 }
