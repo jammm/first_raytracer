@@ -8,7 +8,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 {
     samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
     SH_project_environment();
-    SH_project_full_global_illumination();
+    SH_project_shadowed_diffuse_transfer();
 
     // Acual rendering after PRT only needs 1spp
     //n_samples = 1;
@@ -24,6 +24,7 @@ void path_prt::SH_project_unshadowed_diffuse_transfer()
     {
         triangle* tri = dynamic_cast<triangle*>(i);
         if (tri == nullptr) continue;
+        tri->coeffs.reset(new SHCoefficients[3]);
         for (int idx = 0; idx < 3; ++idx)
         {
             const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
