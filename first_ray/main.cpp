@@ -204,7 +204,7 @@ Scene *furnace_test_scene(const float &aspect)
 
     return new Scene(
         parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map("data/rural_winter_roadside_4k.hdr"),
+        new environment_map("data/small_empty_house_4k.hdr"),
         cam, lights
     );
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -405,7 +405,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path renderer;
+    path_prt renderer(scene.get(), ns);
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
