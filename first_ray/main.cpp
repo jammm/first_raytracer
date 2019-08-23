@@ -195,7 +195,7 @@ Scene *furnace_test_scene(const float &aspect)
     }
     
 
-    Vector3f lookfrom(0, 125, 175.0f);
+    Vector3f lookfrom(50, 125, 175.0f);
     Vector3f lookat(0, 50, 0);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
@@ -204,7 +204,7 @@ Scene *furnace_test_scene(const float &aspect)
 
     return new Scene(
         parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map("data/ennis.hdr"),
+        new environment_map("data/rural_winter_roadside_4k.hdr"),
         cam, lights
     );
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -302,7 +302,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 1024;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -332,7 +332,7 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(prt_test(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(furnace_test_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
@@ -405,7 +405,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path_prt renderer(scene.get(), ns);
+    path renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {

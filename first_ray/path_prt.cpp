@@ -103,6 +103,11 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
     }
 }
 
+void path_prt::SH_project_full_global_illumination()
+{
+
+}
+
 // Here, n_coeffs = n_bands*n_bands and n_samples = sqrt_n_samples*sqrt_n_samples
 void path_prt::SH_project_environment()
 {

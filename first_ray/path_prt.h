@@ -17,11 +17,14 @@ struct path_prt
     void SH_project_environment();
     void SH_project_unshadowed_diffuse_transfer();
     void SH_project_shadowed_diffuse_transfer();
+    void SH_project_full_global_illumination();
 
     const Scene *scene;
     int n_samples;
+    // Coefficients for environment map 
     std::unique_ptr<Vector3f[]> Li_coeffs;
     std::unique_ptr<PRT::SHSample[]> samples;
+    std::vector<PRT::SHCoefficients> coeffs_buffer;
 };
 
 #endif
