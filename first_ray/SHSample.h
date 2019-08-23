@@ -9,6 +9,7 @@ namespace PRT
 
 	constexpr int n_bands = 3;
 	constexpr int n_coeffs = n_bands * n_bands;
+    constexpr unsigned int max_depth = 50;
 	struct SHSample
 	{
 		Vector3f direction;

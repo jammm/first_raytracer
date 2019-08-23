@@ -95,7 +95,7 @@ public:
                 rec.v = uvhit.y;
 				rec.uv.x = u;
 				rec.uv.y = v;
-                rec.mat_ptr = mat_ptr.get();
+                rec.mat_ptr = mat_ptr;
                 rec.obj_name = mesh->name;
 				rec.obj = (hitable*)this;
                 return true;
@@ -148,7 +148,7 @@ public:
         rec.t = 1.0f;
         rec.p = random_point;
         rec.normal = (1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]];
-        rec.mat_ptr = mat_ptr.get();
+        rec.mat_ptr = mat_ptr;
         rec.obj_name = mesh->name;
         Point2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
         rec.u = uvhit.x;
@@ -164,9 +164,9 @@ public:
     const Vector3f edge1;
     const Vector3f edge2;
     std::shared_ptr<triangle_mesh> mesh;
-    std::shared_ptr<material> mat_ptr;
+    material *mat_ptr;
 	// For PRT
-	PRT::SHCoefficients coeffs[3];
+	std::unique_ptr<PRT::SHCoefficients[]> coeffs;
 };
 
 std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);
