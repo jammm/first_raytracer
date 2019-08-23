@@ -7,16 +7,16 @@
 namespace PRT
 {
 
-    constexpr int n_bands = 5;
-    constexpr int n_coeffs = n_bands * n_bands;
-    constexpr int max_depth = 10;
-    struct SHSample
-    {
-        Vector3f direction;
-        float theta, phi;
-        std::array<float, n_coeffs> Ylm;
-    };
-    typedef std::array<Vector3f, n_coeffs> SHCoefficients;
+	constexpr int n_bands = 3;
+	constexpr int n_coeffs = n_bands * n_bands;
+    constexpr unsigned int max_depth = 50;
+	struct SHSample
+	{
+		Vector3f direction;
+		float theta, phi;
+		std::array<float, n_coeffs> Ylm;
+	};
+	typedef std::array<Vector3f, n_coeffs> SHCoefficients;
 }
 
 #endif
