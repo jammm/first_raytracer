@@ -14,7 +14,6 @@
 #include "pdf.h"
 #include "path.h"
 #include "path_prt.h"
-#include "ao.h"
 #include "debug_renderer.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
@@ -137,6 +136,13 @@ Scene* prt_test(const float& aspect)
     hitable** list = new hitable * [20000];
     int i = 0;
 
+    Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    material* specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
+        new constant_texture(reflectance), 100.0f);
+    material* lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    material* mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+    material* lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+
     std::vector<hitable*> lights;
     //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/plane.obj", lights);
@@ -167,12 +173,12 @@ Scene *furnace_test_scene(const float &aspect)
     hitable **list = new hitable*[20000];
     int i = 0;
 
-    //Vector3f reflectance(1.0f, 1.0f, 1.0f);
-    //material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
-    //                                    new constant_texture(reflectance), 100.0f);
-    //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
-    //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
-    //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+    Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
+                                        new constant_texture(reflectance), 100.0f);
+    material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+    material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
     //list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
     //list[i++] = new sphere(Vector3f(0, 0, 0), 0.3f, lambert);
@@ -188,8 +194,8 @@ Scene *furnace_test_scene(const float &aspect)
         list[i++] = triangle.get();
     }
     
-    Vector3f lookfrom(0, 125, 175.0f);
-    Vector3f lookat(0, 50, 0);
+    Vector3f lookfrom(-42.7181f, 133.526f, -202.406f);
+    Vector3f lookat(-42.5467f, 133.149f, -201.496f);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
@@ -197,7 +203,7 @@ Scene *furnace_test_scene(const float &aspect)
 
     return new Scene(
         parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map("data/small_empty_house_4k.hdr"),
+        new environment_map("data/ennis.hdr"),
         cam, lights
     );
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -230,33 +236,6 @@ Scene *cornell_box_obj(const float &aspect)
     return new Scene(
         parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
         new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
-        cam, lights
-    );
-}
-
-Scene* cornell_box_ao(const float& aspect)
-{
-    hitable** list = new hitable * [300];
-    int i = 0;
-    std::vector<hitable*> lights;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
-
-    for (auto triangle : mesh)
-    {
-        list[i++] = triangle.get();
-    }
-
-    Vector3f lookfrom(0, 1, 3.9f);
-    Vector3f lookat(0, 1, 0);
-    constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 40.0f;
-    camera cam;
-    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
-
-    return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(1.0f, 1.0f, 1.0f))),
         cam, lights
     );
 }
@@ -322,7 +301,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -425,7 +404,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path_prt renderer(scene.get(), ns);
+    path renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
