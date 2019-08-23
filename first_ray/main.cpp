@@ -197,7 +197,7 @@ Scene *furnace_test_scene(const float &aspect)
 
     return new Scene(
         parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map("data/ennis.hdr"),
+        new environment_map("data/small_empty_house_4k.hdr"),
         cam, lights
     );
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
