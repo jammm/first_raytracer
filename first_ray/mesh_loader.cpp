@@ -76,7 +76,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
         else
         {
             // Use placeholder material (lambertian with white reflectance)
-            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(1, 1, 1)));
+            mat = std::make_unique<lambertian>(new constant_texture(Vector3f(0.5, 0.5, 0.5)));
             name = aiString("unknown");
         }
 

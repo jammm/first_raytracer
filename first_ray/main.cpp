@@ -194,9 +194,8 @@ Scene *furnace_test_scene(const float &aspect)
         list[i++] = triangle.get();
     }
     
-
-    Vector3f lookfrom(50, 125, 175.0f);
-    Vector3f lookat(0, 50, 0);
+    Vector3f lookfrom(-42.7181f, 133.526f, -202.406f);
+    Vector3f lookat(-42.5467f, 133.149f, -201.496f);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
@@ -204,7 +203,7 @@ Scene *furnace_test_scene(const float &aspect)
 
     return new Scene(
         parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map("data/small_empty_house_4k.hdr"),
+        new environment_map("data/ennis.hdr"),
         cam, lights
     );
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
@@ -302,7 +301,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
@@ -405,7 +404,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path_prt renderer(scene.get(), ns);
+    path renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
@@ -425,7 +424,7 @@ int main(int argc, const char **argv)
                     assert(std::isfinite(sample[0])
                            && std::isfinite(sample[1])
                            && std::isfinite(sample[2]));
-                    col += de_nan(sample);
+                    col += sample;
                 }
                 col /= float(ns);
 
