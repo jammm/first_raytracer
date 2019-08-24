@@ -81,12 +81,12 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
                 for (int i = 0; i < n_samples; ++i)
                 {
                     const Vector3f& direction = samples[i].direction;
-                    const ray r(v, direction);
+                    const float cosine = std::max(dot(n, direction), 0.0f);
+                    if (cosine == 0.0f) continue;
+                    const ray r(v + (EPSILON * n), direction);
                     hit_record rec;
                     if (!scene->world->hit(r, EPSILON, FLT_MAX, rec))
                     {
-                        const float cosine = std::max(dot(n, direction), 0.0f);
-                        if (cosine == 0.0f) continue;
                         rec.p = v;
                         rec.u = uv.x;
                         rec.v = uv.y;
