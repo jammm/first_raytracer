@@ -194,8 +194,8 @@ Scene *furnace_test_scene(const float &aspect)
         list[i++] = triangle.get();
     }
     
-    Vector3f lookfrom(-42.7181f, 133.526f, -202.406f);
-    Vector3f lookat(-42.5467f, 133.149f, -201.496f);
+    Vector3f lookfrom(0, 125, 175.0f);
+    Vector3f lookat(0, 50, 0);
     constexpr float dist_to_focus = 10.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;

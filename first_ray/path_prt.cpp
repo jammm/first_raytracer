@@ -114,23 +114,39 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
     tf.dispatch().get();
 }
 
+// SH projection for diffuse inter-reflection
+// It calculates coefficients for each vertex, adding
+// coefficients calculated from direct lighting (diffuse shadowed SH projection).
+// The process is repeated again for the next bounce by storing calcualted coefficients
+// and using them as the base for the next bounce.
+// Finally, every vertex's coefficients are summed together from all bounces,
+// giving the final transfer vector.
+
 void path_prt::SH_project_full_global_illumination()
 {
     hitable_list* world = dynamic_cast<hitable_list*>(scene->world.get());
     assert(world != nullptr);
+    // Allocate memory for coefficients buffer
+    // coeffs_buffer contains coefficients for each vertex stored separately per bounce
     coeffs_buffer = std::vector<SHCoefficients[max_depth]>(world->list.size() * 3);
-    // Fill coefficients on depth 0 using shadowed SH projection
+    // Fill coefficients on depth 0 (direct illumination) using shadowed SH projection
     SH_project_shadowed_diffuse_transfer();
     const unsigned int world_size = world->list.size();
 
     tf::Taskflow tf;
+    // For upto 10 bounces
+    // TODO: Use max_depth instead of hardcoding 10
     tf.parallel_for(0, 10, 1, [&](unsigned int depth)
     {
         std::cout << depth << std::endl;
+        // Loop through all triangles in scene
         for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
         {
+            // Get current object. Ignore if object isn't triangle
             triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
+
             if (tri == nullptr) continue;
+            // Process each vertex of triangle
             for (int idx = 0; idx < 3; ++idx)
             {
                 const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
@@ -138,10 +154,12 @@ void path_prt::SH_project_full_global_illumination()
                 const Point2f uv = tri->mesh->uv[tri->V[idx]];
                 for (int i = 0; i < n_samples; ++i)
                 {
+                    // Get precomputed sample direction
                     const Vector3f& direction = samples[i].direction;
+                    const ray r(v + (EPSILON * n), direction);
 
-                    const ray r(v, direction);
                     hit_record rec;
+                    // Cast a ray to the scene
                     if (scene->world->hit(r, EPSILON, FLT_MAX, rec))
                     {
                         const float cosine = std::max(dot(n, direction), 0.0f);
@@ -150,18 +168,20 @@ void path_prt::SH_project_full_global_illumination()
                         auto& tri_coeffs = dynamic_cast<triangle*>(rec.obj)->coeffs;
                         SHCoefficients cur_coeffs = {};
 
+                        // Interpolate coefficients on hit point
                         for (int n = 0; n < n_coeffs; ++n)
                         {
+                            // Use coefficients from previous bounce
                             cur_coeffs[n] += (1 - uv.x - uv.y) * coeffs_buffer[obj_idx][depth-1][n]
                                                         + uv.x * coeffs_buffer[obj_idx + 1][depth-1][n]
                                                         + uv.y * coeffs_buffer[obj_idx + 2][depth-1][n];
-
                         }
                         const Point2f &uv = rec.uv;
                         rec.p = v;
                         rec.u = uv.x;
                         rec.v = uv.y;
                         const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
+                        // Calculate coefficients for current bounce
                         for (int n = 0; n < n_coeffs; ++n)
                         {
                             const Vector3f value = cosine * cur_coeffs[n];
@@ -172,6 +192,7 @@ void path_prt::SH_project_full_global_illumination()
 
             }
         }
+        // Normalize coefficients
         for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
         {
             // Divide the result by weight and number of samples
@@ -185,10 +206,14 @@ void path_prt::SH_project_full_global_illumination()
         }
     });
     tf.dispatch().get();
+
+    // Sum all coefficients for current bounce
     for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
     {
         triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
         if (tri == nullptr) continue;
+
+        // Each triangle vertex has its own coefficient vector
         for (unsigned int depth = 1; depth <= max_depth; ++depth)
             for (int idx = 0; idx < 3; ++idx)
                 for (int n = 0; n < n_coeffs; ++n)
