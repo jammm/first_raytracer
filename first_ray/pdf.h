@@ -22,7 +22,7 @@ inline Vector3f hemisphere_to_cosine_direction(float &theta, float& phi)
 {
     const float r0 = gen_cano_rand(), r1 = gen_cano_rand();
     const float r = sqrt(r0);
-    theta = acos(r);
+    theta = asin(r);
     phi = 2 * (float)M_PI * r1;
     const float x = r * cos(phi);
     const float y = r * sin(phi);

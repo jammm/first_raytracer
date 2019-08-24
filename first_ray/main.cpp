@@ -301,7 +301,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 1024;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
