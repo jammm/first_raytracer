@@ -22,7 +22,7 @@ struct path_prt
     const Scene *scene;
     int n_samples;
     // Coefficients for environment map 
-    std::unique_ptr<Vector3f[]> Li_coeffs;
+    PRT::SHCoefficients Li_coeffs;
     std::unique_ptr<PRT::SHSample[]> samples;
     std::vector<PRT::SHCoefficients[PRT::max_depth]> coeffs_buffer;
 };
