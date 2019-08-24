@@ -8,7 +8,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 {
     samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
     SH_project_environment();
-    SH_project_shadowed_diffuse_transfer();
+    SH_project_unshadowed_diffuse_transfer();
 
     // Acual rendering after PRT only needs 1spp
     //n_samples = 1;
@@ -24,6 +24,8 @@ void path_prt::SH_project_unshadowed_diffuse_transfer()
     {
         triangle* tri = dynamic_cast<triangle*>(i);
         if (tri == nullptr) continue;
+
+        // Initialize per-vertex SH coefficients per triangle
         tri->coeffs.reset(new SHCoefficients[3]);
         for (int idx = 0; idx < 3; ++idx)
         {
@@ -65,6 +67,8 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
     {
         triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
         if (tri == nullptr) continue;
+
+        // Initialize per-vertex SH coefficients per triangle
         tri->coeffs.reset(new SHCoefficients[3]);
         for (int idx = 0; idx < 3; ++idx)
         {
@@ -188,9 +192,7 @@ void path_prt::SH_project_full_global_illumination()
 // Here, n_coeffs = n_bands*n_bands and n_samples = sqrt_n_samples*sqrt_n_samples
 void path_prt::SH_project_environment()
 {
-    Li_coeffs.reset(new Vector3f[n_coeffs]);
-    std::memset(Li_coeffs.get(), 0, n_coeffs * sizeof(Vector3f));
-
+    Li_coeffs = {};
     // For each sample
     for (int i = 0; i < n_samples; ++i)
     {
@@ -198,7 +200,6 @@ void path_prt::SH_project_environment()
         ray r(Vector3f(0, 0, 0), samples[i].direction);
         for (int n = 0; n < n_coeffs; ++n)
         {
-
             Li_coeffs[n] += scene->env_map->eval(r, envmap_rec, -1) * samples[i].Ylm[n];
         }
     }
@@ -232,12 +233,9 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
             for (int i = 0; i < n_coeffs; ++i)
             {
                 tr_coeffs[i] += (1 - uv.x - uv.y) * tri_coeffs[0][i] + uv.x * tri_coeffs[1][i] + uv.y * tri_coeffs[2][i];
+                result += tr_coeffs[i];
             }
-
-            for (int i = 0; i < n_coeffs; ++i)
-            {
-                result += Li_coeffs[i] * tr_coeffs[i];
-            }
+            //assert(result.e[0] > 0 && result.e[1] > 0 && result.e[2] > 0);
             return result;
         }
     }
