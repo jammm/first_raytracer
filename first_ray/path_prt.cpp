@@ -9,7 +9,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 {
     samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
     SH_project_environment();
-    SH_project_shadowed_diffuse_transfer();
+    SH_project_full_global_illumination();
 
     // Acual rendering after PRT only needs 1spp
     //n_samples = 1;
@@ -134,9 +134,9 @@ void path_prt::SH_project_full_global_illumination()
     const unsigned int world_size = world->list.size();
 
     tf::Taskflow tf;
-    // For upto 10 bounces
-    // TODO: Use max_depth instead of hardcoding 10
-    tf.parallel_for(0, 10, 1, [&](unsigned int depth)
+    // For upto *max_depth* bounces. Start from depth 1 instead of 0 as 0 was already
+    // calculated by SH_project_shadowed_diffuse_transfer()
+    tf.parallel_for(1, max_depth, 1, [&](unsigned int depth)
     {
         std::cout << depth << std::endl;
         // Loop through all triangles in scene
