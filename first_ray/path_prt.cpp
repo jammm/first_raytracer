@@ -1,6 +1,7 @@
 #include "path_prt.h"
 #include "prt.h"
 #include "triangle.h"
+#include <taskflow/taskflow.hpp>
 
 using namespace PRT;
 
@@ -8,7 +9,7 @@ path_prt::path_prt(Scene *scene, int &n_samples) : scene(scene), n_samples(n_sam
 {
     samples = PreComputeSamples(std::sqrt(n_samples), n_bands);
     SH_project_environment();
-    SH_project_unshadowed_diffuse_transfer();
+    SH_project_shadowed_diffuse_transfer();
 
     // Acual rendering after PRT only needs 1spp
     //n_samples = 1;
@@ -63,50 +64,54 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
 {
     hitable_list* world = dynamic_cast<hitable_list*>(scene->world.get());
     assert(world != nullptr);
-    for (unsigned int obj_idx=0; obj_idx < world->list.size(); ++obj_idx)
+    tf::Taskflow tf;
+    int world_size = world->list.size();
+    tf.parallel_for(0, world_size, 1, [&](int obj_idx)
     {
         triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
-        if (tri == nullptr) continue;
-
-        // Initialize per-vertex SH coefficients per triangle
-        tri->coeffs.reset(new SHCoefficients[3]);
-        for (int idx = 0; idx < 3; ++idx)
+        if (tri != nullptr)
         {
-            const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
-            const Vector3f& n = tri->mesh->normals[tri->V[idx]];
-            const Point2f uv = tri->mesh->uv[tri->V[idx]];
-            for (int i = 0; i < n_samples; ++i)
+            // Initialize per-vertex SH coefficients per triangle
+            tri->coeffs.reset(new SHCoefficients[3]);
+            for (int idx = 0; idx < 3; ++idx)
             {
-                const Vector3f& direction = samples[i].direction;
-                const ray r(v, direction);
-                hit_record rec;
-                if (!scene->world->hit(r, EPSILON, FLT_MAX, rec))
+                const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
+                const Vector3f& n = tri->mesh->normals[tri->V[idx]];
+                const Point2f uv = tri->mesh->uv[tri->V[idx]];
+                for (int i = 0; i < n_samples; ++i)
                 {
-                    const float cosine = std::max(dot(n, direction), 0.0f);
-                    if (cosine == 0.0f) continue;
-                    rec.p = v;
-                    rec.u = uv.x;
-                    rec.v = uv.y;
-                    const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
-                    for (int n = 0; n < n_coeffs; ++n)
+                    const Vector3f& direction = samples[i].direction;
+                    const ray r(v, direction);
+                    hit_record rec;
+                    if (!scene->world->hit(r, EPSILON, FLT_MAX, rec))
                     {
-                        const float value = cosine * samples[i].Ylm[n];
-                        tri->coeffs[idx][n] += albedo * value / M_PI;
+                        const float cosine = std::max(dot(n, direction), 0.0f);
+                        if (cosine == 0.0f) continue;
+                        rec.p = v;
+                        rec.u = uv.x;
+                        rec.v = uv.y;
+                        const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
+                        for (int n = 0; n < n_coeffs; ++n)
+                        {
+                            const float value = cosine * samples[i].Ylm[n];
+                            tri->coeffs[idx][n] += albedo * value / M_PI;
+                        }
+                    }
+                }
+                // Divide the result by weight and number of samples
+                const float factor = 4.0 * M_PI / n_samples;
+                for (int i = 0; i < n_coeffs; ++i)
+                {
+                    tri->coeffs[idx][i] *= factor;
+                    if (!coeffs_buffer.empty())
+                    {
+                        coeffs_buffer[obj_idx + idx][0][i] = tri->coeffs[idx][i];
                     }
                 }
             }
-            // Divide the result by weight and number of samples
-            const float factor = 4.0 * M_PI / n_samples;
-            for (int i = 0; i < n_coeffs; ++i)
-            {
-                tri->coeffs[idx][i] *= factor;
-                if (!coeffs_buffer.empty())
-                {
-                    coeffs_buffer[obj_idx + idx][0][i] = tri->coeffs[idx][i];
-                }
-            }
         }
-    }
+    });
+    tf.dispatch().get();
 }
 
 void path_prt::SH_project_full_global_illumination()
@@ -118,7 +123,8 @@ void path_prt::SH_project_full_global_illumination()
     SH_project_shadowed_diffuse_transfer();
     const unsigned int world_size = world->list.size();
 
-    for (unsigned int depth = 1; depth <= 10; ++depth)
+    tf::Taskflow tf;
+    tf.parallel_for(0, 10, 1, [&](unsigned int depth)
     {
         std::cout << depth << std::endl;
         for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
@@ -177,7 +183,8 @@ void path_prt::SH_project_full_global_illumination()
                 coeffs_buffer[obj_idx + 2][depth][n] *= factor;
             }
         }
-    }
+    });
+    tf.dispatch().get();
     for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
     {
         triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
@@ -233,9 +240,8 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
             for (int i = 0; i < n_coeffs; ++i)
             {
                 tr_coeffs[i] += (1 - uv.x - uv.y) * tri_coeffs[0][i] + uv.x * tri_coeffs[1][i] + uv.y * tri_coeffs[2][i];
-                result += tr_coeffs[i];
+                result += tr_coeffs[i] * Li_coeffs[i];
             }
-            //assert(result.e[0] > 0 && result.e[1] > 0 && result.e[2] > 0);
             return result;
         }
     }
