@@ -126,99 +126,95 @@ void path_prt::SH_project_full_global_illumination()
 {
     hitable_list* world = dynamic_cast<hitable_list*>(scene->world.get());
     assert(world != nullptr);
-    // Allocate memory for coefficients buffer
-    // coeffs_buffer contains coefficients for each vertex stored separately per bounce
-    coeffs_buffer = std::vector<SHCoefficients[max_depth]>(world->list.size() * 3);
-    // Fill coefficients on depth 0 (direct illumination) using shadowed SH projection
-    SH_project_shadowed_diffuse_transfer();
     const unsigned int world_size = world->list.size();
 
     tf::Taskflow tf;
-    // For upto *max_depth* bounces. Start from depth 1 instead of 0 as 0 was already
-    // calculated by SH_project_shadowed_diffuse_transfer()
-    tf.parallel_for(1, max_depth, 1, [&](unsigned int depth)
+    // Loop through all triangles in scene
+    tf.parallel_for(0U, world_size, 1U, [&](int obj_idx)
     {
-        std::cout << depth << std::endl;
-        // Loop through all triangles in scene
-        for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
+        // Get current object. Ignore if object isn't triangle
+        triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
+
+        //if (tri == nullptr) continue;
+        // Process each vertex of triangle
+        // Initialize per-vertex SH coefficients per triangle
+        tri->coeffs.reset(new SHCoefficients[3]);
+        for (int idx = 0; idx < 3; ++idx)
         {
-            // Get current object. Ignore if object isn't triangle
-            triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
-
-            if (tri == nullptr) continue;
-            // Process each vertex of triangle
-            for (int idx = 0; idx < 3; ++idx)
+            const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
+            const Vector3f n = tri->mesh->normals[tri->V[idx]];
+            const Point2f uv = tri->mesh->uv[tri->V[idx]];
+            //Vector3f result(0.0f, 0.0f, 0.0f);
+            for (int i = 0; i < n_samples; ++i)
             {
-                const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
-                const Vector3f& n = tri->mesh->normals[tri->V[idx]];
-                const Point2f uv = tri->mesh->uv[tri->V[idx]];
-                for (int i = 0; i < n_samples; ++i)
+                // Get precomputed sample direction
+                const Vector3f v_direction = cosine_pdf(n).generate();
+                ray r(v + (EPSILON * n), v_direction);
+                Vector3f throughput(1.0f, 1.0f, 1.0f);
+                Vector3f result(0.0f, 0.0f, 0.0f);
+                hit_record hrec;
+                hrec.p = v;
+                hrec.normal = n;
+                hrec.u = uv.x;
+                hrec.v = uv.y;
+                const Vector3f v_bsdf = tri->mat_ptr->eval_bsdf(r, hrec, r.direction());
+                // Set initial BSDF to be used in case current vertex is directly visible from envmap
+                Vector3f bsdf = v_bsdf;
+
+                for (unsigned int depth = 0; depth < max_depth; ++depth)
                 {
-                    // Get precomputed sample direction
-                    const Vector3f& direction = samples[i].direction;
-                    const ray r(v + (EPSILON * n), direction);
-
-                    hit_record rec;
+                    scatter_record srec;
                     // Cast a ray to the scene
-                    if (scene->world->hit(r, EPSILON, FLT_MAX, rec))
+                    if (scene->world->hit(r, EPSILON, FLT_MAX, hrec))
                     {
-                        const float cosine = std::max(dot(n, direction), 0.0f);
-                        if (cosine == 0.0f) continue;
-                        // Ray is within hemisphere
-                        auto& tri_coeffs = dynamic_cast<triangle*>(rec.obj)->coeffs;
-                        SHCoefficients cur_coeffs = {};
+                        if (hrec.mat_ptr->scatter(r, hrec, srec))
+                        {
+                            const float cos_wi = std::max(dot(hrec.normal, unit_vector(-r.direction())), 0.0f);
+                            if (cos_wi == 0.0f) continue;
 
-                        // Interpolate coefficients on hit point
-                        for (int n = 0; n < n_coeffs; ++n)
-                        {
-                            // Use coefficients from previous bounce
-                            cur_coeffs[n] += (1 - uv.x - uv.y) * coeffs_buffer[obj_idx][depth-1][n]
-                                                        + uv.x * coeffs_buffer[obj_idx + 1][depth-1][n]
-                                                        + uv.y * coeffs_buffer[obj_idx + 2][depth-1][n];
-                        }
-                        const Point2f &uv = rec.uv;
-                        rec.p = v;
-                        rec.u = uv.x;
-                        rec.v = uv.y;
-                        const Vector3f albedo = tri->mat_ptr->get_albedo(rec);
-                        // Calculate coefficients for current bounce
-                        for (int n = 0; n < n_coeffs; ++n)
-                        {
-                            const Vector3f value = cosine * cur_coeffs[n];
-                            coeffs_buffer[obj_idx + idx][depth][n] += albedo * value / M_PI;
+                            /* Sample BSDF to generate next ray direction for indirect lighting */
+                            hrec.p = hrec.p + (EPSILON * hrec.normal);
+                            r = ray(hrec.p, srec.pdf_ptr->generate());
+                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, r.direction());
+                            bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, r.direction());
+                            /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
+                            if (surface_bsdf_pdf == 0)
+                            {
+                                break;
+                            }
+
+                            throughput *= bsdf * cos_wi;
+                            result += throughput;
                         }
                     }
+                    else
+                    {
+                        // Hit nothing, which means it'll hit envmap. Calculate SH coefficients here
+                        const float cos_wi = std::max(dot(n, unit_vector(v_direction)), 0.0f);
+                        for (int l = 0; l < n_bands; ++l)
+                        {
+                            for (int m = -l; m <= l; ++m)
+                            {
+                                float phi = std::atan2(v_direction.x(), -v_direction.z());
+                                float theta = std::acos(v_direction.y());
+                                phi = (phi < 0) ? (phi + M_PI * 2) : phi;
+                                theta = (theta < 0) ? (theta + M_PI) : theta;
+                                const float SH_basis_sample = EstimateSH(l, m, theta, phi);
+                                const Vector3f value = (result + cos_wi * v_bsdf) * SH_basis_sample;
+                                tri->coeffs[idx][l * (l + 1) + m] += value;
+                            }
+                        }
+                        break;
+                    }
                 }
-
             }
-        }
-        // Normalize coefficients
-        for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
-        {
-            // Divide the result by weight and number of samples
-            const float factor = 4.0 * M_PI / n_samples;
-            for (int n = 0; n < n_coeffs; ++n)
-            {
-                coeffs_buffer[obj_idx][depth][n] *= factor;
-                coeffs_buffer[obj_idx + 1][depth][n] *= factor;
-                coeffs_buffer[obj_idx + 2][depth][n] *= factor;
-            }
+            // Divide the result by number of samples
+            const float factor = 1.0f / (float)n_samples;
+            for (int i = 0; i < n_coeffs; ++i)
+                tri->coeffs[idx][i] *= factor;
         }
     });
     tf.dispatch().get();
-
-    // Sum all coefficients for current bounce
-    for (unsigned int obj_idx = 0; obj_idx < world_size; ++obj_idx)
-    {
-        triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
-        if (tri == nullptr) continue;
-
-        // Each triangle vertex has its own coefficient vector
-        for (unsigned int depth = 1; depth <= max_depth; ++depth)
-            for (int idx = 0; idx < 3; ++idx)
-                for (int n = 0; n < n_coeffs; ++n)
-                    tri->coeffs[idx][n] += coeffs_buffer[obj_idx + idx][depth][n];
-    }
 }
 
 // Here, n_coeffs = n_bands*n_bands and n_samples = sqrt_n_samples*sqrt_n_samples
@@ -265,7 +261,7 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
             for (int i = 0; i < n_coeffs; ++i)
             {
                 tr_coeffs[i] += (1 - uv.x - uv.y) * tri_coeffs[0][i] + uv.x * tri_coeffs[1][i] + uv.y * tri_coeffs[2][i];
-                result += tr_coeffs[i] * Li_coeffs[i];
+                result += Li_coeffs[i] * tr_coeffs[i];
             }
             return result;
         }
