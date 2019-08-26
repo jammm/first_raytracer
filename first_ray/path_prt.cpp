@@ -196,7 +196,7 @@ void path_prt::SH_project_full_global_illumination()
                             for (int m = -l; m <= l; ++m)
                             {
                                 float phi = std::atan2(v_direction.x(), -v_direction.z());
-                                float theta = std::acos(v_direction.y());
+                                float theta = std::acos(std::clamp(v_direction.y(), -1.0f, 1.0f));
                                 phi = (phi < 0) ? (phi + M_PI * 2) : phi;
                                 theta = (theta < 0) ? (theta + M_PI) : theta;
                                 const float SH_basis_sample = EstimateSH(l, m, theta, phi);
