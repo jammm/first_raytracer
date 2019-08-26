@@ -168,14 +168,10 @@
     <ClCompile Include="../mesh_loader.cpp" />
     <ClCompile Include="../triangle.cpp" />
     <ClCompile Include="..\ao.cpp" />
-    <ClCompile Include="..\hitable.cpp" />
     <ClCompile Include="..\hitable_list.cpp" />
     <ClCompile Include="..\image.cpp" />
-    <ClCompile Include="..\material.cpp" />
     <ClCompile Include="..\path.cpp" />
     <ClCompile Include="..\path_prt.cpp" />
-    <ClCompile Include="..\pdf.cpp" />
-    <ClCompile Include="..\texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../camera.h" />
