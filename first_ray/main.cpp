@@ -14,6 +14,7 @@
 #include "pdf.h"
 #include "path.h"
 #include "path_prt.h"
+#include "ao.h"
 #include "debug_renderer.h"
 #include <float.h>
 #include <taskflow/taskflow.hpp>
@@ -240,6 +241,33 @@ Scene *cornell_box_obj(const float &aspect)
     );
 }
 
+Scene* cornell_box_ao(const float& aspect)
+{
+    hitable** list = new hitable * [300];
+    int i = 0;
+    std::vector<hitable*> lights;
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
+
+    for (auto triangle : mesh)
+    {
+        list[i++] = triangle.get();
+    }
+
+    Vector3f lookfrom(0, 1, 3.9f);
+    Vector3f lookat(0, 1, 0);
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 40.0f;
+    camera cam;
+    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+    return new Scene(
+        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(1.0f, 1.0f, 1.0f))),
+        cam, lights
+    );
+}
+
 hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lights)
 {
     hitable **list = new hitable*[300];
@@ -301,7 +329,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 50625;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
     auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);

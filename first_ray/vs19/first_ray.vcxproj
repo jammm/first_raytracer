@@ -167,6 +167,7 @@
     <ClCompile Include="../main.cpp" />
     <ClCompile Include="../mesh_loader.cpp" />
     <ClCompile Include="../triangle.cpp" />
+    <ClCompile Include="..\ao.cpp" />
     <ClCompile Include="..\hitable_list.cpp" />
     <ClCompile Include="..\image.cpp" />
     <ClCompile Include="..\path.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="../geometry.h" />
     <ClInclude Include="..\aabb.h" />
     <ClInclude Include="..\aarect.h" />
+    <ClInclude Include="..\ao.h" />
     <ClInclude Include="..\box.h" />
     <ClInclude Include="..\bvh.h" />
     <ClInclude Include="..\debug_renderer.h" />
