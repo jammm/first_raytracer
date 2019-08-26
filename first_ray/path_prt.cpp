@@ -143,6 +143,7 @@ void path_prt::SH_project_full_global_illumination()
         {
             const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
             const Vector3f n = tri->mesh->normals[tri->V[idx]];
+            Vector3f cur_n = n;
             const Point2f uv = tri->mesh->uv[tri->V[idx]];
             //Vector3f result(0.0f, 0.0f, 0.0f);
             for (int i = 0; i < n_samples; ++i)
@@ -169,7 +170,7 @@ void path_prt::SH_project_full_global_illumination()
                     {
                         if (hrec.mat_ptr->scatter(r, hrec, srec))
                         {
-                            const float cos_wi = std::max(dot(hrec.normal, unit_vector(-r.direction())), 0.0f);
+                            const float cos_wi = std::max(dot(hrec.normal, unit_vector(r.direction())), 0.0f);
                             if (cos_wi == 0.0f) continue;
 
                             /* Sample BSDF to generate next ray direction for indirect lighting */
@@ -183,6 +184,7 @@ void path_prt::SH_project_full_global_illumination()
                                 break;
                             }
 
+                            cur_n = hrec.normal;
                             throughput *= bsdf * cos_wi;
                             result += throughput;
                         }
@@ -190,18 +192,19 @@ void path_prt::SH_project_full_global_illumination()
                     else
                     {
                         // Hit nothing, which means it'll hit envmap. Calculate SH coefficients here
+                        const float cosine = std::max(dot(cur_n, unit_vector(r.direction())), 0.0f);
                         const float cos_wi = std::max(dot(n, unit_vector(v_direction)), 0.0f);
                         for (int l = 0; l < n_bands; ++l)
                         {
                             for (int m = -l; m <= l; ++m)
                             {
-                                float phi = std::atan2(v_direction.x(), -v_direction.z());
-                                float theta = std::acos(std::clamp(v_direction.y(), -1.0f, 1.0f));
+                                float phi = std::atan2(r.direction().x(), -r.direction().z());
+                                float theta = std::acos(std::clamp(r.direction().y(), -1.0f, 1.0f));
                                 phi = (phi < 0) ? (phi + M_PI * 2) : phi;
                                 theta = (theta < 0) ? (theta + M_PI) : theta;
                                 const float SH_basis_sample = EstimateSH(l, m, theta, phi);
-                                const Vector3f value = (result + cos_wi * v_bsdf) * SH_basis_sample;
-                                tri->coeffs[idx][l * (l + 1) + m] += value;
+                                const Vector3f value = (cosine * bsdf * result + v_bsdf * cos_wi) * SH_basis_sample;
+                                tri->coeffs[idx][l * (l + 1) + m] += (value);
                             }
                         }
                         break;
@@ -209,7 +212,7 @@ void path_prt::SH_project_full_global_illumination()
                 }
             }
             // Divide the result by number of samples
-            const float factor = 1.0f / (float)n_samples;
+            const float factor = 4.0f * M_PI / (float)n_samples;
             for (int i = 0; i < n_coeffs; ++i)
                 tri->coeffs[idx][i] *= factor;
         }
@@ -221,18 +224,27 @@ void path_prt::SH_project_full_global_illumination()
 void path_prt::SH_project_environment()
 {
     Li_coeffs = {};
-    // For each sample
-    for (int i = 0; i < n_samples; ++i)
+    image* img = dynamic_cast<image_texture*>(scene->env_map->env_map_tex.get())->img.get();
+    image_texture* tex = dynamic_cast<image_texture*>(scene->env_map->env_map_tex.get());
+    for (int y = 0; y < img->ny; ++y)
     {
-        hit_record envmap_rec;
-        ray r(Vector3f(0, 0, 0), samples[i].direction);
-        for (int n = 0; n < n_coeffs; ++n)
+        for (int x = 0; x < img->nx; ++x)
         {
-            Li_coeffs[n] += scene->env_map->eval(r, envmap_rec, -1) * samples[i].Ylm[n];
+            const float theta = M_PI * (y + 0.5) / (float)img->ny;
+            const float phi = 2 * M_PI * (x + 0.5) / (float)img->nx;
+            Vector3f pixel = tex->value(x, y);
+            for (int l = 0; l < n_bands; ++l)
+            {
+                for (int m = -l; m <= l; ++m)
+                {
+                    const float SH_basis_sample = EstimateSH(l, m, theta, phi);
+                    Li_coeffs[l * (l + 1) + m] += pixel * SH_basis_sample;
+                }
+            }
         }
     }
     // Divide the result by weight and number of samples
-    const float factor = 4.0 * M_PI / n_samples;
+    const float factor = 2.0f * M_PI * M_PI / (img->nx * img->ny);
     for (int i = 0; i < n_coeffs; ++i)
     {
         Li_coeffs[i] *= factor;
