@@ -81,6 +81,27 @@ public:
         return Vector3f(r, g, b);
     }
 
+    Vector3f value(const int& x, const int& y) const
+    {
+        const int& nx = img->nx;
+        const int& ny = img->ny;
+        float r, g, b;
+        if (img->type == formats::STBI_HDR)
+        {
+            r = img->dataf[3 * x + 3 * nx * y];
+            g = img->dataf[3 * x + 3 * nx * y + 1];
+            b = img->dataf[3 * x + 3 * nx * y + 2];
+        }
+        else
+        {
+            r = int(img->data[3 * x + 3 * nx * y]) / 255.0f;
+            g = int(img->data[3 * x + 3 * nx * y + 1]) / 255.0f;
+            b = int(img->data[3 * x + 3 * nx * y + 2]) / 255.0f;
+        }
+
+        return Vector3f(r, g, b);
+    }
+
     std::unique_ptr<image> img;
 };
 
