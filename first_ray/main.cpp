@@ -425,7 +425,7 @@ int main(int argc, const char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use the renderer specified in template parameter
-    path_prt renderer(scene.get(), ns);
+    path renderer;
 
     tf.parallel_for(ny - 1, 0, -1, [&](int j)
     {
