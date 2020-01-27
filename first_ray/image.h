@@ -22,8 +22,8 @@ public:
     image() {}
     image(const std::string &filename, const formats &format);
 
-    image(unsigned char *data, const int &nx, const int &ny, const int &nn) : data(data), nx(nx), ny(ny), nn(nn),
-																			  filename("out_test"), loaded_from_stbi(false)
+    image(unsigned char *data, const int &nx, const int &ny, const int &nn) : loaded_from_stbi(false), filename("out_test"), data(data), nx(nx), ny(ny), nn(nn)
+																			   
 	{}
 
     int save_image(formats type);

@@ -39,13 +39,14 @@ public:
 	virtual bool bounding_box(float t0, float t1, aabb &box) const = 0;
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const { return 0.0f; }
     virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const { return Vector3f(1, 0, 0); }
+    virtual ~hitable() = 0;
 };
 
 class flip_normals : public hitable
 {
 public:
     flip_normals(hitable *ptr) : ptr(ptr) {}
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override
     {
         if (ptr->hit(r, t_min, t_max, rec))
         {
@@ -54,7 +55,7 @@ public:
         }
         return false;
     }
-    virtual bool bounding_box(float t0, float t1, aabb &box) const
+    bool bounding_box(float t0, float t1, aabb &box) const override
     {
         return ptr->bounding_box(t0, t1, box);
     }
@@ -66,7 +67,7 @@ class translate : public hitable
 {
 public:
     translate(hitable *ptr, const Vector3f &offset) : ptr(ptr), offset(offset) {}
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override
     {
         ray moved_r(r.origin() - offset, r.direction());
         if (ptr->hit(moved_r, t_min, t_max, rec))
@@ -76,7 +77,7 @@ public:
         }
         return false;
     }
-    virtual bool bounding_box(float t0, float t1, aabb &box) const
+    bool bounding_box(float t0, float t1, aabb &box) const override
     {
         if (ptr->bounding_box(t0, t1, box))
         {
@@ -122,7 +123,7 @@ public:
         bbox = aabb(min, max);
     }
 
-    bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const
+    bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const override
     {
         Vector3f origin = r.origin();
         Vector3f direction = r.direction();
@@ -146,7 +147,7 @@ public:
         return false;
     }
 
-    virtual bool bounding_box(float t0, float t1, aabb &box) const
+    bool bounding_box(float t0, float t1, aabb &box) const override
     {
         box = bbox;
         return hasbox;

@@ -116,7 +116,7 @@ class yz_rect : public hitable
 {
 public:
     yz_rect() {}
-    yz_rect(const float &y0, const float &y1, const float &z0, const float &z1, const float &k, material *mat) : z0(z0), z1(z1), y0(y0), y1(y1), k(k), mat(mat) {}
+    yz_rect(const float &y0, const float &y1, const float &z0, const float &z1, const float &k, material *mat) : y0(y0), y1(y1), z0(z0), z1(z1), k(k), mat(mat) {}
 
 
     virtual bool bounding_box(float t_min, float t_max, aabb &box) const

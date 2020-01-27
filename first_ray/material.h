@@ -47,6 +47,7 @@ public:
     virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const { return Vector3f(0, 0, 0); }
     virtual Vector3f get_albedo(const hit_record& rec) const { return Vector3f(0, 0, 0); }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
+    virtual ~material() = 0;
 };
 
 class lambertian : public material
@@ -80,7 +81,7 @@ class modified_phong : public material
 public:
     modified_phong(texture *a, texture *b, const float &specular_exponent) : diffuse_reflectance(a), specular_reflectance(b), specular_exponent(specular_exponent) {}
 
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override
     {
         //const float rand_var = gen_cano_rand();
         //constexpr float specular_chance = 0.5f;
@@ -94,10 +95,9 @@ public:
         return true;
     }
 
-    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
     {
         const Vector3f reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-        const float cos_alpha = dot(reflected, r_in.direction());
         return (diffuse_reflectance->value(rec) / M_PI) + specular_reflectance->value(rec)
                 * ((specular_exponent + 2) / (2 * M_PI)) * pow(dot(reflected, wo), specular_exponent);
     }
@@ -112,7 +112,7 @@ class metal : public material
 {
 public:
     metal(const Vector3f &a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0f; }
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override
     {
         Vector3f reflected = reflect(unit_vector(r_in.direction()), hrec.normal);
         srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere());
@@ -121,7 +121,7 @@ public:
         srec.pdf_ptr = std::make_unique<constant_pdf>(1.0f);
         return true;
     }
-    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
     {
         return albedo;
     }
@@ -155,7 +155,7 @@ class dielectric : public material
 public:
     dielectric(float ri) : ref_idx(ri) {}
 
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override
     {
         Vector3f outward_normal;
         Vector3f reflected = reflect(r_in.direction(), hrec.normal);
@@ -197,7 +197,7 @@ public:
 
         return true;
     }
-    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
     {
         return Vector3f(1, 1, 1);
     }
@@ -209,8 +209,8 @@ class diffuse_light : public material
 {
 public:
     diffuse_light(texture *a) : emit(a) {}
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const { return false; }
-    virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override { return false; }
+    Vector3f emitted(const ray &r_in, const hit_record &rec) const override
     {
         if (dot(rec.normal, r_in.direction()) < 0)
             return emit->value(rec);
@@ -232,7 +232,7 @@ public:
     {
         env_map_tex = std::move(e);
     }
-    virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const { return false; }
+    bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const override { return false; }
     Vector3f eval(const ray& r_in, hit_record rec, const int &depth, const float theeta=0, const float phii=06) const
     {
         const Vector3f direction = unit_vector(r_in.d);

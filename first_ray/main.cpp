@@ -137,13 +137,6 @@ Scene* prt_test(const float& aspect)
     hitable** list = new hitable * [20000];
     int i = 0;
 
-    Vector3f reflectance(1.0f, 1.0f, 1.0f);
-    material* specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
-        new constant_texture(reflectance), 100.0f);
-    material* lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
-    material* mirror = new metal(Vector3f(1, 1, 1), 0.0f);
-    material* lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
-
     std::vector<hitable*> lights;
     //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/plane.obj", lights);
@@ -174,12 +167,12 @@ Scene *furnace_test_scene(const float &aspect)
     hitable **list = new hitable*[20000];
     int i = 0;
 
-    Vector3f reflectance(1.0f, 1.0f, 1.0f);
-    material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
-                                        new constant_texture(reflectance), 100.0f);
-    material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
-    material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
-    material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
+    //Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    //material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
+    //                                    new constant_texture(reflectance), 100.0f);
+    //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+    //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
     //list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
     //list[i++] = new sphere(Vector3f(0, 0, 0), 0.3f, lambert);

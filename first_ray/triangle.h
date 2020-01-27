@@ -51,10 +51,11 @@ public:
 class triangle : public hitable
 {
 public:
-    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num) : mesh(mesh),
-        mat_ptr(mesh->mat.get()),
+    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num) :
         edge1(mesh->vertices[mesh->indices[3 * tri_num + 1]] - mesh->vertices[mesh->indices[3 * tri_num]]),
-        edge2(mesh->vertices[mesh->indices[3 * tri_num + 2]] - mesh->vertices[mesh->indices[3 * tri_num]])
+        edge2(mesh->vertices[mesh->indices[3 * tri_num + 2]] - mesh->vertices[mesh->indices[3 * tri_num]]),
+        mesh(mesh),
+        mat_ptr(mesh->mat.get())
     {
         V = &mesh->indices[3 * tri_num];
     }

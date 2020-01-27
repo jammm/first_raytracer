@@ -258,7 +258,6 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
 {
     hit_record hrec;
     auto &world = scene->world;
-    auto &lights = scene->lights;
     Vector3f result(0.0f, 0.0f, 0.0f);
 
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
