@@ -10,6 +10,7 @@ class texture
 {
 public:
     virtual Vector3f value(const hit_record &rec) const = 0;
+    virtual ~texture() = 0;
 };
 
 class constant_texture : public texture
@@ -53,7 +54,7 @@ public:
     image_texture() {}
     image_texture(std::unique_ptr<image> &img) : img(move(img)) {}
 
-    virtual Vector3f value(const hit_record &rec) const
+    Vector3f value(const hit_record &rec) const override
     {
         const int &nx = img->nx;
         const int &ny = img->ny;
@@ -84,7 +85,6 @@ public:
     Vector3f value(const int& x, const int& y) const
     {
         const int& nx = img->nx;
-        const int& ny = img->ny;
         float r, g, b;
         if (img->type == formats::STBI_HDR)
         {

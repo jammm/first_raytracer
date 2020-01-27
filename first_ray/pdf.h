@@ -63,8 +63,9 @@ inline Vector3f random_to_sphere(const float &radius, const float &distance_squa
 class pdf
 {
 public:
-    virtual float value(const hit_record &lrec, const Vector3f &to_light) const = 0;
+    virtual float value(const hit_record& lrec, const Vector3f& to_light) const = 0;
     virtual Vector3f generate() const = 0;
+    virtual ~pdf() = 0;
 };
 
 class cosine_pdf : public pdf
@@ -120,27 +121,6 @@ public:
     }
 
     const float p;
-};
-
-// hitable_pdf is used to generate random directions and to generate a pdf for the corresponding hitable object
-// currently used *only* for sampling on a light source
-class hitable_pdf : public pdf
-{
-public:
-    hitable_pdf(hitable *p, const hit_record &hrec) : ptr(p), origin(hrec.p) {}
-    virtual float value(const hit_record &lrec, const Vector3f &to_light) const
-    {
-        return ptr->pdf_direct_sampling(lrec, to_light);
-    }
-    virtual Vector3f generate(hit_record &rec) const
-    {
-        return ptr->sample_direct(rec, origin);
-    }
-
-    // hitable object on which sample is generated
-    hitable *ptr;
-    // origin from where direction towards light is sampled
-    Vector3f origin;
 };
 
 class mixture_pdf : public pdf
