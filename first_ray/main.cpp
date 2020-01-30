@@ -12,23 +12,20 @@
 #include "aarect.h"
 #include "box.h"
 #include "pdf.h"
+#include "viewer.h"
+
+// Include renderers
 #include "path.h"
 #include "path_prt.h"
 #include "ao.h"
 #include "debug_renderer.h"
+
+// Other includes
 #include <float.h>
 #include <taskflow/taskflow.hpp>
 #include <chrono>
 
-#if defined(_WIN32) || defined(__linux__)
-#define GLEW_STATIC
-#include <GL/glew.h>
-#define _CRT_SECURE_NO_DEPRECATE
-#endif
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#endif
-#include <GLFW/glfw3.h>
+#include "gl_includes.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -44,11 +41,6 @@ inline Vector3f de_nan(const Vector3f &c)
     if (!(temp[2] == temp[2])) temp[2] = 0;
 
     return temp;
-}
-
-void glfw_error_callback(int, const char* err_str)
-{
-    std::cout << "GLFW Error: " << err_str << std::endl;
 }
 
 hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
@@ -324,12 +316,9 @@ int main(int argc, const char **argv)
     constexpr int ny = 768;
     int ns = 100;
     constexpr int comp = 3; //RGB
-    auto out_image = std::make_unique<GLubyte[]>(nx * ny * comp + 64);
-    auto fout_image = std::make_unique<GLfloat[]>(nx * ny * comp + 64);
-    memset(out_image.get(), 0, nx * ny * comp + 64);
-    memset(fout_image.get(), 0.0f, nx * ny * comp + 64);
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     bool to_exit = false;
+    viewer film_viewer(nx, ny, ns, comp);
 
     /* Parse command line args */
     if (argc == 3)
@@ -358,78 +347,14 @@ int main(int argc, const char **argv)
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
-    GLFWwindow* window;
-
-    /* Register GLFW error callback */
-    glfwSetErrorCallback(glfw_error_callback);
-    /* Initialize GLFW */
-    if (!glfwInit())
-        return -1;
-
-    /* Create a windowed mode window and its OpenGL context */
-    /* Also specify the OpenGL version (seems like this is sensitive to many potential issues) */
-#if defined(__APPLE__) || defined(_WIN32)
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-#else
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#endif
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
-#endif
-
-#ifdef __APPLE__
-    /* OSX requires forward compatibility for some reason */
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    window = glfwCreateWindow(nx, ny, "jam's ray tracer", NULL, NULL);
-    if (!window) {
-        fprintf(stderr, "ERROR: cannot open window with GLFW3\n");
-        glfwTerminate();
-        return -1;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-#if defined(_WIN32) || defined(__linux__)
-    /* Initialize GLEW */
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        // Problem: glewInit failed, something is seriously wrong.
-        std::cout << "glewInit failed: " << glewGetErrorString(err) << std::endl;
-        exit(1);
-    }
-#endif
-
-    /* Create texture used to represent the color buffer */
-    GLuint render_texture;
-    glGenTextures(1, &render_texture);
-    glBindTexture(GL_TEXTURE_2D, render_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-    /* Create FBO to represent the framebuffer for blitting to the screen */
-    GLuint fbo;
-    glGenFramebuffers(1, &fbo);
-
-    /* Bind FBO to both GL_FRAMEBUFFER and GL_READ_FRAMEBUFFER */
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    /* Clear the window */
-    glClear(GL_COLOR_BUFFER_BIT);
+    GLFWwindow* window = film_viewer.init();
 
     // Use the renderer specified in template parameter
     path renderer;
 
-    tf.parallel_for(ny - 1, 0, -1, [&](int j)
+    tf.parallel_for(ny - 1, 0, -1, [&](int y)
     {
-        for (int i = 0; i < nx; i++)
+        for (int x = 0; x < nx; x++)
         {
             //if (i <= 512)
             {
@@ -437,35 +362,19 @@ int main(int argc, const char **argv)
                 Vector3f col(0.0f, 0.0f, 0.0f);
                 for (int s = 0; s < ns; s++)
                 {
-                    float u = float(i + gen_cano_rand()) / float(nx);
-                    float v = float(j + gen_cano_rand()) / float(ny);
+                    float u = float(x + gen_cano_rand()) / float(nx);
+                    float v = float(y + gen_cano_rand()) / float(ny);
                     ray r = scene->cam.get_ray(u, v);
                     hit_record hrec;
+                    // Compute a sample
                     const Vector3f sample = renderer.Li(r, scene.get(), 0, hrec, 0.0f);
                     assert(std::isfinite(sample[0])
                            && std::isfinite(sample[1])
                            && std::isfinite(sample[2]));
                     col += sample;
                 }
-                col /= float(ns);
-
-                float fr = col[0];
-                float fg = col[1];
-                float fb = col[2];
-
-                int ir = std::min(int(pow(fr, 1.0f/2.2f) * 255.9999), 255);
-                int ig = std::min(int(pow(fg, 1.0f/2.2f) * 255.9999), 255);
-                int ib = std::min(int(pow(fb, 1.0f/2.2f) * 255.9999), 255);
-                int index = (j * nx + i) * comp;
-
-                // Store output pixels
-                out_image[index] = (GLubyte)ir;
-                out_image[index + 1] = (GLubyte)ig;
-                out_image[index + 2] = (GLubyte)ib;
-
-                fout_image[index] = fr;
-                fout_image[index + 1] = fg;
-                fout_image[index + 2] = fb;
+                // Splat this sample to film
+                film_viewer.add_sample(Vector2i(x, y), col);
             }
         }
         std::cout << ".";
@@ -476,7 +385,7 @@ int main(int argc, const char **argv)
     auto future = tf.dispatch();
 
     // Refresh window in background
-    background_thread(future, out_image.get(), window, nx, ny, to_exit);
+    background_thread(future, film_viewer.out_image.get(), window, nx, ny, to_exit);
 
     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
@@ -484,16 +393,8 @@ int main(int argc, const char **argv)
 
     std::cout << "\nIt took me " << time_span.count() << " seconds to render." << std::endl;
 
-    std::cout << "Saving BMP..." << std::endl;
-    image(out_image.get(), nx, ny, comp).save_image(formats::STBI_BMP);
-    std::cout << "Saving JPG..." << std::endl;
-    image(out_image.get(), nx, ny, comp).save_image(formats::STBI_JPG);
-    std::cout << "Saving PNG..." << std::endl;
-    image(out_image.get(), nx, ny, comp).save_image(formats::STBI_PNG);
-    std::cout << "Saving PFM..." << std::endl;
-    image_pfm(fout_image.get(), nx, ny, comp).save_image("out_test.pfm");
-
-    glfwTerminate();
+    // Save film to file(s) (currently JPG,PNG and PFM)
+    film_viewer.save_and_destroy();
 
     return 0;
 }

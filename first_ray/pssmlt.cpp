@@ -2,7 +2,11 @@
 #include "material.h"
 
 Vector3f pssmlt::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
+<<<<<<< HEAD
     const float &prev_bsdf_pdf, sampler &random_sampler)
+=======
+    const float &prev_bsdf_pdf)
+>>>>>>> 789dbd6... Refactor viewer into a separate class
 {
     hit_record hrec;
     auto &world = scene->world;
@@ -32,7 +36,11 @@ Vector3f pssmlt::Li(const ray &r, Scene *scene, const int &depth, const hit_reco
             return Le * weight;
         }
 
+<<<<<<< HEAD
         if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+=======
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec))
+>>>>>>> 789dbd6... Refactor viewer into a separate class
         {
             if (srec.is_specular)
             {
@@ -43,18 +51,30 @@ Vector3f pssmlt::Li(const ray &r, Scene *scene, const int &depth, const hit_reco
                     return Vector3f(0, 0, 0);
                 }
                 //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+<<<<<<< HEAD
                 return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) / surface_bsdf_pdf;
+=======
+                return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
+>>>>>>> 789dbd6... Refactor viewer into a separate class
             }
             else
             {
                 /* Direct light sampling */
+<<<<<<< HEAD
                 const int index = lights.pick_sample(random_sampler.get1d());
+=======
+                const int index = lights.pick_sample();
+>>>>>>> 789dbd6... Refactor viewer into a separate class
                 if (index >= 0)
                 {
                     /* Sample a random light source */
                     hit_record lrec;
                     Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
+<<<<<<< HEAD
                     Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin, random_sampler.get2d());
+=======
+                    Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin);
+>>>>>>> 789dbd6... Refactor viewer into a separate class
                     const float dist_to_light = to_light.length();
                     //to_light.make_unit_vector();
 
@@ -87,7 +107,11 @@ Vector3f pssmlt::Li(const ray &r, Scene *scene, const int &depth, const hit_reco
                 }
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 hrec.p = hrec.p + (EPSILON * hrec.normal);
+<<<<<<< HEAD
                 ray wo(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d()));
+=======
+                ray wo(hrec.p, srec.pdf_ptr->generate());
+>>>>>>> 789dbd6... Refactor viewer into a separate class
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -97,12 +121,17 @@ Vector3f pssmlt::Li(const ray &r, Scene *scene, const int &depth, const hit_reco
                 }
                 const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
+<<<<<<< HEAD
                 return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) * cos_wi / surface_bsdf_pdf;
+=======
+                return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
+>>>>>>> 789dbd6... Refactor viewer into a separate class
             }
         }
         return Le;
     }
 
+<<<<<<< HEAD
     //Vector3f unit_direction = unit_vector(r.direction());
     //float t = 0.5*(unit_direction.y() + 1.0);
     //return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
@@ -141,4 +170,7 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
             }
             std::cout << ".";
         });
+=======
+    return scene->env_map->eval(r, prev_hrec, depth);
+>>>>>>> 789dbd6... Refactor viewer into a separate class
 }
