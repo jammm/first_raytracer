@@ -15,6 +15,7 @@
 #include "viewer.h"
 
 // Include renderers
+#include "integrator.h"
 #include "path.h"
 #include "path_prt.h"
 #include "ao.h"
@@ -22,10 +23,7 @@
 
 // Other includes
 #include <float.h>
-#include <taskflow/taskflow.hpp>
 #include <chrono>
-
-#include "gl_includes.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -317,7 +315,6 @@ int main(int argc, const char **argv)
     int ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
-    bool to_exit = false;
     viewer film_viewer(nx, ny, ns, comp);
 
     /* Parse command line args */
@@ -333,9 +330,6 @@ int main(int argc, const char **argv)
     std::cout<<"Resolution: "<<nx<<"x"<<ny<<std::endl;
     std::cout<<"Setting number of samples to "<<ns<<std::endl;
 
-    // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
-    tf::Taskflow tf;
-
     // Start performance timer
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
@@ -347,51 +341,10 @@ int main(int argc, const char **argv)
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
-    GLFWwindow* window = film_viewer.init();
-
     // Use the renderer specified in template parameter
-    path renderer;
+    renderer<path> render;
 
-    tf.parallel_for(ny - 1, 0, -1, [&](int y)
-    {
-        for (int x = 0; x < nx; x++)
-        {
-            //if (i <= 512)
-            {
-                if (to_exit) break;
-                Vector3f col(0.0f, 0.0f, 0.0f);
-                for (int s = 0; s < ns; s++)
-                {
-                    float u = float(x + gen_cano_rand()) / float(nx);
-                    float v = float(y + gen_cano_rand()) / float(ny);
-                    ray r = scene->cam.get_ray(u, v);
-                    hit_record hrec;
-                    // Compute a sample
-                    const Vector3f sample = renderer.Li(r, scene.get(), 0, hrec, 0.0f);
-                    assert(std::isfinite(sample[0])
-                           && std::isfinite(sample[1])
-                           && std::isfinite(sample[2]));
-                    col += sample;
-                }
-                // Splat this sample to film
-                film_viewer.add_sample(Vector2i(x, y), col);
-            }
-        }
-        std::cout << ".";
-    });
-
-    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-    auto future = tf.dispatch();
-
-    // Refresh window in background
-    background_thread(future, film_viewer.out_image.get(), window, nx, ny, to_exit);
-
-    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-
-    std::cout << "\nIt took me " << time_span.count() << " seconds to render." << std::endl;
+    render.Render(scene.get(), film_viewer);
 
     // Save film to file(s) (currently JPG,PNG and PFM)
     film_viewer.save_and_destroy();

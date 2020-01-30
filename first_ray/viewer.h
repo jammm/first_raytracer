@@ -10,10 +10,11 @@ struct viewer
 {
 	viewer(const int& nx, const int& ny, const int &ns, const int& num_channels);
 	GLFWwindow* init();
-	static void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit);
+	void background_thread(const std::shared_future<void> &future, GLFWwindow* window);
 	void add_sample(const Vector2i &pixel, Vector3f sample);
 	void save_and_destroy();
 
+	bool to_exit;
 	const int nx;
 	const int ny;
 	const int ns;
