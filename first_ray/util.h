@@ -10,6 +10,14 @@
 constexpr float EPSILON = 1e-5f;
 constexpr float SHADOW_EPSILON = 1e-4f;
 
+// Generates the canonical uniform random variable ξ
+inline float gen_cano_rand()
+{
+    thread_local static std::mt19937 engine;
+    thread_local static std::uniform_real_distribution<> dist(0.0f, 1.0f);
+    return dist(engine);
+}
+
 inline float unit_angle(const Vector3f& u, const Vector3f& v) {
 	if (dot(u, v) < 0)
 		return M_PI - 2 * std::asin(0.5f * (v + u).length());
@@ -17,26 +25,15 @@ inline float unit_angle(const Vector3f& u, const Vector3f& v) {
 		return 2 * std::asin(0.5f * (v - u).length());
 }
 
-inline Vector2f random_in_unit_disk(Vector2f sample)
+inline Vector3f random_in_unit_disk()
 {
-	Vector2f ab = sample * 2.0f - Vector2f(1.0f, 1.0f);
+	Vector3f p;
+	do
+	{
+		p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), 0.0f) - Vector3f(1.0f, 1.0f, 0.0f);
+	} while (dot(p, p) >= 1.0f);
 
-	if (ab[0] == 0.0f && ab[1] == 0.0f) { return Vector2f(0.0f, 0.0f); }
-
-	Vector2f ab2 = ab * ab;
-	float phi, r;
-	if (ab2[0] > ab2[1]) { // use squares instead of absolute values
-		r = ab[0];
-		phi = (M_PI / 4.0f) * (ab[1] / ab[0]);
-	}
-	else {
-		r = ab[1];
-		phi = (M_PI / 2.0f) - (M_PI / 4.0f) * (ab[0] / ab[1]);
-	}
-	float cosphi = std::cos(phi);
-	float sinphi = std::sin(phi);
-
-	return r * Vector2f(cosphi, sinphi);
+	return p;
 }
 
 // MIS weight using power heuristic
