@@ -24,7 +24,7 @@ struct hit_record
     float u;
     float v;
 	// Local barycentric coordinates
-	Point2f uv;
+	Vector2f uv;
     Vector3f p;
     Vector3f normal;
     material *mat_ptr;

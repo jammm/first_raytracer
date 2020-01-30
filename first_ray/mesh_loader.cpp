@@ -21,7 +21,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 
 		Vector3f *vertices = new Vector3f[mesh->mNumVertices];
 		Vector3f *normals = new Vector3f[mesh->mNumVertices];
-		Point2f *uv = new Point2f[mesh->mNumVertices];
+		Vector2f *uv = new Vector2f[mesh->mNumVertices];
         std::vector<int> indices;
 
 		for (unsigned int j = 0; j < mesh->mNumVertices; ++j)

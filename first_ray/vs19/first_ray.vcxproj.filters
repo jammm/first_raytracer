@@ -51,6 +51,12 @@
     <ClCompile Include="..\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\pssmlt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\viewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../camera.h">
@@ -138,6 +144,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ao.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl_includes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pssmlt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\viewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

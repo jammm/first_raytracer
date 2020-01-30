@@ -17,7 +17,7 @@ public:
 	triangle_mesh() {}
 
     triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
-        const int *indices, Vector3f *n, Point2f *_uv, std::unique_ptr<material> mat, std::string name, const bool &shallow_copy = false)
+        const int *indices, Vector3f *n, Vector2f *_uv, std::unique_ptr<material> mat, std::string name, const bool &shallow_copy = false)
         : nTriangles(nTriangles),
         nVertices(nVertices),
         indices(indices, indices + 3 * nTriangles), mat(move(mat)),
@@ -26,13 +26,13 @@ public:
 
         vertices.reset(shallow_copy ? v : new Vector3f[nVertices]);
         normals.reset(shallow_copy ? n : new Vector3f[nVertices]);
-        uv.reset(shallow_copy ? _uv : new Point2f[nVertices]);
+        uv.reset(shallow_copy ? _uv : new Vector2f[nVertices]);
 
         if (!shallow_copy)
         {
             std::memcpy(vertices.get(), v, sizeof(Vector3f) * nVertices);
             std::memcpy(normals.get(), v, sizeof(Vector3f) * nVertices);
-            std::memcpy(uv.get(), v, sizeof(Point2f) * nVertices);
+            std::memcpy(uv.get(), v, sizeof(Vector2f) * nVertices);
         }
 
     }
@@ -42,7 +42,7 @@ public:
     std::vector<int> indices;
     std::unique_ptr<Vector3f[]> vertices;
     std::unique_ptr<Vector3f[]> normals;
-    std::unique_ptr<Point2f[]> uv;
+    std::unique_ptr<Vector2f[]> uv;
     std::unique_ptr<material> mat;
     // Name of the object this mesh belongs to
     std::string name;
@@ -91,7 +91,7 @@ public:
                 // Use u, v to find interpolated normals and texture coords
                 // P = (1 - u - v) * V0 + u * V1 + v * V2
 				rec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
-                Point2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
+                Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 rec.u = uvhit.x;
                 rec.v = uvhit.y;
 				rec.uv.x = u;
@@ -139,7 +139,7 @@ public:
         const Vector3f &v1 = mesh->vertices[V[1]];
         const Vector3f &v2 = mesh->vertices[V[2]];
 
-        Point2f u(gen_cano_rand(), gen_cano_rand());
+        Vector2f u(gen_cano_rand(), gen_cano_rand());
         float su0 = std::sqrt(u.x);
         float b0 = 1 - su0;
         float b1 = u.y * su0;
@@ -151,7 +151,7 @@ public:
         rec.normal = (1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]];
         rec.mat_ptr = mat_ptr;
         rec.obj_name = mesh->name;
-        Point2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
+        Vector2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
         rec.u = uvhit.x;
         rec.v = uvhit.y;
 		rec.obj = (hitable *)this;

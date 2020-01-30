@@ -111,7 +111,8 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Strict</FloatingPointModel>
       <FloatingPointExceptions>true</FloatingPointExceptions>
-      <AdditionalOptions>/constexpr:steps10000000  -Xclang -fconstexpr-steps -Xclang 100000000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -152,7 +153,8 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <FloatingPointModel>Strict</FloatingPointModel>
       <FloatingPointExceptions>true</FloatingPointExceptions>
-      <AdditionalOptions>/constexpr:steps10000000  -Xclang -fconstexpr-steps -Xclang 100000000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -175,7 +177,9 @@
     <ClCompile Include="..\path.cpp" />
     <ClCompile Include="..\path_prt.cpp" />
     <ClCompile Include="..\pdf.cpp" />
+    <ClCompile Include="..\pssmlt.cpp" />
     <ClCompile Include="..\texture.cpp" />
+    <ClCompile Include="..\viewer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../camera.h" />
@@ -198,6 +202,7 @@
     <ClInclude Include="..\box.h" />
     <ClInclude Include="..\bvh.h" />
     <ClInclude Include="..\debug_renderer.h" />
+    <ClInclude Include="..\gl_includes.h" />
     <ClInclude Include="..\integrator.h" />
     <ClInclude Include="..\onb.h" />
     <ClInclude Include="..\parallel_bvh.h" />
@@ -205,8 +210,10 @@
     <ClInclude Include="..\path_prt.h" />
     <ClInclude Include="..\pdf.h" />
     <ClInclude Include="..\prt.h" />
+    <ClInclude Include="..\pssmlt.h" />
     <ClInclude Include="..\Scene.h" />
     <ClInclude Include="..\SHSample.h" />
+    <ClInclude Include="..\viewer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

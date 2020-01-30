@@ -258,21 +258,21 @@ inline Vector3<T>& Vector3<T>::operator/=(const T &t)
     return *this;
 }
 
-// Point stuff
+// 2D vector
 template <typename T>
-struct Point2
+struct Vector2
 {
-    Point2() {}
-    Point2(T _x, T _y) : x(_x), y(_y) {}
+    Vector2() {}
+    Vector2(T _x, T _y) : x(_x), y(_y) {}
 
     template<typename U>
-    explicit Point2(const Point2<U> &v)
+    explicit Vector2(const Vector2<U> &v)
     {
         x = (T)v.x;
         y = (T)v.y;
     }
 
-    inline Point2<T>& operator*=(const Point2<T>& p2);
+    inline Vector2<T>& operator*=(const Vector2<T>& p2);
     inline T operator[](int i) const
     {
         if (i == 0) return x;
@@ -285,24 +285,24 @@ struct Point2
     }
 
 
-    // Point2 data
+    // Vector2 data
     T x, y;
 };
 
 template <typename T>
-inline Point2<T> operator+(const Point2<T>&p1, const Point2<T>&p2)
+inline Vector2<T> operator+(const Vector2<T>&p1, const Vector2<T>&p2)
 {
-    return Point2<T>(p1.x + p2.x, p1.y + p2.y);
+    return Vector2<T>(p1.x + p2.x, p1.y + p2.y);
 }
 
 template <typename T>
-inline Point2<T> operator*(const Point2<T>&p1, const Point2<T>&p2)
+inline Vector2<T> operator*(const Vector2<T>&p1, const Vector2<T>&p2)
 {
-    return Point2<T>(p1.x * p2.x, p1.y * p2.y);
+    return Vector2<T>(p1.x * p2.x, p1.y * p2.y);
 }
 
 template <typename T>
-inline Point2<T>& Point2<T>::operator*=(const Point2<T>& p2)
+inline Vector2<T>& Vector2<T>::operator*=(const Vector2<T>& p2)
 {
     x *= p2.x;
     y *= p2.y;
@@ -310,17 +310,18 @@ inline Point2<T>& Point2<T>::operator*=(const Point2<T>& p2)
 }
 
 template <typename T>
-inline Point2<T> operator*(const float &t, const Point2<T>&p)
+inline Vector2<T> operator*(const float &t, const Vector2<T>&p)
 {
-    return Point2<T>(t*p.x, t*p.y);
+    return Vector2<T>(t*p.x, t*p.y);
 }
 
 template <typename T>
-inline Point2<T> operator*(const Point2<T>&p, const float &t)
+inline Vector2<T> operator*(const Vector2<T>&p, const float &t)
 {
     return t * p;
 }
 
-typedef Point2<float> Point2f;
+typedef Vector2<float> Vector2f;
+typedef Vector2<int> Vector2i;
 
 #endif

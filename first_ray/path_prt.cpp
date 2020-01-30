@@ -32,7 +32,7 @@ void path_prt::SH_project_unshadowed_diffuse_transfer()
         {
             const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
             const Vector3f& n = tri->mesh->normals[tri->V[idx]];
-            const Point2f uv = tri->mesh->uv[tri->V[idx]];
+            const Vector2f uv = tri->mesh->uv[tri->V[idx]];
             for (int i = 0; i < n_samples; ++i)
             {
                 const Vector3f& direction = samples[i].direction;
@@ -77,7 +77,7 @@ void path_prt::SH_project_shadowed_diffuse_transfer()
             {
                 const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
                 const Vector3f& n = tri->mesh->normals[tri->V[idx]];
-                const Point2f uv = tri->mesh->uv[tri->V[idx]];
+                const Vector2f uv = tri->mesh->uv[tri->V[idx]];
                 for (int i = 0; i < n_samples; ++i)
                 {
                     const Vector3f& direction = samples[i].direction;
@@ -144,7 +144,7 @@ void path_prt::SH_project_full_global_illumination()
             const Vector3f& v = tri->mesh->vertices[tri->V[idx]];
             const Vector3f n = tri->mesh->normals[tri->V[idx]];
             Vector3f cur_n = n;
-            const Point2f uv = tri->mesh->uv[tri->V[idx]];
+            const Vector2f uv = tri->mesh->uv[tri->V[idx]];
             //Vector3f result(0.0f, 0.0f, 0.0f);
             for (int i = 0; i < n_samples; ++i)
             {
@@ -266,7 +266,7 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
         if (hrec.mat_ptr->scatter(r, hrec, srec))
         {
             auto &tri_coeffs = dynamic_cast<triangle*>(hrec.obj)->coeffs;
-            Point2f &uv = hrec.uv;
+            Vector2f &uv = hrec.uv;
             SHCoefficients tr_coeffs = {};
 
             for (int i = 0; i < n_coeffs; ++i)

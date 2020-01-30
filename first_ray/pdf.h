@@ -41,7 +41,7 @@ inline Vector3f hemisphere_to_cosine_power_direction()
 }
 
 inline Vector3f uniform_sample_sphere() {
-    Point2f u(gen_cano_rand(), gen_cano_rand());
+    Vector2f u(gen_cano_rand(), gen_cano_rand());
     const float  z = 1 - 2 * u[0];
     const float r = std::sqrt(std::max((float)0, (float)1 - z * z));
     const float phi = 2 * (float)M_PI * u[1];
