@@ -7,11 +7,7 @@ static void glfw_error_callback(int, const char* err_str)
     std::cout << "GLFW Error: " << err_str << std::endl;
 }
 
-<<<<<<< HEAD
 viewer::viewer(const int& nx, const int& ny, const int &ns, const int& num_channels) : to_exit(false), nx(nx), ny(ny), ns(ns), num_channels(num_channels)
-=======
-viewer::viewer(const int& nx, const int& ny, const int &ns, const int& num_channels) : nx(nx), ny(ny), ns(ns), num_channels(num_channels)
->>>>>>> 789dbd6... Refactor viewer into a separate class
 {
     out_image = std::make_unique<GLubyte[]>(nx * ny * num_channels + 64);
     fout_image = std::make_unique<GLfloat[]>(nx * ny * num_channels + 64);
@@ -90,22 +86,14 @@ GLFWwindow* viewer::init()
     return window;
 }
 
-<<<<<<< HEAD
 void viewer::background_thread(const std::shared_future<void>& future, GLFWwindow* window)
-=======
-void viewer::background_thread(const std::shared_future<void>& future, GLubyte* out_image, GLFWwindow* window, int nx, int ny, bool& to_exit)
->>>>>>> 789dbd6... Refactor viewer into a separate class
 {
     while (!to_exit)
     {
         /* Poll for and process events */
         glfwPollEvents();
         /* Render here */
-<<<<<<< HEAD
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image.get());
-=======
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
->>>>>>> 789dbd6... Refactor viewer into a separate class
         glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
             GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
