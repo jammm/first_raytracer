@@ -286,28 +286,6 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
-void background_thread(const std::shared_future<void> &future, GLubyte *out_image, GLFWwindow* window, int nx, int ny, bool &to_exit)
-{
-    while (!to_exit)
-    {
-        /* Poll for and process events */
-        glfwPollEvents();
-        /* Render here */
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nx, ny, 0, GL_RGB, GL_UNSIGNED_BYTE, out_image);
-        glBlitFramebuffer(0, 0, nx, ny, 0, 0, nx, ny,
-            GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready || glfwWindowShouldClose(window))
-        {
-            to_exit = true;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-}
-
 int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;

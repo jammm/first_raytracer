@@ -13,8 +13,7 @@ constexpr float SHADOW_EPSILON = 1e-4f;
 // Generates the canonical uniform random variable ξ
 inline float gen_cano_rand()
 {
-    thread_local static std::random_device seed_gen;
-    thread_local static std::mt19937 engine(seed_gen());
+    thread_local static std::mt19937 engine;
     thread_local static std::uniform_real_distribution<> dist(0.0f, 1.0f);
     return dist(engine);
 }

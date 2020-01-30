@@ -103,5 +103,40 @@ Vector3f pssmlt::Li(const ray &r, Scene *scene, const int &depth, const hit_reco
         return Le;
     }
 
+    //Vector3f unit_direction = unit_vector(r.direction());
+    //float t = 0.5*(unit_direction.y() + 1.0);
+    //return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
     return scene->env_map->eval(r, prev_hrec, depth);
+}
+
+void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
+{
+
+    tf.parallel_for(film_viewer->ny - 1, 0, -1, [=](int y)
+        {
+            for (int x = 0; x < film_viewer->nx; x++)
+            {
+                //if (i <= 512)
+                {
+                    if (film_viewer->to_exit) break;
+                    Vector3f col(0.0f, 0.0f, 0.0f);
+                    for (int s = 0; s < film_viewer->ns; s++)
+                    {
+                        float u = float(x + gen_cano_rand()) / float(film_viewer->nx);
+                        float v = float(y + gen_cano_rand()) / float(film_viewer->ny);
+                        ray r = scene->cam.get_ray(u, v);
+                        hit_record hrec;
+                        // Compute a sample
+                        const Vector3f sample = Li(r, scene, 0, hrec, 0.0f);
+                        assert(std::isfinite(sample[0])
+                            && std::isfinite(sample[1])
+                            && std::isfinite(sample[2]));
+                        col += sample;
+                    }
+                    // Splat this sample to film
+                    film_viewer->add_sample(Vector2i(x, y), col);
+                }
+            }
+            std::cout << ".";
+        });
 }
