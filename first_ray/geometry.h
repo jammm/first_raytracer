@@ -296,7 +296,6 @@ inline Vector2<T> operator+(const Vector2<T>&p1, const Vector2<T>&p2)
 }
 
 template <typename T>
-<<<<<<< HEAD
 inline Vector2<T> operator-(const Vector2<T>& p1, const Vector2<T>& p2)
 {
     return Vector2<T>(p1.x - p2.x, p1.y - p2.y);
@@ -309,14 +308,6 @@ inline Vector2<T> operator*(const Vector2<T>&p1, const Vector2<T>&p2)
 }
 
 template <typename T>
-=======
-inline Vector2<T> operator*(const Vector2<T>&p1, const Vector2<T>&p2)
-{
-    return Vector2<T>(p1.x * p2.x, p1.y * p2.y);
-}
-
-template <typename T>
->>>>>>> 789dbd6... Refactor viewer into a separate class
 inline Vector2<T>& Vector2<T>::operator*=(const Vector2<T>& p2)
 {
     x *= p2.x;

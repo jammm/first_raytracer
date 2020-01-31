@@ -211,10 +211,7 @@
     <ClInclude Include="..\pdf.h" />
     <ClInclude Include="..\prt.h" />
     <ClInclude Include="..\pssmlt.h" />
-<<<<<<< HEAD
     <ClInclude Include="..\sampler.h" />
-=======
->>>>>>> 789dbd6... Refactor viewer into a separate class
     <ClInclude Include="..\Scene.h" />
     <ClInclude Include="..\SHSample.h" />
     <ClInclude Include="..\viewer.h" />

@@ -139,11 +139,7 @@ public:
         const Vector3f &v1 = mesh->vertices[V[1]];
         const Vector3f &v2 = mesh->vertices[V[2]];
 
-<<<<<<< HEAD
         const Vector2f &u = sample;
-=======
-        Vector2f u(gen_cano_rand(), gen_cano_rand());
->>>>>>> 789dbd6... Refactor viewer into a separate class
         float su0 = std::sqrt(u.x);
         float b0 = 1 - su0;
         float b1 = u.y * su0;

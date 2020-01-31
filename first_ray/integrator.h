@@ -5,15 +5,16 @@
 #include "geometry.h"
 #include "Scene.h"
 #include "viewer.h"
+#include "sampler.h"
 #include <taskflow/taskflow.hpp>
 
 template <typename integrator>
 struct renderer : public integrator
 {
     Vector3f Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-        const float &prev_bsdf_pdf)
+        const float &prev_bsdf_pdf, sampler &random_sampler)
     {
-        return integrator::Li(r, scene, depth, prev_hrec, prev_bsdf_pdf);
+        return integrator::Li(r, scene, depth, prev_hrec, prev_bsdf_pdf, random_sampler);
     };
 
     void Render(Scene *scene, viewer& film_viewer)
@@ -22,7 +23,6 @@ struct renderer : public integrator
         GLFWwindow* window = film_viewer.init();
         // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
         tf::Taskflow tf;
-        // Stop rendering if to_exit is set to true by background_thread()
 
         integrator::Render(scene, &film_viewer, tf);
 

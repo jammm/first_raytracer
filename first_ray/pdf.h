@@ -43,13 +43,8 @@ inline Vector3f hemisphere_to_cosine_power_direction(const Vector2f& sample)
     return Vector3f(sin_theta*cos(r), sin_theta * sin(r), sqrt(r1));
 }
 
-<<<<<<< HEAD
 inline Vector3f uniform_sample_sphere(const Vector2f &sample) {
     Vector2f u(sample);
-=======
-inline Vector3f uniform_sample_sphere() {
-    Vector2f u(gen_cano_rand(), gen_cano_rand());
->>>>>>> 789dbd6... Refactor viewer into a separate class
     const float  z = 1 - 2 * u[0];
     const float r = std::sqrt(std::max((float)0, (float)1 - z * z));
     const float phi = 2 * (float)M_PI * u[1];
