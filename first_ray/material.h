@@ -8,25 +8,25 @@
 #include "pdf.h"
 #include "image.h"
 
-inline Vector3f random_in_unit_sphere()
+inline Vector3f random_in_unit_sphere(const Vector3f &sample)
 {
     Vector3f p;
 
     do
     {
-        p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), gen_cano_rand()) - Vector3f(1, 1, 1);
+        p = 2.0f * sample - Vector3f(1, 1, 1);
     } while (p.squared_length() >= 1.0f);
 
     return p;
 }
 
-inline Vector3f random_on_unit_sphere()
+inline Vector3f random_on_unit_sphere(const Vector3f &sample)
 {
     Vector3f p;
 
     do
     {
-        p = 2.0f * Vector3f(gen_cano_rand(), gen_cano_rand(), gen_cano_rand()) - Vector3f(1, 1, 1);
+        p = 2.0f * sample - Vector3f(1, 1, 1);
     } while (p.squared_length() >= 1.0f);
 
     return unit_vector(p);
@@ -43,7 +43,7 @@ struct scatter_record
 class material
 {
 public:
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const { return false; }
+    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const { return false; }
     virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const { return Vector3f(0, 0, 0); }
     virtual Vector3f get_albedo(const hit_record& rec) const { return Vector3f(0, 0, 0); }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
@@ -55,7 +55,7 @@ class lambertian : public material
 public:
     lambertian(texture *a) : albedo(a) {}
 
-    virtual bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         srec.is_specular = false;
         srec.attenuation = albedo->value(hrec);
@@ -63,12 +63,12 @@ public:
         return true;
     }
 
-    virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
     {
         return albedo->value(rec) / M_PI;
     }
 
-    virtual Vector3f get_albedo(const hit_record& rec) const
+    Vector3f get_albedo(const hit_record& rec) const override
     {
         return albedo->value(rec);
     }
@@ -81,7 +81,7 @@ class modified_phong : public material
 public:
     modified_phong(texture *a, texture *b, const float &specular_exponent) : diffuse_reflectance(a), specular_reflectance(b), specular_exponent(specular_exponent) {}
 
-    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         //const float rand_var = gen_cano_rand();
         //constexpr float specular_chance = 0.5f;
@@ -90,7 +90,7 @@ public:
 
         srec.pdf_ptr = std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent);
         srec.attenuation = diffuse_reflectance->value(hrec);
-        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate());
+        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1])));
 
         return true;
     }
@@ -112,10 +112,10 @@ class metal : public material
 {
 public:
     metal(const Vector3f &a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0f; }
-    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         Vector3f reflected = reflect(unit_vector(r_in.direction()), hrec.normal);
-        srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere());
+        srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere(sample));
         srec.attenuation = albedo;
         srec.is_specular = true;
         srec.pdf_ptr = std::make_unique<constant_pdf>(1.0f);
@@ -155,7 +155,7 @@ class dielectric : public material
 public:
     dielectric(float ri) : ref_idx(ri) {}
 
-    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         Vector3f outward_normal;
         Vector3f reflected = reflect(r_in.direction(), hrec.normal);
@@ -186,7 +186,7 @@ public:
         {
             reflect_prob = 1.0f;
         }
-        if (gen_cano_rand() < reflect_prob)
+        if (sample[0] < reflect_prob)
         {
             srec.specular_ray = ray(hrec.p, reflected);
         }
@@ -209,7 +209,7 @@ class diffuse_light : public material
 {
 public:
     diffuse_light(texture *a) : emit(a) {}
-    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec) const override { return false; }
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override { return false; }
     Vector3f emitted(const ray &r_in, const hit_record &rec) const override
     {
         if (dot(rec.normal, r_in.direction()) < 0)
@@ -232,7 +232,7 @@ public:
     {
         env_map_tex = std::move(e);
     }
-    bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const override { return false; }
+    bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec, const Vector3f& sample) const override { return false; }
     Vector3f eval(const ray& r_in, hit_record rec, const int &depth, const float theeta=0, const float phii=06) const
     {
         const Vector3f direction = unit_vector(r_in.d);

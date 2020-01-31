@@ -133,13 +133,13 @@ public:
         // TODO: Allow switching between solid angle/area measure
         return 1.0f / area;
     }
-    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const
+    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
     {
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f &v1 = mesh->vertices[V[1]];
         const Vector3f &v2 = mesh->vertices[V[2]];
 
-        Vector2f u(gen_cano_rand(), gen_cano_rand());
+        const Vector2f &u = sample;
         float su0 = std::sqrt(u.x);
         float b0 = 1 - su0;
         float b1 = u.y * su0;

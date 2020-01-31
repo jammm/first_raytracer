@@ -296,6 +296,12 @@ inline Vector2<T> operator+(const Vector2<T>&p1, const Vector2<T>&p2)
 }
 
 template <typename T>
+inline Vector2<T> operator-(const Vector2<T>& p1, const Vector2<T>& p2)
+{
+    return Vector2<T>(p1.x - p2.x, p1.y - p2.y);
+}
+
+template <typename T>
 inline Vector2<T> operator*(const Vector2<T>&p1, const Vector2<T>&p2)
 {
     return Vector2<T>(p1.x * p2.x, p1.y * p2.y);

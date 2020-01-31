@@ -13,6 +13,7 @@
 #include "box.h"
 #include "pdf.h"
 #include "viewer.h"
+#include "sampler.h"
 
 // Include renderers
 #include "integrator.h"
@@ -48,6 +49,7 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
     hitable **list = new hitable*[n + 1];
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)));
+    sampler s;
 
     list[0] = new sphere(Vector3f(0, -1000, 0), 1000, new lambertian(checker));
     int i = 1;
@@ -55,20 +57,20 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
     {
         for (int b = -11; b < 11; b++)
         {
-            float choose_mat = gen_cano_rand();
-            Vector3f center(a + 0.9f * gen_cano_rand(), 0.2f, b + 0.9f * gen_cano_rand());
+            float choose_mat = s.get1d();
+            Vector3f center(a + 0.9f * s.get1d(), 0.2f, b + 0.9f * s.get1d());
             if ((center - Vector3f(4, 0.2f, 0)).length() > 0.9f)
             {
                 if (choose_mat < 0.8)
                 {
                     //diffuse
-                    list[i++] = new sphere(center, 0.2f, new lambertian(new constant_texture(Vector3f(gen_cano_rand() * gen_cano_rand(), gen_cano_rand() * gen_cano_rand(), gen_cano_rand() * gen_cano_rand()))));
+                    list[i++] = new sphere(center, 0.2f, new lambertian(new constant_texture(Vector3f(s.get1d() * s.get1d(), s.get1d() * s.get1d(), s.get1d() * s.get1d()))));
                 }
                 else if (choose_mat < 0.95)
                 {
                     //metal
                     list[i++] = new sphere(center, 0.2f,
-                        new metal(Vector3f(0.5f*(1 + gen_cano_rand()), 0.5f*(1 + gen_cano_rand()), 0.5f*(1 + gen_cano_rand())), 0.5f*gen_cano_rand()));
+                        new metal(Vector3f(0.5f*(1 + s.get1d()), 0.5f*(1 + s.get1d()), 0.5f*(1 + s.get1d())), 0.5f*s.get1d()));
                 }
                 else
                 {

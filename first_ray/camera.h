@@ -25,10 +25,10 @@ struct camera
 
     }
 
-    ray get_ray(const float &s, const float &t)
+    ray get_ray(const float &s, const float &t, const Vector2f &sample)
     {
-        Vector3f rd = lens_radius * random_in_unit_disk();
-        Vector3f offset = u * rd.x() + v * rd.y();
+        Vector2f rd = lens_radius * random_in_unit_disk(sample);
+        Vector3f offset = u * rd[0] + v * rd[1];
         return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset);
     }
 

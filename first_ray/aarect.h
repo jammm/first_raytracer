@@ -55,7 +55,7 @@ public:
     xz_rect(const float &x0, const float &x1, const float &z0, const float &z1, const float &k, material *mat) : x0(x0), x1(x1), z0(z0), z1(z1), k(k), mat(mat) {}
 
 
-    virtual bool bounding_box(float t0, float t1, aabb &box) const
+    bool bounding_box(float t0, float t1, aabb &box) const override
     {
         box = aabb(Vector3f(x0, k - 0.0001, z0), Vector3f(x1, k + 0.0001, z1));
         return true;
@@ -74,13 +74,14 @@ public:
         }
         return 0;
     }
-    virtual Vector3f random(const Vector3f &o) const
+
+    virtual Vector3f random(const Vector3f &o, const Vector2f& sample) const
     {
-        Vector3f random_point = Vector3f(x0+gen_cano_rand()*(x1-x0), k, z0+gen_cano_rand()*(z1-z0));
+        Vector3f random_point = Vector3f(x0+sample[0]*(x1-x0), k, z0+sample[1]*(z1-z0));
         return random_point - o;
     }
 
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override
     {
         const float t = (k - r.origin().y()) / r.direction().y();
         if (t < t_min || t > t_max)

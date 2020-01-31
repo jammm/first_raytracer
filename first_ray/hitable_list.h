@@ -11,14 +11,14 @@ public:
     hitable_list() {}
     hitable_list(const std::vector<hitable *> &l , int n) { list = l; list_size = n; }
 
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
-    virtual bool bounding_box(float t0, float t1, aabb &b) const;
-    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const;
-    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const;
+    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override;
+    bool bounding_box(float t0, float t1, aabb &b) const override;
+    float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const override;
+    Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f &sample) const override;
     inline hitable *operator[](const int &i) const { return list[i]; }
 
     /* Picks a random object from the list and returns its index (used for light sampling) */
-    int pick_sample() const;
+    int pick_sample(const float &sample) const;
     int list_size;
     std::vector<hitable *> list;
 };

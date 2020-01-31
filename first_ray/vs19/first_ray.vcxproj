@@ -211,6 +211,7 @@
     <ClInclude Include="..\pdf.h" />
     <ClInclude Include="..\prt.h" />
     <ClInclude Include="..\pssmlt.h" />
+    <ClInclude Include="..\sampler.h" />
     <ClInclude Include="..\Scene.h" />
     <ClInclude Include="..\SHSample.h" />
     <ClInclude Include="..\viewer.h" />

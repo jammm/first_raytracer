@@ -53,18 +53,17 @@ float hitable_list::pdf_direct_sampling(const hit_record& lrec, const Vector3f& 
 	return sum;
 }
 
-Vector3f hitable_list::sample_direct(hit_record& rec, const Vector3f& o) const
+Vector3f hitable_list::sample_direct(hit_record& rec, const Vector3f& o, const Vector2f &sample) const
 {
-	float rand = gen_cano_rand();
+	float rand = sample[0];
 	int index = int(rand * list_size);
 	if (index == list_size) index -= 1;
-	return list[index]->sample_direct(rec, o);
+	return list[index]->sample_direct(rec, o, sample);
 }
 
-int hitable_list::pick_sample() const
+int hitable_list::pick_sample(const float& sample) const
 {
-	float rand = gen_cano_rand();
-	int index = int(rand * list_size);
+	int index = int(sample * list_size);
 	if (index == list_size) index -= 1;
 
 	return index;

@@ -132,6 +132,7 @@ void path_prt::SH_project_full_global_illumination()
     // Loop through all triangles in scene
     tf.parallel_for(0U, world_size, 1U, [&](int obj_idx)
     {
+        sampler random_sampler(obj_idx);
         // Get current object. Ignore if object isn't triangle
         triangle* tri = dynamic_cast<triangle*>(world->list[obj_idx]);
 
@@ -149,7 +150,7 @@ void path_prt::SH_project_full_global_illumination()
             for (int i = 0; i < n_samples; ++i)
             {
                 // Get precomputed sample direction
-                const Vector3f v_direction = cosine_pdf(n).generate();
+                const Vector3f v_direction = cosine_pdf(n).generate(random_sampler.get2d());
                 ray r(v + (EPSILON * n), v_direction);
                 Vector3f throughput(1.0f, 1.0f, 1.0f);
                 Vector3f result(0.0f, 0.0f, 0.0f);
@@ -168,14 +169,14 @@ void path_prt::SH_project_full_global_illumination()
                     // Cast a ray to the scene
                     if (scene->world->hit(r, EPSILON, FLT_MAX, hrec))
                     {
-                        if (hrec.mat_ptr->scatter(r, hrec, srec))
+                        if (hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
                         {
                             const float cos_wi = std::max(dot(hrec.normal, unit_vector(r.direction())), 0.0f);
                             if (cos_wi == 0.0f) continue;
 
                             /* Sample BSDF to generate next ray direction for indirect lighting */
                             hrec.p = hrec.p + (EPSILON * hrec.normal);
-                            r = ray(hrec.p, srec.pdf_ptr->generate());
+                            r = ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d()));
                             const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, r.direction());
                             bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, r.direction());
                             /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -254,7 +255,7 @@ void path_prt::SH_project_environment()
 // TODO
 // Convert from recursive to iterative
 Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-    const float &prev_bsdf_pdf)
+    const float &prev_bsdf_pdf, sampler &random_sampler)
 {
     hit_record hrec;
     auto &world = scene->world;
@@ -263,7 +264,7 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec;
-        if (hrec.mat_ptr->scatter(r, hrec, srec))
+        if (hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             auto &tri_coeffs = dynamic_cast<triangle*>(hrec.obj)->coeffs;
             Vector2f &uv = hrec.uv;

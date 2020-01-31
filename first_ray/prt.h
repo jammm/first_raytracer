@@ -67,12 +67,13 @@ namespace PRT
 
 		// Create samples array
 		auto samples = std::make_unique<SHSample[]>(sqrt_n_samples * sqrt_n_samples);
+		sampler random_sampler;
 
 		for (int a = 0, i=0; a < sqrt_n_samples; a++) {
 			for (int b = 0; b < sqrt_n_samples; b++, i++) {
 				// Generate unbiased distribution of spherical coords
-				float x = (a + gen_cano_rand()) * oneoverN;           // Do not reuse results
-				float y = (b + gen_cano_rand()) * oneoverN;           // Each sample must be random!
+				float x = (a + random_sampler.get1d()) * oneoverN;           // Do not reuse results
+				float y = (b + random_sampler.get1d()) * oneoverN;           // Each sample must be random!
 				float theta = 2.0 * acos(sqrt(1.0 - x));   // Uniform sampling on theta
 				float phi = 2.0 * M_PI * y;                      // Uniform sampling on phi
 

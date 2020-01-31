@@ -14,6 +14,7 @@ struct viewer
 	void add_sample(const Vector2i &pixel, Vector3f sample);
 	void save_and_destroy();
 
+	// Stop rendering if to_exit is set to true by background_thread()
 	bool to_exit;
 	const int nx;
 	const int ny;

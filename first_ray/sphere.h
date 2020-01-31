@@ -11,10 +11,10 @@ public:
     sphere() {}
     sphere(const Vector3f &cen, const float &r, material *mat) : center(cen), radius(r), mat_ptr(mat) {}
 
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const;
-    virtual bool bounding_box(float t0, float t1, aabb &b) const;
-    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const;
-    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o) const;
+    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override;
+    bool bounding_box(float t0, float t1, aabb &b) const override;
+    float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const override;
+    Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const override;
 
     Vector3f center;
     float radius;
@@ -72,7 +72,7 @@ float sphere::pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_lig
     return 1 / solid_angle;
 }
 
-Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o) const
+Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
 {
     const Vector3f direction = center - o;
     const float distance_squared = direction.squared_length();
@@ -81,7 +81,7 @@ Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o) const
     // If origin is inside sphere, do uniform sphere sampling instead
     if (distance_squared <= radius * radius)
     {
-        Vector3f p = center + radius * uniform_sample_sphere();
+        Vector3f p = center + radius * uniform_sample_sphere(sample);
         rec.p = p;
         rec.mat_ptr = mat_ptr;
         rec.normal = unit_vector(center - p);
@@ -89,7 +89,7 @@ Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o) const
 
         return p - o;
     }
-    return uvw.local(random_to_sphere(radius, distance_squared));
+    return uvw.local(random_to_sphere(radius, distance_squared, sample));
 }
 
 #endif

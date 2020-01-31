@@ -155,5 +155,8 @@
     <ClInclude Include="..\viewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\sampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

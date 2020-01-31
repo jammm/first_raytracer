@@ -5,8 +5,8 @@
 
 struct normals_renderer
 {
-	Vector3f Li(const ray& r, Scene* scene, const int& depth, const hit_record& prev_hrec,
-		const float& prev_bsdf_pdf)
+    Vector3f Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
+        const float &prev_bsdf_pdf, sampler &random_sampler)
 	{
 		hit_record hrec;
 		if (scene->world->hit(r, EPSILON, FLT_MAX, hrec))
