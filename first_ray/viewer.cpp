@@ -17,8 +17,6 @@ viewer::viewer(const int& nx, const int& ny, const int &ns, const int& num_chann
 
 GLFWwindow* viewer::init()
 {
-    GLFWwindow* window;
-
     /* Register GLFW error callback */
     glfwSetErrorCallback(glfw_error_callback);
     /* Initialize GLFW */

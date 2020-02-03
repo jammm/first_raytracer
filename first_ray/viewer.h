@@ -22,6 +22,7 @@ struct viewer
 	const int num_channels;
 	std::unique_ptr<GLubyte[]> out_image;
 	std::unique_ptr<GLfloat[]> fout_image;
+	GLFWwindow *window;
 };
 
 #endif

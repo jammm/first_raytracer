@@ -21,6 +21,7 @@
 #include "path_prt.h"
 #include "ao.h"
 #include "debug_renderer.h"
+#include "pssmlt.h"
 
 // Other includes
 #include <float.h>
@@ -292,7 +293,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 1024;
     constexpr int ny = 768;
-    int ns = 100;
+    int ns = 786432;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
@@ -322,7 +323,7 @@ int main(int argc, const char **argv)
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<path> render;
+    renderer<pssmlt> render;
 
     render.Render(scene.get(), film_viewer);
 

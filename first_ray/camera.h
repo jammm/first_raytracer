@@ -7,7 +7,7 @@
 struct camera
 {
     camera() {}
-    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float focus_dist)
+    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float _focus_dist) : focus_dist(_focus_dist)
     {
         lens_radius = aperture / 2;
         float theta = vfov * (float)M_PI / 180.0f;
@@ -25,11 +25,16 @@ struct camera
 
     }
 
-    ray get_ray(const float &s, const float &t, const Vector2f &sample)
+    ray get_ray(const float s, const float t, const Vector2f &sample)
     {
         Vector2f rd = lens_radius * random_in_unit_disk(sample);
         Vector3f offset = u * rd[0] + v * rd[1];
         return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset);
+    }
+
+    ray get_ray_as_pinhole(const float s, const float t)
+    {
+        return ray(origin, lower_left_corner + s * horizontal + t * vertical - origin);
     }
 
     Vector3f origin;
@@ -38,6 +43,7 @@ struct camera
     Vector3f vertical;
     Vector3f u, v, w;
     float lens_radius;
+    float focus_dist;
 
 };
 
