@@ -7,7 +7,7 @@
 struct camera
 {
     camera() {}
-    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float _focus_dist) : focus_dist(_focus_dist)
+    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float focus_dist)
     {
         lens_radius = aperture / 2;
         float theta = vfov * (float)M_PI / 180.0f;
@@ -22,6 +22,8 @@ struct camera
         lower_left_corner = origin - half_width*focus_dist*u - half_height*focus_dist*v - focus_dist*w;
         horizontal = 2*half_width*focus_dist*u;
         vertical = 2*half_height*focus_dist*v;
+
+        dist = 768.0f / (2 * half_height);
 
     }
 
@@ -43,7 +45,7 @@ struct camera
     Vector3f vertical;
     Vector3f u, v, w;
     float lens_radius;
-    float focus_dist;
+    float dist;
 
 };
 

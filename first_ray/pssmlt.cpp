@@ -2,9 +2,8 @@
 #include "material.h"
 
 // primary space Markov chain
-inline double perturb(const float value, const float s1, const float s2) {
+inline double perturb(const float value, const float s1, const float s2, sampler &s) {
 	double Result;
-    thread_local static sampler s;
     double r = s.get1d();
 	if (r < 0.5) {
 		r = r * 2.0;
@@ -51,16 +50,16 @@ struct TMarkovChain
 		for (int i = 0; i < NumStates; i++) Result.u[i] = s.get1d();
 		return Result;
 	}
-	TMarkovChain mutate() const {
+	TMarkovChain mutate(sampler& s) const {
 		TMarkovChain Result;
 		Result.C = (*this).C;
 
 		// pixel location
-		Result.u[0] = perturb(u[0], 2.0 / float(PixelWidth+PixelHeight), 0.1f);
-		Result.u[1] = perturb(u[1], 2.0 / float(PixelWidth+PixelHeight), 0.1f);
+		Result.u[0] = perturb(u[0], 2.0 / float(PixelWidth+PixelHeight), 0.1f, s);
+		Result.u[1] = perturb(u[1], 2.0 / float(PixelWidth+PixelHeight), 0.1f, s);
 
 		// the rest
-		for (int i = 2; i < NumStates; i++) Result.u[i] = perturb(u[i], 1.0f / 1024.0f, 1.0f / 64.0f);
+		for (int i = 2; i < NumStates; i++) Result.u[i] = perturb(u[i], 1.0f / 1024.0f, 1.0f / 64.0f, s);
 		return Result;
 	}
 };
@@ -100,15 +99,34 @@ Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene)
     for (int i = 0; i < MaxEvents; i++) Result.x[i].hit_obj = (hitable*)0xdeadbeef;
     PathRndsOffset = 0;
 
-    ray r = cam.get_ray_as_pinhole(prnds[PathRndsOffset + 0], prnds[PathRndsOffset + 1]);
+    ray r = cam.get_ray(prnds[PathRndsOffset + 0], prnds[PathRndsOffset + 1], sampler().get2d());
+    
+    //const Vector3f su = cam.u * -(0.5 - prnds[PathRndsOffset + 0]) * PixelWidth;
+    //const Vector3f sv = cam.v * (0.5 - prnds[PathRndsOffset + 1]) * PixelHeight;
+    //const Vector3f sw = cam.w * cam.dist;
+    //ray r = ray(cam.origin, unit_vector(su + sv + sw));
+    //std::cout << r.d[0] << " " << r.d[1] << " " << r.d[2] << std::endl;
+
+
     PathRndsOffset += 2;
 
     Result.x[0] = Vert(r.o, cam.w, nullptr); 
-    Result.contrib.x = prnds[PathRndsOffset + 0] * float(PixelWidth);
-    Result.contrib.y = prnds[PathRndsOffset + 1] * float(PixelHeight);
+    Result.camera_ray = unit_vector(r.d);
+
     Result.n++;
     hit_record dummy_hrec;
     TracePath(Result, r, scene);
+
+    // get the pixel location
+    Vector3f Direction = Result.camera_ray;
+    Vector3f ScreenCenter = cam.origin + (cam.w * cam.dist);
+    Vector3f ScreenPosition = cam.origin + (Direction * (cam.dist / dot(Direction, cam.w))) - ScreenCenter;
+    Result.contrib.x = dot(cam.u, ScreenPosition) + (PixelWidth * 0.5f);
+    Result.contrib.y = -dot(cam.v, ScreenPosition) + (PixelHeight * 0.5f);
+
+    //std::cout << Direction[0] << " " << Direction[1] << " " << Direction[2] << std::endl;
+    //std::cout << Result.contrib.x << " " << Result.contrib.y << std::endl;
+
     return Result;
 }
 
@@ -125,7 +143,8 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, const int depth, con
         Vector3f Le = hrec.mat_ptr->emitted(r, hrec);
 
         // set path data
-        path.x[path.n] = Vert(hrec.p, hrec.normal, hrec.obj); path.n++;
+        path.x[path.n] = Vert(hrec.p, hrec.normal, hrec.obj); 
+        path.n++;
         float rnd0 = prnds[PathRndsOffset + 0];
         float rnd1 = prnds[PathRndsOffset + 1];
         float rnd2 = prnds[PathRndsOffset + 2];
@@ -254,11 +273,11 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
     InitRandomNumbersByChain(current);
     current.C = GenerateEyePath(MaxEvents, scene).contrib;
 
-    fprintf(stderr, "\n");
+    //fprintf(stderr, "\n");
 
     for (int total_samples=0; total_samples < film_viewer->ns; total_samples++)
     {
-        fprintf(stderr, "\r%f%%", (float(total_samples) / film_viewer->ns)*100.0f);
+        //fprintf(stderr, "\r%f%%", (float(total_samples) / film_viewer->ns)*100.0f);
         float is_large_step_done;
         if (s.get1d() < LargeStepProb)
         {
@@ -267,7 +286,7 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
         }
         else
         {
-            proposal = current.mutate();
+            proposal = current.mutate(s);
             is_large_step_done = 0.0f;
         }
         InitRandomNumbersByChain(proposal);

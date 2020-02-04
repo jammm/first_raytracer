@@ -15,7 +15,7 @@ constexpr static float LargeStepProb = 0.3f;
 constexpr static int NumRNGsPerEvent = 3;
 constexpr static int MaxEvents = (MaxPathLength + 1);
 constexpr static int NumStatesSubpath = ((MaxEvents + 2) * NumRNGsPerEvent);
-constexpr static int NumStates = (NumStatesSubpath * 3);
+constexpr static int NumStates = (NumStatesSubpath * 5);
 
 
 // path data
@@ -41,6 +41,7 @@ struct Path
 {
     Vert x[MaxEvents];
     PathContribution contrib;
+    Vector3f camera_ray;
     int n;
     Path() { n = 0; }
 };
