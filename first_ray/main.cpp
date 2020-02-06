@@ -296,6 +296,12 @@ Scene *veach_door_scene(const float &aspect)
 
     std::vector<hitable*> lights;
 
+    struct meshes
+    {
+        const char *filename;
+        Matrix4x4 toWorld;
+    };
+
     const char* f[] = 
     { 
         "veach_ajar/Mesh000.obj", 
