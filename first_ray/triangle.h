@@ -61,7 +61,7 @@ public:
     }
 
     //Use M�ller�Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hrec) const
     {
         float a, f, u, v;
         const Vector3f &v0 = mesh->vertices[V[0]];
@@ -86,19 +86,20 @@ public:
             if (t > t_min
                 && t < t_max)
             {
-                rec.t = t;
-                rec.p = r.point_at_parameter(t);
+                hrec.t = t;
+                hrec.p = r.point_at_parameter(t);
                 // Use u, v to find interpolated normals and texture coords
                 // P = (1 - u - v) * V0 + u * V1 + v * V2
-				rec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+				hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
                 Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
-                rec.u = uvhit.x;
-                rec.v = uvhit.y;
-				rec.uv.x = u;
-				rec.uv.y = v;
-                rec.mat_ptr = mat_ptr;
-                rec.obj_name = mesh->name;
-				rec.obj = (hitable*)this;
+                hrec.u = uvhit.x;
+                hrec.v = uvhit.y;
+                hrec.wi = r.d;
+				hrec.uv.x = u;
+				hrec.uv.y = v;
+                hrec.mat_ptr = mat_ptr;
+                hrec.obj_name = mesh->name;
+				hrec.obj = (hitable*)this;
                 return true;
             }
         }

@@ -150,8 +150,6 @@ void path_prt::SH_project_full_global_illumination()
             for (int i = 0; i < n_samples; ++i)
             {
                 // Get precomputed sample direction
-                const Vector3f v_direction = cosine_pdf(n).generate(random_sampler.get2d());
-                ray r(v + (EPSILON * n), v_direction);
                 Vector3f throughput(1.0f, 1.0f, 1.0f);
                 Vector3f result(0.0f, 0.0f, 0.0f);
                 hit_record hrec;
@@ -159,6 +157,8 @@ void path_prt::SH_project_full_global_illumination()
                 hrec.normal = n;
                 hrec.u = uv.x;
                 hrec.v = uv.y;
+                const Vector3f v_direction = cosine_pdf(n).generate(random_sampler.get2d(), hrec);
+                ray r(v + (EPSILON * n), v_direction);
                 const Vector3f v_bsdf = tri->mat_ptr->eval_bsdf(r, hrec, r.direction());
                 // Set initial BSDF to be used in case current vertex is directly visible from envmap
                 Vector3f bsdf = v_bsdf;
@@ -176,7 +176,7 @@ void path_prt::SH_project_full_global_illumination()
 
                             /* Sample BSDF to generate next ray direction for indirect lighting */
                             hrec.p = hrec.p + (EPSILON * hrec.normal);
-                            r = ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d()));
+                            r = ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), hrec));
                             const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, r.direction());
                             bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, r.direction());
                             /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/

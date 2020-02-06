@@ -5,6 +5,7 @@
 #include "util.h"
 #include "texture.h"
 #include "onb.h"
+#include "microfacet.h"
 #include "pdf.h"
 #include "image.h"
 
@@ -90,7 +91,7 @@ public:
 
         srec.pdf_ptr = std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent);
         srec.attenuation = diffuse_reflectance->value(hrec);
-        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1])));
+        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), hrec));
 
         return true;
     }
@@ -233,7 +234,7 @@ public:
         env_map_tex = std::move(e);
     }
     bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec, const Vector3f& sample) const override { return false; }
-    Vector3f eval(const ray& r_in, hit_record rec, const int &depth, const float theeta=0, const float phii=06) const
+    Vector3f eval(const ray& r_in, hit_record hrec, const int &depth) const
     {
         const Vector3f direction = unit_vector(r_in.d);
         float phi = std::atan2(direction.x(), -direction.z());
@@ -242,10 +243,10 @@ public:
         phi = (phi < 0) ? (phi + M_PI * 2) : phi;
         theta = (theta < 0) ? (theta + M_PI) : theta;
 
-        rec.u = phi / (2.0f * M_PI);
-        rec.v = theta / (M_PI);
+        hrec.u = phi / (2.0f * M_PI);
+        hrec.v = theta / (M_PI);
 
-        return env_map_tex->value(rec);
+        return env_map_tex->value(hrec);
     }
     Vector3f eval(const float &theta, const float &phi) const
     {
@@ -258,6 +259,77 @@ public:
 
     std::string env_map_filename;
     std::unique_ptr<texture> env_map_tex;
+};
+
+class rough_conductor : public material
+{
+public:
+    rough_conductor(const float alpha_, const float extEta_, const Vector3f &eta_, const Vector3f &k_,
+                    texture *specular_reflectance_, const std::string &distribution_) 
+        : alpha(alpha_), extEta(extEta_), alphaU(alpha), alphaV(alpha), eta(eta_), k(k_), specular_reflectance(specular_reflectance_), distribution(distribution_)
+    {
+        std::transform(distribution_.begin(), distribution_.end(), distribution.begin(), std::tolower);
+        if (distribution == "ggx")
+        {
+            distribution_type = microfacet_distributions::ggx;
+        }
+        else
+            distribution_type = microfacet_distributions::beckmann;
+    }
+
+    bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
+    {
+        srec.is_specular = true;
+
+        srec.pdf_ptr = std::make_unique<roughconductor_pdf>(r_in, hrec.normal, alphaU, alphaV, distribution_type);
+        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), hrec));
+
+        return true;
+    }
+
+    inline float G_term(const Vector3f &wi, const Vector3f &wo, const Vector3f &m, const hit_record &hrec) const {
+        return microfacet::smithG1(wi, m, hrec, alphaU, alphaV, distribution_type) * microfacet::smithG1(wo, m, hrec, alphaU, alphaV, distribution_type);
+    }
+
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
+    {
+        float cosWi = dot(hrec.wi, hrec.normal);
+        /* Stop if this component was not requested */
+        if (cosWi <= 0 ||
+            dot(wo, hrec.normal) <= 0)
+            return Vector3f(0.0f, 0.0f, 0.0f);
+
+        /* Calculate the reflection half-vector */
+        Vector3f H = unit_vector(wo+hrec.wi);
+
+        /* Construct the microfacet distribution matching the
+           roughness values at the current surface position. */
+
+        /* Evaluate the microfacet normal distribution */
+        const float D = microfacet::eval(H, hrec, alphaU, alphaV, distribution_type);
+        if (D == 0)
+            return Vector3f(0.0f, 0.0f, 0.0f);
+
+        /* Fresnel factor */
+        const Vector3f F = microfacet::fresnelConductorExact(dot(hrec.wi, H), eta, k) *
+            specular_reflectance->value(hrec);
+
+        /* Smith's shadow-masking function */
+        const float G = G_term(hrec.wi, wo, H, hrec);
+
+        /* Calculate the total amount of reflection */
+        float model = D * G / (4.0f * cosWi);
+
+        return F * model;
+    }
+
+    float alpha;
+    float extEta;
+    float alphaU, alphaV;
+    Vector3f eta, k;
+    texture *specular_reflectance;
+    std::string distribution;
+    microfacet_distributions distribution_type;
 };
 
 #endif

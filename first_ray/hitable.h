@@ -26,6 +26,7 @@ struct hit_record
 	// Local barycentric coordinates
 	Vector2f uv;
     Vector3f p;
+    Vector3f wi;
     Vector3f normal;
     material *mat_ptr;
 	hitable *obj;

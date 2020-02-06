@@ -173,6 +173,18 @@ inline Vector3<T>unit_vector(const Vector3<T>&v)
 }
 
 template <typename T>
+inline Vector3<T>safe_sqrt(const Vector3<T>& v)
+{
+    Vector3f result;
+    for (int i = 0; i < 3; ++i)
+    {
+        result[i] = std::max(static_cast<T>(0), std::sqrt(v[i]));
+    }
+
+    return result;
+}
+
+template <typename T>
 inline Vector3<T>& Vector3<T>::operator+=(const Vector3<T>& v2)
 {
     e[0] += v2.e[0];

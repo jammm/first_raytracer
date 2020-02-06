@@ -14,7 +14,7 @@ Vector3f ao::Li(const ray &r, Scene *scene, const int &depth, const hit_record &
         {
             /* Sample BSDF to generate next ray direction for visibility check */
             hrec.p = hrec.p;
-            ray shadow_ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d()));
+            ray shadow_ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), hrec));
             // Find approximate max. radius from bounding box
             // TODO: evaluate bounding sphere for every hitable geometry
             aabb bbox;

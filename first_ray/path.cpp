@@ -87,7 +87,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 }
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 hrec.p = hrec.p + (EPSILON * hrec.normal);
-                ray wo(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d()));
+                ray wo(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), hrec));
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -95,9 +95,9 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 {
                     return Vector3f(0, 0, 0);
                 }
-                const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
+                const float cos_wo = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
-                return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) * cos_wi / surface_bsdf_pdf;
+                return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) * cos_wo / surface_bsdf_pdf;
             }
         }
         return Le;
@@ -111,7 +111,6 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
 void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
-
     tf.parallel_for(film_viewer->ny - 1, 0, -1, [=](int y)
         {
             static thread_local sampler random_sampler(y);

@@ -235,7 +235,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, const int depth, con
 
                 Vector2f rnd_2d(prnds[PathRndsOffset + 0], prnds[PathRndsOffset + 1]);
                 PathRndsOffset += 2;
-                ray wo(hrec.p, srec.pdf_ptr->generate(rnd_2d));
+                ray wo(hrec.p, srec.pdf_ptr->generate(rnd_2d, hrec));
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -243,9 +243,9 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, const int depth, con
                 {
                     return Vector3f(0, 0, 0);
                 }
-                const float cos_wi = abs(dot(hrec.normal, unit_vector(wo.direction())));
+                const float cos_wo = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
-                return Le + surface_bsdf * Li(path, wo, scene, depth + 1, hrec, surface_bsdf_pdf) * cos_wi / surface_bsdf_pdf;
+                return Le + surface_bsdf * Li(path, wo, scene, depth + 1, hrec, surface_bsdf_pdf) * cos_wo / surface_bsdf_pdf;
             }
         }
         return Le;

@@ -204,6 +204,7 @@
     <ClInclude Include="..\debug_renderer.h" />
     <ClInclude Include="..\gl_includes.h" />
     <ClInclude Include="..\integrator.h" />
+    <ClInclude Include="..\microfacet.h" />
     <ClInclude Include="..\onb.h" />
     <ClInclude Include="..\parallel_bvh.h" />
     <ClInclude Include="..\path.h" />
