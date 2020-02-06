@@ -289,10 +289,70 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
     //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
 }
 
+Scene *veach_door_scene(const float &aspect)
+{
+    hitable **list = new hitable*[100000];
+    int i = 0;
+
+    std::vector<hitable*> lights;
+
+    const char* f[] = 
+    { 
+        "veach_ajar/Mesh000.obj", 
+        "veach_ajar/Mesh001.obj",
+        "veach_ajar/Mesh002.obj",
+        "veach_ajar/Mesh003.obj",
+        "veach_ajar/Mesh004.obj",
+        "veach_ajar/Mesh005.obj",
+        "veach_ajar/Mesh006.obj",
+        "veach_ajar/Mesh007.obj",
+        "veach_ajar/Mesh008.obj",
+        "veach_ajar/Mesh009.obj",
+        "veach_ajar/Mesh000.obj",
+        "veach_ajar/Mesh011.obj",
+        "veach_ajar/Mesh012.obj",
+        "veach_ajar/Mesh013.obj",
+        "veach_ajar/Mesh014.obj",
+        "veach_ajar/Mesh015.obj",
+        "veach_ajar/Mesh016.obj",
+        "veach_ajar/light.obj",
+    };
+
+    std::vector<std::string> mesh_filenames(f, std::end(f));
+    
+    static std::vector<std::vector<std::shared_ptr<hitable>>> triangle_soup;
+
+    for (auto file : mesh_filenames)
+        triangle_soup.push_back(create_triangle_mesh("cube/teapot.obj", lights));
+
+    for (auto &mesh : triangle_soup)
+    {
+        for (auto triangle : mesh)
+        {
+            list[i++] = triangle.get();
+        }
+    }
+
+    Vector3f lookfrom(4.05402f, 1.61647f, -2.30652f);
+    Vector3f lookat(-4.29809f, 1.34399f, -3.4641f);
+    constexpr float dist_to_focus = 10.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 60.0f;
+    camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+    return new Scene(
+        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+        cam, lights
+    );
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new hitable_list(std::vector<hitable*>(list, list + i), i);
+}
+
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 1024;
-    constexpr int ny = 768;
+    constexpr int nx = 1280;
+    constexpr int ny = 720;
     int ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
