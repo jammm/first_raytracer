@@ -90,7 +90,8 @@ public:
                 hrec.p = r.point_at_parameter(t);
                 // Use u, v to find interpolated normals and texture coords
                 // P = (1 - u - v) * V0 + u * V1 + v * V2
-				hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+                hrec.normal = unit_vector(cross(edge1, edge2));
+				//hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
                 Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 hrec.u = uvhit.x;
                 hrec.v = uvhit.y;
@@ -172,6 +173,7 @@ public:
 };
 
 std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable*> &lights);
 
 
 #endif

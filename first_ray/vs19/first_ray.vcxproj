@@ -110,9 +110,10 @@
       <OpenMPSupport>false</OpenMPSupport>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Strict</FloatingPointModel>
-      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
       <AdditionalOptions>
       </AdditionalOptions>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -155,6 +156,8 @@
       <FloatingPointExceptions>true</FloatingPointExceptions>
       <AdditionalOptions>
       </AdditionalOptions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

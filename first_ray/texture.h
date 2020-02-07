@@ -52,7 +52,10 @@ class image_texture : public texture
 {
 public:
     image_texture() {}
-    image_texture(std::unique_ptr<image> &img) : img(move(img)) {}
+    image_texture(std::unique_ptr<image> img_)
+    {
+        img = std::move(img_);
+    }
 
     Vector3f value(const hit_record &rec) const override
     {

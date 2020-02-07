@@ -597,7 +597,7 @@ inline Vector2<T>& Vector2<T>::operator*=(const Vector2<T>& p2)
 template <typename T>
 inline Vector2<T> operator*(const float &t, const Vector2<T>&p)
 {
-    return Vector2<T>(t*p.x, t*p.y);
+    return Vector2<T>(t*p[0], t*p[1]);
 }
 
 template <typename T>
@@ -649,11 +649,18 @@ template <int M, int N, typename T> struct Matrix {
                 m[i][j] = (i == j) ? 1.0f : 0.0f;
     }
 
+    inline void transpose(Matrix<N, M, T> &target) const {
+        for (int i=0; i<M; ++i)
+            for (int j=0; j<N; ++j)
+                target.m[i][j] = m[j][i];
+    }
+
     void set_zero()
     {
         memset(m, 0, sizeof(T) * M * N);
     }
 
+    bool invert(Matrix& target) const;
     inline T &operator()(int i, int j) { return m[i][j]; }
     inline const T & operator()(int i, int j) const { return m[i][j]; }
 
@@ -811,6 +818,16 @@ template <int M, int N, typename T> struct Matrix {
         *this = temp;
         return *this;
     }
+
+    inline Vector3f normal_transform(const Vector3f &v) const
+    {
+
+        float x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
+        float y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
+        float z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
+
+        return Vector3f(x, y, z);
+    }
 };
 
 struct Matrix4x4 : public Matrix<4, 4, float> 
@@ -862,6 +879,24 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         );
     }
 
+    inline Vector3f operator*(const Vector3f &v) const
+    {
+
+        float x = m[0][0] * v[0] + m[0][1] * v[1]
+            + m[0][2] * v[2] + m[0][3];
+        float y = m[1][0] * v[0] + m[1][1] * v[1]
+            + m[1][2] * v[2] + m[1][3];
+        float z = m[2][0] * v[0] + m[2][1] * v[1]
+            + m[2][2] * v[2] + m[2][3];
+        float w = m[3][0] * v[0] + m[3][1] * v[1]
+            + m[3][2] * v[2] + m[3][3];
+
+        if (w == 1.0f)
+            return Vector3f(x, y, z);
+        
+        return Vector3f(x, y, z) / w;
+    }
+
     inline Matrix4x4 operator*(float value) const 
     {
         Matrix4x4 result;
@@ -907,6 +942,64 @@ template <typename T, int M1, int N1, int M2, int N2> inline Matrix<M1, N2, T>
         }
     }
     return result;
+}
+
+// Matrix inversion taken from mitsuba
+template <int M, int N, typename T> bool Matrix<M, N, T>::invert(Matrix &target) const {
+    static_assert(M == N);
+
+    int indxc[N], indxr[N];
+    int ipiv[N];
+    memset(ipiv, 0, sizeof(int)*N);
+    memcpy(target.m, m, M*N*sizeof(T));
+
+    for (int i = 0; i < N; i++) {
+        int irow = -1, icol = -1;
+        T big = 0;
+        for (int j = 0; j < N; j++) {
+            if (ipiv[j] != 1) {
+                for (int k = 0; k < N; k++) {
+                    if (ipiv[k] == 0) {
+                        if (std::abs(target.m[j][k]) >= big) {
+                            big = std::abs(target.m[j][k]);
+                            irow = j;
+                            icol = k;
+                        }
+                    } else if (ipiv[k] > 1) {
+                        return false;
+                    }
+                }
+            }
+        }
+        ++ipiv[icol];
+        if (irow != icol) {
+            for (int k = 0; k < N; ++k)
+                std::swap(target.m[irow][k], target.m[icol][k]);
+        }
+        indxr[i] = irow;
+        indxc[i] = icol;
+        if (target.m[icol][icol] == 0)
+            return false;
+        T pivinv = 1.f / target.m[icol][icol];
+        target.m[icol][icol] = 1.f;
+        for (int j = 0; j < N; j++)
+            target.m[icol][j] *= pivinv;
+        for (int j = 0; j < N; j++) {
+            if (j != icol) {
+                T save = target.m[j][icol];
+                target.m[j][icol] = 0;
+                for (int k = 0; k < N; k++)
+                    target.m[j][k] -= target.m[icol][k]*save;
+            }
+        }
+    }
+    for (int j = N-1; j >= 0; j--) {
+        if (indxr[j] != indxc[j]) {
+            for (int k = 0; k < N; k++)
+                std::swap(target.m[k][indxr[j]], target.m[k][indxc[j]]);
+        }
+    }
+    return true;
 }
 
 template <typename T, int M, int N> inline Matrix<M, N, T> operator*(T f, const Matrix<M, N, T> &m) {

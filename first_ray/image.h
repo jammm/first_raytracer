@@ -20,7 +20,7 @@ class image
     bool loaded_from_stbi;
 public:
     image() {}
-    image(const std::string &filename, const formats &format);
+    image(const std::string& filename, const formats &format = formats::STBI_JPG);
 
     image(unsigned char *data, const int &nx, const int &ny, const int &nn) : loaded_from_stbi(false), filename("out_test"), data(data), nx(nx), ny(ny), nn(nn)
 																			   

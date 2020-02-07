@@ -48,7 +48,7 @@ public:
     virtual Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const { return Vector3f(0, 0, 0); }
     virtual Vector3f get_albedo(const hit_record& rec) const { return Vector3f(0, 0, 0); }
     virtual Vector3f emitted(const ray &r_in, const hit_record &rec) const { return Vector3f(0, 0, 0); }
-    virtual ~material() = 0;
+    virtual ~material();
 };
 
 class lambertian : public material
@@ -227,7 +227,7 @@ public:
     environment_map(std::string env_map_filename) : env_map_filename(env_map_filename)
     {
         auto env_map_img = std::make_unique<image>(env_map_filename, formats::STBI_HDR);
-        env_map_tex = std::make_unique<image_texture>(env_map_img);
+        env_map_tex = std::make_unique<image_texture>(std::move(env_map_img));
     }
     environment_map(std::unique_ptr<texture> e)
     {

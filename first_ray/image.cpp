@@ -8,7 +8,7 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
-image::image(const std::string &filename, const formats &format = formats::STBI_JPG) : loaded_from_stbi(true), filename(filename), type(format)
+image::image(const std::string &filename, const formats &format) : loaded_from_stbi(true), filename(filename), type(format)
 {
     switch (format)
     {
