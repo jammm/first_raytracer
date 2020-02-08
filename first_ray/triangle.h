@@ -95,7 +95,7 @@ public:
                 Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 hrec.u = uvhit.x;
                 hrec.v = uvhit.y;
-                hrec.wi = r.d;
+                hrec.wi = unit_vector(-r.d);
 				hrec.uv.x = u;
 				hrec.uv.y = v;
                 hrec.mat_ptr = mat_ptr;

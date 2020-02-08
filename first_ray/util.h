@@ -127,24 +127,28 @@ inline float erfinv(float x)
         p = (float)1.00167406 + p * w;
         p = (float)2.83297682 + p * w;
     }
+
+    assert(std::isfinite(p) && std::isfinite(x));
     return p * x;
 }
 
-inline float erf_(float x) {
-    float a1 = (float)0.254829592;
-    float a2 = (float)-0.284496736;
-    float a3 = (float)1.421413741;
-    float a4 = (float)-1.453152027;
-    float a5 = (float)1.061405429;
-    float p = (float)0.3275911;
+inline float erf_(double x) {
+    double a1 = (float)0.254829592;
+    double a2 = (float)-0.284496736;
+    double a3 = (float)1.421413741;
+    double a4 = (float)-1.453152027;
+    double a5 = (float)1.061405429;
+    double p = (float)0.3275911;
 
     // Save the sign of x
-    float sign = _copysign(1.0f, x);
+    double sign = _copysign(1.0f, x);
     x = std::abs(x);
 
     // A&S formula 7.1.26
-    float t = (float)1.0 / ((float)1.0 + p * x);
-    float y = (float)1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * std::expf(-x * x);
+    double t = (float)1.0 / ((float)1.0 + p * x);
+    double y = (float)1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * std::exp(-x * x);
+
+    auto lol = (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * std::exp(-x * x);
 
     return sign * y;
 }

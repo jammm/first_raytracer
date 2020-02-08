@@ -390,14 +390,16 @@ public:
         float theta = 0, phi = 0;
         if (wi[2] < (float)0.99999) 
         {
-            theta = std::acos(wi[0]);
-            phi = std::atan2(wi[1], wi[2]);
+            theta = std::acos(wi[2]);
+            phi = std::atan2(wi[1], wi[0]);
         }
         float sinPhi, cosPhi;
         sincos(phi, &sinPhi, &cosPhi);
 
         /* Step 2: simulate P22_{wi}(slope.x, slope.y, 1, 1) */
         Vector2 slope = sampleVisible11(theta, sample);
+
+        assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
 
         /* Step 3: rotate */
         slope = Vector2(
@@ -412,11 +414,15 @@ public:
         float normalization = (float)1 / std::sqrt(slope.x * slope.x
             + slope.y * slope.y + (float)1.0);
 
-        return Vector3f(
+        Vector3f result = Vector3f(
             -slope.x * normalization,
             -slope.y * normalization,
             normalization
         );
+
+        assert(std::isfinite(result[0]) && std::isfinite(result[1]) && std::isfinite(result[2]));
+
+        return result;
     }
 
 

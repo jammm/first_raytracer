@@ -16,7 +16,7 @@ struct renderer : public integrator
         // Initialize viewer and create gl window
         GLFWwindow* window = film_viewer.init();
         // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
-        tf::Taskflow tf;
+        tf::Taskflow tf(1);
 
         integrator::Render(scene, &film_viewer, tf);
 
