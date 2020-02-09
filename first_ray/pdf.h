@@ -87,7 +87,7 @@ public:
 
     Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
     {
-        return uvw.local(hemisphere_to_cosine_direction(sample));
+        return uvw.fromLocal(hemisphere_to_cosine_direction(sample));
     }
 
     onb uvw;
@@ -98,16 +98,32 @@ class cosine_power_pdf : public pdf
 public:
     cosine_power_pdf(const ray &r_in, const Vector3f &w, const float &specular_exponent) : specular_exponent(specular_exponent), r_in(r_in) { uvw.build_from_w(w); }
     // TODO: modify this stuff - modified phong BRDF paper
-    float value(const hit_record &hrec, const Vector3f &wo) const override
+    float value(const hit_record& hrec, const Vector3f& wo) const override
     {
-        const float cosine = std::max<float>(0.0f, dot(reflect(-unit_vector(r_in.direction()), uvw.w()), wo));
+        if (dot(hrec.normal, wo) <= 0
+            || dot(hrec.normal, hrec.wi) <= 0)
+            return 0.0f;
+        const double alpha = std::max(0.0f, dot(reflect(hrec.wi, uvw.w()), wo));
+        const double specular_pdf = std::pow(alpha, (double)specular_exponent);
 
-        return ((specular_exponent + 1) / (2 * (float)M_PI)) * pow(cosine, specular_exponent);
+        return specular_pdf * (specular_exponent + 1.0f) / (2 * (float)M_PI);
     }
 
     Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
     {
-        return uvw.local(hemisphere_to_cosine_power_direction(sample));
+        Vector3f R = reflect(hrec.wi, uvw.w());
+
+        /* Sample from a Phong lobe centered around (0, 0, 1) */
+        float sinAlpha = std::sqrt(1 - std::pow(sample[1], 2 / (specular_exponent + 1)));
+        float cosAlpha = std::pow(sample[1], 1 / (specular_exponent + 1));
+        float phi = (2.0f * M_PI) * sample[0];
+        Vector3f localDir = Vector3f(
+            sinAlpha * std::cos(phi),
+            sinAlpha * std::sin(phi),
+            cosAlpha
+        );
+
+        return onb(R).fromLocal(localDir);
     }
 
     onb uvw;
@@ -193,7 +209,7 @@ public:
         case microfacet_distributions::beckmann:
         {
             /* Beckmann distribution function for Gaussian random surfaces - [Walter 2005] evaluation */
-            eval_result = std::exp(-beckmannExponent) /
+            eval_result = fastexp(-beckmannExponent) /
                 (M_PI * alphaU * alphaV * cosTheta2 * cosTheta2);
             break;
         }
@@ -262,7 +278,7 @@ public:
             /* Special case (normal incidence) */
             if (thetaI < 1e-4f) {
                 float sinPhi, cosPhi;
-                float r = std::sqrt(-std::logf(1.0f - sample.x));
+                float r = std::sqrt(-fastlog(1.0f - sample.x));
                 sincos(2 * M_PI * sample.y, &sinPhi, &cosPhi);
                 return Vector2(r * cosPhi, r * sinPhi);
             }
@@ -285,7 +301,7 @@ public:
 
             /* Normalization factor for the CDF */
             float normalization = 1 / (1 + c + SQRT_PI_INV *
-                tanThetaI * std::exp(-cotThetaI * cotThetaI));
+                tanThetaI * fastexp(-cotThetaI * cotThetaI));
 
             int it = 0;
             while (++it < 10) {
@@ -299,7 +315,7 @@ public:
                    (i.e. the density function) */
                 float invErf = erfinv(b);
                 float value = normalization * (1 + b + SQRT_PI_INV *
-                    tanThetaI * std::exp(-invErf * invErf)) - sample_x;
+                    tanThetaI * fastexp(-invErf * invErf)) - sample_x;
                 float derivative = normalization * (1
                     - invErf * tanThetaI);
 
@@ -430,15 +446,16 @@ public:
     {
         Vector3f m;
         m = sampleVisible(wi, sample);
-        pdf = pdfVisible(wi, m, hrec);
+        //pdf = pdfVisible(wi, m, hrec);
+        pdf = 0.0f;
         return m;
     }
 
     Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
     {
 
-        if (dot(hrec.normal, hrec.wi) < 0)
-            return Vector3f(0.0f, 0.0f, 0.0f);
+        //if (dot(hrec.normal, hrec.wi) < 0)
+        //    return Vector3f(0.0f, 0.0f, 0.0f);
 
         /* Construct the microfacet distribution matching the
            roughness values at the current surface position. */
@@ -447,8 +464,8 @@ public:
         float pdf;
         Vector3f m = sample_microfacet(hrec.wi, sample, pdf, hrec);
 
-        if (pdf == 0)
-            return Vector3f(0.0f, 0.0f, 0.0f);
+        //if (pdf == 0)
+        //    return Vector3f(0.0f, 0.0f, 0.0f);
 
         /* Perfect specular reflection based on the microfacet normal */
         Vector3f wo = reflect(hrec.wi, m);

@@ -90,12 +90,12 @@ public:
                 hrec.p = r.point_at_parameter(t);
                 // Use u, v to find interpolated normals and texture coords
                 // P = (1 - u - v) * V0 + u * V1 + v * V2
-                hrec.normal = unit_vector(cross(edge1, edge2));
-				//hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+                //hrec.normal = unit_vector(cross(edge1, edge2));
+				hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
                 Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 hrec.u = uvhit.x;
                 hrec.v = uvhit.y;
-                hrec.wi = unit_vector(-r.d);
+                hrec.wi = -unit_vector(r.d);
 				hrec.uv.x = u;
 				hrec.uv.y = v;
                 hrec.mat_ptr = mat_ptr;

@@ -32,17 +32,22 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 15 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             if (srec.is_specular)
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0f;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
+                assert(std::isfinite(surface_bsdf[0])
+                    && std::isfinite(surface_bsdf[1])
+                    && std::isfinite(surface_bsdf[2]));
+                assert(std::isfinite(surface_bsdf_pdf));
                 if (surface_bsdf_pdf == 0)
                 {
                     return Vector3f(0, 0, 0);
                 }
                 //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                srec.specular_ray.o += (EPSILON * hrec.normal);
                 return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) / surface_bsdf_pdf;
             }
             else

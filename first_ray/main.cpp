@@ -160,9 +160,9 @@ Scene *furnace_test_scene(const float &aspect)
     hitable **list = new hitable*[20000];
     int i = 0;
 
-    //Vector3f reflectance(1.0f, 1.0f, 1.0f);
-    //material *specular = new modified_phong(new constant_texture(Vector3f(0.0f, 0.0f, 0.0f)),
-    //                                    new constant_texture(reflectance), 100.0f);
+    Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    material *specular = new modified_phong(new constant_texture(Vector3f(0, 0, 0)),
+                                        new constant_texture(reflectance), 100.0f);
     //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
     //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
     //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
@@ -173,8 +173,12 @@ Scene *furnace_test_scene(const float &aspect)
 
     std::vector<hitable*> lights;
     //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
-    
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", lights);
+#define POT2_MATERIAL new rough_conductor(0.15f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "ggx")
+
+    Matrix4x4 I;
+    I.set_identity();
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, specular, lights);
+
 
     for (auto triangle : mesh)
     {
@@ -341,7 +345,7 @@ Scene *veach_door_scene(const float &aspect)
         //{"veach_ajar/models/Mesh012.obj", HINGE_MATERIAL                                                                                              , identity},
         //{"veach_ajar/models/Mesh013.obj", new lambertian(new constant_texture(Vector3f(0.258824f, 0.207843f, 0.145098f)))                             , identity},
         {"veach_ajar/models/Mesh014.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , Mesh014_toWorld},
-        {"veach_ajar/models/Mesh015.obj", DOORHANDLE_MATERIAL                                                                                         , identity},
+        //{"veach_ajar/models/Mesh015.obj", DOORHANDLE_MATERIAL                                                                                         , identity},
         //{"veach_ajar/models/Mesh016.obj", HINGE_MATERIAL                                                                                              , identity},
     };
     constexpr int num_objs = sizeof(objects) / sizeof(obj);
@@ -382,8 +386,8 @@ Scene *veach_door_scene(const float &aspect)
 
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 1280;
-    constexpr int ny = 720;
+    constexpr int nx = 640;
+    constexpr int ny = 480;
     int ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
@@ -407,7 +411,7 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(veach_door_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(furnace_test_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);

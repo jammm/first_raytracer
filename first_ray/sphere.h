@@ -89,7 +89,7 @@ Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o, const Vector2
 
         return p - o;
     }
-    return uvw.local(random_to_sphere(radius, distance_squared, sample));
+    return uvw.fromLocal(random_to_sphere(radius, distance_squared, sample));
 }
 
 #endif

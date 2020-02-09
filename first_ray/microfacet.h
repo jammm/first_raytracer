@@ -101,7 +101,7 @@ struct microfacet
         case microfacet_distributions::beckmann:
         {
             /* Beckmann distribution function for Gaussian random surfaces - [Walter 2005] evaluation */
-            result = std::expf(-beckmannExponent) /
+            result = fastexp(-beckmannExponent) /
                 (M_PI * alphaU * alphaV * cosTheta2 * cosTheta2);
             break;
         }

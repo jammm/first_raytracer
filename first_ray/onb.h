@@ -7,12 +7,14 @@ class onb
 {
 public:
     onb() {}
+    onb(const Vector3f &w) { build_from_w(w); }
     inline Vector3f operator[](int i) const { return axis[i]; }
     Vector3f u() const { return axis[0]; }
     Vector3f v() const { return axis[1]; }
     Vector3f w() const { return axis[2]; }
     Vector3f local(const float &a, const float &b, const float &c) { return a*u() + b*v() + c*w(); }
-    Vector3f local(const Vector3f &a) const { return a.x()*u() + a.y()*v() + a.z()*w(); }
+    Vector3f fromLocal(const Vector3f &a) const { return a.x()*u() + a.y()*v() + a.z()*w(); }
+    Vector3f toLocal(const Vector3f& a) const { return Vector3f(dot(a, axis[0]), dot(a, axis[1]), dot(a, axis[2])); }
     void build_from_w(const Vector3f &n)
     {
         axis[2] = unit_vector(n);

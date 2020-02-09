@@ -96,10 +96,44 @@ inline void sincos(double theta, double *_sin, double *_cos) {
 }
 #endif
 
+#if defined(__LINUX__) && defined(__x86_64__)
+inline float fastexp(float value) {
+    return (float) exp((double) value);
+}
+
+inline double fastexp(double value) {
+    return exp(value);
+}
+
+inline float fastlog(float value) {
+    return (float) log((double) value);
+}
+
+inline double fastlog(double value) {
+    return log(value);
+}
+#else
+inline float fastexp(float value) {
+    return expf(value);
+}
+
+inline double fastexp(double value) {
+    return exp(value);
+}
+
+inline float fastlog(float value) {
+    return logf(value);
+}
+
+inline double fastlog(double value) {
+    return log(value);
+}
+#endif
+
 inline float erfinv(float x) 
 {
     // Based on "Approximating the erfinv function" by Mark Giles
-    float w = -std::logf(((float)1 - x) * ((float)1 + x));
+    float w = -fastlog(((float)1 - x) * ((float)1 + x));
     float p;
     if (w < (float)5) 
     {
@@ -146,9 +180,7 @@ inline float erf_(double x) {
 
     // A&S formula 7.1.26
     double t = (float)1.0 / ((float)1.0 + p * x);
-    double y = (float)1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * std::exp(-x * x);
-
-    auto lol = (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * std::exp(-x * x);
+    double y = (float)1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * fastexp(-x * x);
 
     return sign * y;
 }

@@ -80,7 +80,8 @@ public:
 class modified_phong : public material
 {
 public:
-    modified_phong(texture *a, texture *b, const float &specular_exponent) : diffuse_reflectance(a), specular_reflectance(b), specular_exponent(specular_exponent) {}
+    modified_phong(texture *diffuse_reflectance_, texture *specular_reflectance_, const float &specular_exponent) 
+        : diffuse_reflectance(diffuse_reflectance_), specular_reflectance(specular_reflectance_), specular_exponent(specular_exponent) {}
 
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
@@ -96,11 +97,14 @@ public:
         return true;
     }
 
-    Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
     {
-        const Vector3f reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-        return (diffuse_reflectance->value(rec) / M_PI) + specular_reflectance->value(rec)
-                * ((specular_exponent + 2) / (2 * M_PI)) * pow(dot(reflected, wo), specular_exponent);
+        const Vector3f reflected = reflect(hrec.wi, hrec.normal);
+        const float alpha = std::max(0.0f, dot(reflected, wo));
+        const Vector3f result = (diffuse_reflectance->value(hrec) / M_PI) + specular_reflectance->value(hrec)
+                * ((specular_exponent + 2) / (2 * M_PI)) * std::pow(alpha, specular_exponent);
+
+        return result * dot(hrec.normal, wo);
     }
 
     texture *diffuse_reflectance;
@@ -282,7 +286,7 @@ public:
         srec.is_specular = true;
 
         srec.pdf_ptr = std::make_unique<roughconductor_pdf>(r_in, hrec.normal, alphaU, alphaV, distribution_type);
-        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), hrec));
+        srec.specular_ray = ray(hrec.p, unit_vector(srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), hrec)));
 
         return true;
     }
