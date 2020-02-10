@@ -462,15 +462,15 @@ public:
 
         /* Sample M, the microfacet normal */
         float pdf;
-        Vector3f m = sample_microfacet(hrec.wi, sample, pdf, hrec);
+        Vector3f m = sample_microfacet(uvw.toLocal(hrec.wi), sample, pdf, hrec);
 
         //if (pdf == 0)
         //    return Vector3f(0.0f, 0.0f, 0.0f);
 
         /* Perfect specular reflection based on the microfacet normal */
-        Vector3f wo = reflect(hrec.wi, m);
+        Vector3f wo = reflect(-uvw.toLocal(hrec.wi), m);
 
-        return wo;
+        return uvw.fromLocal(wo);
     }
 
     onb uvw;

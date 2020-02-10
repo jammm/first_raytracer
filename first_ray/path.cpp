@@ -116,7 +116,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
 void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
-    tf.parallel_for(film_viewer->ny - 1, 0, -1, [=](int y)
+    tf.parallel_for(film_viewer->ny - 1, -1, -1, [=](int y)
         {
             static thread_local sampler random_sampler(y);
             for (int x = 0; x < film_viewer->nx; x++)

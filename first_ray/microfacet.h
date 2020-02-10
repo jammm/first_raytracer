@@ -53,9 +53,10 @@ struct microfacet
             return 0.0f;
 
         /* Perpendicular incidence -- no shadowing/masking */
-        const float tanTheta = std::sqrt(1 - cosTheta * cosTheta) / cosTheta;
-        if (tanTheta == 0.0f)
+        float temp = 1 - (cosTheta * cosTheta);
+        if (temp <= 0.0f)
             return 1.0f;
+        const float tanTheta = std::sqrt(temp) / cosTheta;
 
         float alpha = projectRoughness(v, hrec, alphaU, alphaV);
         switch (distribution_type)

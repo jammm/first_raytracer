@@ -160,9 +160,9 @@ Scene *furnace_test_scene(const float &aspect)
     hitable **list = new hitable*[20000];
     int i = 0;
 
-    Vector3f reflectance(1.0f, 1.0f, 1.0f);
-    material *specular = new modified_phong(new constant_texture(Vector3f(0, 0, 0)),
-                                        new constant_texture(reflectance), 100.0f);
+    //Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    //material *specular = new modified_phong(new constant_texture(Vector3f(0, 0, 0)),
+    //                                    new constant_texture(reflectance), 100.0f);
     //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
     //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
     //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
@@ -177,7 +177,7 @@ Scene *furnace_test_scene(const float &aspect)
 
     Matrix4x4 I;
     I.set_identity();
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, specular, lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, POT2_MATERIAL, lights);
 
 
     for (auto triangle : mesh)
@@ -187,7 +187,7 @@ Scene *furnace_test_scene(const float &aspect)
     
     Vector3f lookfrom(0, 125, 175.0f);
     Vector3f lookat(0, 50, 0);
-    constexpr float dist_to_focus = 10.0f;
+    constexpr float dist_to_focus = 300.0f;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 40.0f;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
@@ -386,9 +386,9 @@ Scene *veach_door_scene(const float &aspect)
 
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 1024;
-    constexpr int ny = 768;
-    int ns = 1024;
+    constexpr int nx = 640;
+    constexpr int ny = 480;
+    int ns = 3000;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
