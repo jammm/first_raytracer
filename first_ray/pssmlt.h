@@ -6,8 +6,8 @@
 /* Implements the PSSMLT paper "Simple and Robust Mutation Strategy for Metropolis Light Transport Algorithm"
    - Csaba Kelemen and László Szirmay-Kalos */
 /* Reference: smallpssmlt by Professor Toshiya Hachisuka https://www.ci.i.u-tokyo.ac.jp/~hachisuka/smallpssmlt.cpp */
-constexpr static int PixelWidth = 1024;
-constexpr static int PixelHeight = 768;
+constexpr static int PixelWidth = 320;
+constexpr static int PixelHeight = 180;
 constexpr static int MaxPathLength = 20;
 constexpr static int N_Init = 10000;
 constexpr static float LargeStepProb = 0.3f;
@@ -56,6 +56,10 @@ struct pssmlt
         const float prev_bsdf_pdf);
 
     void Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf);
+
+    constexpr static bool using_custom_viewer = true;
+
+    void background_thread(const std::shared_future<void> &future, GLFWwindow *window, viewer *film_viewer);
 };
 
 #endif

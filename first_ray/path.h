@@ -13,6 +13,8 @@ struct path
         const float &prev_bsdf_pdf, sampler &random_sampler);
 
     void Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf);
+
+    constexpr static bool using_custom_viewer = false;
 };
 
 #endif

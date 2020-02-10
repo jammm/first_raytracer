@@ -294,7 +294,7 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
 
 Scene *veach_door_scene(const float &aspect)
 {
-    hitable **list = new hitable*[1000000];
+    hitable **list = new hitable*[500000];
     int i = 0;
 
     struct obj
@@ -369,10 +369,10 @@ Scene *veach_door_scene(const float &aspect)
     }
 
     Vector3f lookfrom(4.05402f, 1.61647f, -2.30652f);
-    Vector3f lookat(-4.29809f, 1.34399f, -3.4641f);
-    constexpr float dist_to_focus = 10.0f;
+    Vector3f lookat(3.064f, 1.58417f, -2.44373f);
+    constexpr float dist_to_focus = 100.0f;
     constexpr float aperture = 0.0f;
-    constexpr float vfov = 60.0f;
+    constexpr float vfov = 36.0f;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
@@ -387,8 +387,8 @@ Scene *veach_door_scene(const float &aspect)
 int main(int argc, const char **argv)
 {
     constexpr int nx = 320;
-    constexpr int ny = 240;
-    int ns = 100;
+    constexpr int ny = 180;
+    int ns = 9216000;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
@@ -418,7 +418,7 @@ int main(int argc, const char **argv)
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<path> render;
+    renderer<pssmlt> render;
 
     render.Render(scene.get(), film_viewer);
 

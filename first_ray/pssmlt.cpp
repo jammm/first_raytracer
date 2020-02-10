@@ -25,7 +25,11 @@ void AccumulatePathContribution(const PathContribution pc, const float mScaling,
     if ((ix < 0) || (ix >= PixelWidth) || (iy < 0) || (iy >= PixelHeight))
         return;
     for (int comp=0;comp<3;++comp)
+    {
         v->fout_image[((ix + iy * PixelWidth) * 3) + comp] += scale * c[comp];
+        v->out_image[((ix + iy * PixelWidth) * 3) + comp] += std::min(int(pow(scale*c[comp], 1.0f / 2.2f) * 255.9999), 255);
+    }
+
 }
 
 struct TMarkovChain
@@ -182,6 +186,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, const int depth, con
                     return Vector3f(0, 0, 0);
                 }
                 //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                srec.specular_ray.o += (EPSILON * hrec.normal);
                 return surface_bsdf * Li(path, srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf) / surface_bsdf_pdf;
             }
             else
@@ -257,6 +262,27 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, const int depth, con
     return scene->env_map->eval(r, prev_hrec, depth);
 }
 
+void pssmlt::background_thread(const std::shared_future<void> &future, GLFWwindow *window, viewer *film_viewer)
+{
+    //while (!film_viewer->to_exit)
+    {
+        /* Poll for and process events */
+        glfwPollEvents();
+        /* Render here */
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, film_viewer->nx, film_viewer->ny, 0, GL_RGB, GL_UNSIGNED_BYTE, film_viewer->out_image.get());
+        glBlitFramebuffer(0, 0, film_viewer->nx, film_viewer->ny, 0, 0, film_viewer->nx, film_viewer->ny,
+            GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        /* Swap front and back buffers */
+        glfwSwapBuffers(window);
+
+        if (glfwWindowShouldClose(window))
+        {
+            film_viewer->to_exit = true;
+        }
+    }
+}
+
 
 void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
@@ -302,6 +328,10 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 
         // update the chain
         if (s.get1d() <= a) current = proposal;
+
+        std::shared_future<void> dummy_future;
+        if (total_samples % 100000 == 0)
+            background_thread(dummy_future, film_viewer->window, film_viewer);
     }
     std::cout << "\ndone";
 }

@@ -23,7 +23,7 @@ struct camera
         horizontal = 2*half_width*focus_dist*u;
         vertical = 2*half_height*focus_dist*v;
 
-        dist = 768.0f / (2 * half_height);
+        dist = 180.0f / (2 * half_height);
 
     }
 

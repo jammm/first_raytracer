@@ -25,7 +25,10 @@ struct renderer : public integrator
         auto future = tf.dispatch();
 
         // Refresh window in background
-        film_viewer.background_thread(future, window);
+        if constexpr (integrator::using_custom_viewer)
+            integrator::background_thread(future, window, &film_viewer);
+        else
+            film_viewer.background_thread(future, window);
 
         std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
