@@ -7,8 +7,8 @@
 #include <memory>
 #include "geometry.h"
 
-constexpr float EPSILON = 1e-5f;
-constexpr float SHADOW_EPSILON = 1e-4f;
+constexpr float EPSILON = 1e-4f;
+constexpr float SHADOW_EPSILON = 1e-3f;
 
 inline float unit_angle(const Vector3f& u, const Vector3f& v) {
 	if (dot(u, v) < 0)
@@ -75,6 +75,11 @@ inline Vector3f reflect(const Vector3f &v, const Vector3f &n)
 }
 
 /* All these functions below are taken from mitsuba */
+inline float modulo(float a, float b) {
+    float r = std::fmod(a, b);
+    return (r < 0.0f) ? r+b : r;
+}
+
 #if defined(_GNU_SOURCE)
 inline void sincos(float theta, float *sin, float *cos) {
     sincosf(theta, sin, cos);

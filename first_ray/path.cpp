@@ -32,7 +32,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 15 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             if (srec.is_specular)
             {

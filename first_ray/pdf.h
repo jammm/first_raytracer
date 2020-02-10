@@ -103,7 +103,7 @@ public:
         if (dot(hrec.normal, wo) <= 0
             || dot(hrec.normal, hrec.wi) <= 0)
             return 0.0f;
-        const double alpha = std::max(0.0f, dot(reflect(hrec.wi, uvw.w()), wo));
+        const double alpha = std::max(0.0f, dot(reflect(-hrec.wi, uvw.w()), wo));
         const double specular_pdf = std::pow(alpha, (double)specular_exponent);
 
         return specular_pdf * (specular_exponent + 1.0f) / (2 * (float)M_PI);
@@ -111,7 +111,7 @@ public:
 
     Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
     {
-        Vector3f R = reflect(hrec.wi, uvw.w());
+        Vector3f R = reflect(-hrec.wi, uvw.w());
 
         /* Sample from a Phong lobe centered around (0, 0, 1) */
         float sinAlpha = std::sqrt(1 - std::pow(sample[1], 2 / (specular_exponent + 1)));

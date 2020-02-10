@@ -5,6 +5,7 @@
 #include "geometry.h"
 #include "hitable.h"
 #include "image.h"
+#include "util.h"
 
 class texture
 {
@@ -31,17 +32,15 @@ class checker_texture : public texture
 public:
     checker_texture() {}
     checker_texture(texture *t0, texture *t1) : odd(t1), even(t0) {}
-    virtual Vector3f value(const hit_record &rec) const
+    virtual Vector3f value(const hit_record &hrec) const
     {
-        const Vector3f &p = rec.p;
-        //const float &u = rec.u;
-        //const float &v = rec.v;
+        int x = 2 * modulo((int)(hrec.uv[0] * 2), 2) - 1,
+            y = 2 * modulo((int)(hrec.uv[1] * 2), 2) - 1;
 
-        float sines = sin(10*p.x()) * sin(10*p.y()) * sin(10*p.z());
-        if (sines < 0.0f)
-            return odd->value(rec);
+        if (x * y == 1)
+            return even->value(hrec);
         else
-            return even->value(rec);
+            return odd->value(hrec);
     }
 
     texture *odd;
