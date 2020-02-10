@@ -297,11 +297,11 @@ public:
 
             /* We can do better (inverse of an approximation computed in Mathematica) */
             float fit = 1 + thetaI * (-0.876f + thetaI * (0.4265f - 0.0594f * thetaI));
-            float b = c - (1 + c) * std::pow(1 - sample_x, fit);
+            double b = c - (1 + c) * std::pow(1 - sample_x, fit);
 
             /* Normalization factor for the CDF */
-            float normalization = 1 / (1 + c + SQRT_PI_INV *
-                tanThetaI * fastexp(-cotThetaI * cotThetaI));
+            double normalization = 1 / (1 + c + SQRT_PI_INV *
+                tanThetaI * std::exp(-cotThetaI * cotThetaI));
 
             int it = 0;
             while (++it < 10) {
@@ -313,10 +313,10 @@ public:
 
                 /* Evaluate the CDF and its derivative
                    (i.e. the density function) */
-                float invErf = erfinv(b);
-                float value = normalization * (1 + b + SQRT_PI_INV *
+                double invErf = erfinv(b);
+                double value = normalization * (1 + b + SQRT_PI_INV *
                     tanThetaI * fastexp(-invErf * invErf)) - sample_x;
-                float derivative = normalization * (1
+                double derivative = normalization * (1
                     - invErf * tanThetaI);
 
                 if (std::abs(value) < 1e-5f)
@@ -413,9 +413,11 @@ public:
         sincos(phi, &sinPhi, &cosPhi);
 
         /* Step 2: simulate P22_{wi}(slope.x, slope.y, 1, 1) */
-        Vector2 slope = sampleVisible11(theta, sample);
+        Vector2f slope = sampleVisible11(theta, sample);
 
-        assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
+        //assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
+        if (!std::isfinite(slope.x))
+            slope[0] = 0.0f;
 
         /* Step 3: rotate */
         slope = Vector2(

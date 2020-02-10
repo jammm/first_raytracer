@@ -167,7 +167,6 @@ inline float erfinv(float x)
         p = (float)2.83297682 + p * w;
     }
 
-    assert(std::isfinite(p) && std::isfinite(x));
     return p * x;
 }
 

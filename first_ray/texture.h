@@ -31,20 +31,21 @@ class checker_texture : public texture
 {
 public:
     checker_texture() {}
-    checker_texture(texture *t0, texture *t1) : odd(t1), even(t0) {}
+    checker_texture(texture *t0, texture *t1, const float u_scale_, const float v_scale_) : tex0(t0), tex1(t1), u_scale(u_scale_), v_scale(v_scale_) {}
     virtual Vector3f value(const hit_record &hrec) const
     {
-        int x = 2 * modulo((int)(hrec.uv[0] * 2), 2) - 1,
-            y = 2 * modulo((int)(hrec.uv[1] * 2), 2) - 1;
+        int x = 2 * modulo((int)(hrec.u * u_scale * 2), 2) - 1,
+            y = 2 * modulo((int)(hrec.v * v_scale * 2), 2) - 1;
 
         if (x * y == 1)
-            return even->value(hrec);
+            return tex0->value(hrec);
         else
-            return odd->value(hrec);
+            return tex1->value(hrec);
     }
 
-    texture *odd;
-    texture *even;
+    texture *tex0;
+    texture *tex1;
+    float u_scale, v_scale;
 };
 
 class image_texture : public texture
