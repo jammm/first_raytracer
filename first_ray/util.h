@@ -179,7 +179,7 @@ inline float erf_(double x) {
     double p = (float)0.3275911;
 
     // Save the sign of x
-    double sign = _copysign(1.0f, x);
+    double sign = copysignf(1.0f, x);
     x = std::abs(x);
 
     // A&S formula 7.1.26

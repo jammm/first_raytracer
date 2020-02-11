@@ -386,9 +386,9 @@ Scene *veach_door_scene(const float &aspect)
 
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 640;
-    constexpr int ny = 480;
-    int ns = 64;
+    constexpr int nx = 1280;
+    constexpr int ny = 720;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);

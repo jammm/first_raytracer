@@ -9,6 +9,10 @@
 #include "pdf.h"
 #include "image.h"
 
+#include <algorithm>
+#include <cctype>
+#include <string>
+
 inline Vector3f random_in_unit_sphere(const Vector3f &sample)
 {
     Vector3f p;
@@ -272,7 +276,7 @@ public:
                     texture *specular_reflectance_, const std::string &distribution_) 
         : alpha(alpha_), extEta(extEta_), alphaU(alpha), alphaV(alpha), eta(eta_), k(k_), specular_reflectance(specular_reflectance_), distribution(distribution_)
     {
-        std::transform(distribution_.begin(), distribution_.end(), distribution.begin(), std::tolower);
+        std::transform(distribution_.begin(), distribution_.end(), distribution.begin(), ::tolower);
         if (distribution == "ggx")
         {
             distribution_type = microfacet_distributions::ggx;

@@ -357,7 +357,7 @@ public:
             /* Simulate X component */
             float A = 2.0f * sample.x / G1 - 1.0f;
             if (std::abs(A) == 1)
-                A -= _copysign(1.0f, A) * EPSILON;
+                A -= copysignf(1.0f, A) * EPSILON;
             float tmp = 1.0f / (A * A - 1.0f);
             float B = tanThetaI;
             float D = safe_sqrt(B * B * tmp * tmp - (A * A - B * B) * tmp);

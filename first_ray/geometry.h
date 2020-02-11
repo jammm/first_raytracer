@@ -10,6 +10,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cassert>
+#include <cstring>
 
 namespace jam
 {
@@ -629,17 +630,17 @@ template <int M, int N, typename T> struct Matrix {
 
     explicit inline Matrix(const T _m[M][N])
     {
-        memcpy(m, _m, sizeof(T) * M * N);
+        std::memcpy(m, _m, sizeof(T) * M * N);
     }
 
     explicit inline Matrix(const T _m[M * N])
     {
-        memcpy(m, _m, sizeof(T) * M * N);
+        std::memcpy(m, _m, sizeof(T) * M * N);
     }
 
     inline Matrix(const Matrix& mtx) 
     {
-        memcpy(m, mtx.m, sizeof(T) * M * N);
+        std::memcpy(m, mtx.m, sizeof(T) * M * N);
     }
 
     void set_identity()
@@ -951,7 +952,7 @@ template <int M, int N, typename T> bool Matrix<M, N, T>::invert(Matrix &target)
     int indxc[N], indxr[N];
     int ipiv[N];
     memset(ipiv, 0, sizeof(int)*N);
-    memcpy(target.m, m, M*N*sizeof(T));
+    std::memcpy(target.m, m, M*N*sizeof(T));
 
     for (int i = 0; i < N; i++) {
         int irow = -1, icol = -1;
