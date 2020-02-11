@@ -59,27 +59,28 @@ public:
 
     Vector3f value(const hit_record &rec) const override
     {
-        const int &nx = img->nx;
-        const int &ny = img->ny;
+        const int nx = img->nx;
+        const int ny = img->ny;
         int i = (rec.u)*nx;
-        int j = (rec.v)*ny;
+        int j = (1 - rec.v)*ny;
 		//std::cout << "i,j: " << i << " " << j << std::endl;
-        if (i < 0) return Vector3f(0, 0, 0);
-        if (j < 0) return Vector3f(0, 0, 0);
-        if (i > nx - 1) return Vector3f(0, 0, 0);
-        if (j > ny - 1) return Vector3f(0, 0, 0);
+        if (i < 0) i = 0;
+        if (j < 0) j = 0;
+        if (i > nx - 1) i = nx - 1;
+        if (j > ny - 1) j = nx - 1;
         float r, g, b;
+        const int idx = (j * nx + i) * 3;
         if (img->type == formats::STBI_HDR)
         {
-            r = img->dataf[3 * i + 3 * nx * j];
-            g = img->dataf[3 * i + 3 * nx * j + 1];
-            b = img->dataf[3 * i + 3 * nx * j + 2];
+            r = img->dataf[idx];
+            g = img->dataf[idx + 1];
+            b = img->dataf[idx + 2];
         }
         else
         {
-            r = int(img->data[3 * i + 3 * nx * j]) / 255.0f;
-            g = int(img->data[3 * i + 3 * nx * j + 1]) / 255.0f;
-            b = int(img->data[3 * i + 3 * nx * j + 2]) / 255.0f;
+            r = int(img->data[idx]) / 255.0f;
+            g = int(img->data[idx + 1]) / 255.0f;
+            b = int(img->data[idx + 2]) / 255.0f;
         }
 
         return Vector3f(r, g, b);
