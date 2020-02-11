@@ -38,9 +38,9 @@ public:
             y = 2 * modulo((int)(hrec.v * v_scale * 2), 2) - 1;
 
         if (x * y == 1)
-            return tex0->value(hrec);
-        else
             return tex1->value(hrec);
+        else
+            return tex0->value(hrec);
     }
 
     texture *tex0;
