@@ -64,10 +64,10 @@ public:
         int i = (rec.u)*nx;
         int j = (1 - rec.v)*ny;
 		//std::cout << "i,j: " << i << " " << j << std::endl;
-        if (i < 0) i = 0;
-        if (j < 0) j = 0;
-        if (i > nx - 1) i = nx - 1;
-        if (j > ny - 1) j = nx - 1;
+        if (i < 0 || i > nx)
+            i = modulo(i, nx);
+        if (j < 0 || j > ny)
+            j = modulo(j, ny);
         float r, g, b;
         const int idx = (j * nx + i) * 3;
         if (img->type == formats::STBI_HDR)

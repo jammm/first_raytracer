@@ -80,6 +80,11 @@ inline float modulo(float a, float b) {
     return (r < 0.0f) ? r+b : r;
 }
 
+inline int modulo(int a, int b) {
+    int r = a % b;
+    return (r < 0) ? r+b : r;
+}
+
 #if defined(_GNU_SOURCE)
 inline void sincos(float theta, float *sin, float *cos) {
     sincosf(theta, sin, cos);
