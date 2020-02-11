@@ -78,9 +78,9 @@ public:
         }
         else
         {
-            r = int(img->data[idx]) / 255.0f;
-            g = int(img->data[idx + 1]) / 255.0f;
-            b = int(img->data[idx + 2]) / 255.0f;
+            r = FromSrgb(img->data[idx] / 255.0f);
+            g = FromSrgb(img->data[idx + 1] / 255.0f);
+            b = FromSrgb(img->data[idx + 2] / 255.0f);
         }
 
         return Vector3f(r, g, b);
