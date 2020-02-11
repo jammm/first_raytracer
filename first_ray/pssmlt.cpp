@@ -32,7 +32,7 @@ void AccumulatePathContribution(const pssmlt::PathContribution pc, const float m
     for (int comp=0;comp<3;++comp)
     {
         v->fout_image[((ix + iy * PixelWidth) * 3) + comp] += scale * c[comp];
-        v->out_image[((ix + iy * PixelWidth) * 3) + comp] += std::min(int(pow(scale*c[comp], 1.0f / 2.2f) * 255.9999), 255);
+        v->out_image[((ix + iy * PixelWidth) * 3) + comp] = std::min(int(pow(v->fout_image[((ix + iy * PixelWidth) * 3) + comp] + c[comp] * scale, 1.0 / 2.2) * 255.9999), 255);
     }
 
 }
@@ -312,8 +312,6 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
     }
     b /= N_Init;
 
-
-
     //fprintf(stderr, "\n");
 
     tf.parallel_for((int)tf.num_workers(), 0, -1, [&](int thread_id)
@@ -331,6 +329,7 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
         const int samples_per_thread = film_viewer->ns / tf.num_workers();
         for (int total_samples = 0; total_samples < samples_per_thread; ++total_samples)
         {
+            if (film_viewer->to_exit) break;
             float is_large_step_done;
             if (s.get1d() < LargeStepProb)
             {
