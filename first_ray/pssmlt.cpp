@@ -170,17 +170,6 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
                 || (dynamic_cast<modified_phong*>(st.prev_hrec.mat_ptr) != nullptr)
                 || (dynamic_cast<metal*>(st.prev_hrec.mat_ptr) != nullptr))
                 return Le;
-            // Start with checking if camera ray hits a light source
-            const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
-            float distance_squared = (hrec.p - st.prev_hrec.p).squared_length();
-            if (distance_squared <= EPSILON) distance_squared = EPSILON;
-
-            const float surface_bsdf_pdf = st.prev_bsdf_pdf * cos_wo / distance_squared;
-            const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
-
-            const float weight = miWeight(surface_bsdf_pdf, light_pdf);
-
-            return Le * weight;
         }
 
         if (st.depth <= MaxPathLength && hrec.mat_ptr->scatter(r, hrec, srec, rnd))
@@ -203,50 +192,6 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
             }
             else
             {
-                rnd0 = st.prnds[st.PathRndsOffset + 0];
-                rnd1 = st.prnds[st.PathRndsOffset + 1];
-                rnd2 = st.prnds[st.PathRndsOffset + 2];
-                st.PathRndsOffset += NumRNGsPerEvent;
-                /* Direct light sampling */
-                const int index = lights.pick_sample(rnd0);
-                if (index >= 0)
-                {
-                    /* Sample a random light source */
-                    hit_record lrec;
-                    Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
-
-                    Vector2f rnd_2d(rnd1, rnd2);
-                    Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin, rnd_2d);
-                    const float dist_to_light = to_light.length();
-                    //to_light.make_unit_vector();
-
-                    ray shadow_ray = ray(offset_origin, to_light);
-
-                    if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
-                    {
-                        const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
-                        // Calculate geometry term
-                        const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
-                        const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
-                        if (cos_wo != 0)
-                        {
-                            float distance_squared = dist_to_light * dist_to_light;
-
-                            const float light_pdf = lights.pdf_direct_sampling(hrec, to_light);
-                            // Visibility term is always 1
-                            // because of the invariant imposed on these objects by the if above.
-                            const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
-
-                            if (distance_squared <= EPSILON) distance_squared = EPSILON;
-
-                            const float G = cos_wi * cos_wo / distance_squared;
-
-                            const float weight = miWeight(light_pdf, surface_bsdf_pdf);
-
-                            Le += lights.list_size * lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
-                        }
-                    }
-                }
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 hrec.p = hrec.p + (EPSILON * hrec.normal);
 
