@@ -17,37 +17,42 @@ constexpr static int MaxEvents = (MaxPathLength + 1);
 constexpr static int NumStatesSubpath = ((MaxEvents + 2) * NumRNGsPerEvent);
 constexpr static int NumStates = (NumStatesSubpath * 5);
 
-
-// path data
-struct Vert 
-{ 
-    Vector3f p, n; 
-    hitable *hit_obj;
-    Vert() {}; 
-    Vert(Vector3f p_, Vector3f n_, hitable *hit_obj_) : p(p_), n(n_), hit_obj(hit_obj_) {}
-};
-struct PathContribution
-{
-    //x,y coordinate of eye ray
-    float x, y;
-    Vector3f c;
-    //scalar contribution of path
-    double sc;
-    PathContribution() {};
-    PathContribution(float x_, float y_, const Vector3f &c_, const double sc_) : x(x_), y(y_), c(c_), sc(sc_)
-    {} 
-};
-struct Path
-{
-    Vert x[MaxEvents];
-    PathContribution contrib;
-    Vector3f camera_ray;
-    int n;
-    Path() { n = 0; }
-};
-
 struct pssmlt
 {
+    struct Vert 
+    { 
+        Vector3f p, n; 
+        hitable *hit_obj;
+        Vert() {}; 
+        Vert(Vector3f p_, Vector3f n_, hitable *hit_obj_) : p(p_), n(n_), hit_obj(hit_obj_) {}
+    };
+    struct PathContribution
+    {
+        //x,y coordinate of eye ray
+        float x, y;
+        Vector3f c;
+        //scalar contribution of path
+        double sc;
+        PathContribution() {};
+        PathContribution(float x_, float y_, const Vector3f &c_, const double sc_) : x(x_), y(y_), c(c_), sc(sc_)
+        {} 
+    };
+    struct Path
+    {
+        Vert x[MaxEvents];
+        PathContribution contrib;
+        Vector3f camera_ray;
+        int n;
+        Path() { n = 0; }
+    };
+
+    struct contrib_msg
+    {
+        Vector2i pixel;
+        Vector3f contrib;
+        contrib_msg(const Vector2i &pixel_, const Vector3f &contrib_) : pixel(pixel_), contrib(contrib_) {}
+    };
+
     void TracePath(Path &path, const ray &r, Scene* scene);
 
     Path GenerateEyePath(const int MaxEyeEvents, Scene* scene);

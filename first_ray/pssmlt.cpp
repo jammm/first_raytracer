@@ -15,7 +15,7 @@ inline double perturb(const float value, const float s1, const float s2, sampler
 	return Result;
 }
 
-void AccumulatePathContribution(const PathContribution pc, const float mScaling, viewer *v) {
+void AccumulatePathContribution(const pssmlt::PathContribution pc, const float mScaling, viewer *v) {
     if (pc.sc == 0) return;
     const int ix = int(pc.x);
     const int iy = int(pc.y);
@@ -35,7 +35,7 @@ void AccumulatePathContribution(const PathContribution pc, const float mScaling,
 struct TMarkovChain
 {   
     float u[NumStates];
-    PathContribution C;
+    pssmlt::PathContribution C;
 
     TMarkovChain()
     {
@@ -84,7 +84,7 @@ void InitRandomNumbers(sampler &s)
 }
 
 // path sampling
-void pssmlt::TracePath(Path &path, const ray &r, Scene *scene)
+void pssmlt::TracePath(pssmlt::Path &path, const ray &r, Scene *scene)
 {
     hit_record dummy_hrec;
     // Compute scalar contribution function for this path
@@ -93,7 +93,7 @@ void pssmlt::TracePath(Path &path, const ray &r, Scene *scene)
     path.contrib.sc = std::max(std::max(c[0], c[1]), c[2]);
 }
 
-Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene)
+pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene)
 {
     Path Result;
     Result.n = 0;
@@ -298,7 +298,6 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
     TMarkovChain current(s), proposal(s);
     InitRandomNumbersByChain(current);
     current.C = GenerateEyePath(MaxEvents, scene).contrib;
-
     //fprintf(stderr, "\n");
 
     for (int total_samples=0; total_samples < film_viewer->ns; total_samples++)
