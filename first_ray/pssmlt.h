@@ -6,8 +6,8 @@
 /* Implements the PSSMLT paper "Simple and Robust Mutation Strategy for Metropolis Light Transport Algorithm"
    - Csaba Kelemen and László Szirmay-Kalos */
 /* Reference: smallpssmlt by Professor Toshiya Hachisuka https://www.ci.i.u-tokyo.ac.jp/~hachisuka/smallpssmlt.cpp */
-constexpr static int PixelWidth = 320;
-constexpr static int PixelHeight = 180;
+constexpr static int PixelWidth = 640;
+constexpr static int PixelHeight = 360;
 constexpr static int MaxPathLength = 20;
 constexpr static int N_Init = 10000;
 constexpr static float LargeStepProb = 0.3f;
@@ -16,6 +16,15 @@ constexpr static int NumRNGsPerEvent = 3;
 constexpr static int MaxEvents = (MaxPathLength + 1);
 constexpr static int NumStatesSubpath = ((MaxEvents + 2) * NumRNGsPerEvent);
 constexpr static int NumStates = (NumStatesSubpath * 5);
+
+struct state
+{
+    int depth;
+    hit_record prev_hrec;
+    float prev_bsdf_pdf;
+    float *prnds;
+    int PathRndsOffset;
+};
 
 struct pssmlt
 {
@@ -53,12 +62,11 @@ struct pssmlt
         contrib_msg(const Vector2i &pixel_, const Vector3f &contrib_) : pixel(pixel_), contrib(contrib_) {}
     };
 
-    void TracePath(Path &path, const ray &r, Scene* scene);
+    void TracePath(Path &path, const ray &r, Scene* scene, float *prnds, int &PathRndsOffset);
 
-    Path GenerateEyePath(const int MaxEyeEvents, Scene* scene);
+    Path GenerateEyePath(const int MaxEyeEvents, Scene *scene, float *prnds, int &PathRndsOffset);
 
-    Vector3f Li(Path &path, const ray &r, Scene *scene, const int depth, const hit_record &prev_hrec,
-        const float prev_bsdf_pdf);
+    Vector3f Li(Path &path, const ray &r, Scene *scene, state &st);
 
     void Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf);
 

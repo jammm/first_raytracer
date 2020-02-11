@@ -62,7 +62,7 @@ public:
         const int nx = img->nx;
         const int ny = img->ny;
         int i = (rec.u)*nx;
-        int j = (1 - rec.v)*ny;
+        int j = (rec.v)*ny;
 		//std::cout << "i,j: " << i << " " << j << std::endl;
         if (i < 0 || i > nx)
             i = modulo(i, nx);

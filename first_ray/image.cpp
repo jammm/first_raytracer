@@ -16,6 +16,7 @@ image::image(const std::string &filename, const formats &format) : loaded_from_s
         dataf = stbi_loadf(filename.c_str(), &nx, &ny, &nn, 0);
         break;
     default:
+        stbi_set_flip_vertically_on_load(true);
         data = stbi_load(filename.c_str(), &nx, &ny, &nn, 0);
     }
 }

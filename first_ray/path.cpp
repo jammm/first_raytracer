@@ -118,7 +118,7 @@ void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
     tf.parallel_for(film_viewer->ny - 1, -1, -1, [=](int y)
         {
-            static thread_local sampler random_sampler(y);
+            static thread_local sampler random_sampler(y * 39);
             for (int x = 0; x < film_viewer->nx; x++)
             {
                 //if (i <= 512)

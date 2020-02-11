@@ -163,7 +163,7 @@ Scene *furnace_test_scene(const float &aspect)
     //Vector3f reflectance(1.0f, 1.0f, 1.0f);
     //material *specular = new modified_phong(new constant_texture(Vector3f(0, 0, 0)),
     //                                    new constant_texture(reflectance), 100.0f);
-    //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
     //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
     //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
@@ -176,7 +176,7 @@ Scene *furnace_test_scene(const float &aspect)
 #define DOORHANDLE_MATERIAL new rough_conductor(0.25f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "beckmann")
     Matrix4x4 I;
     I.set_identity();
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, DOORHANDLE_MATERIAL, lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, lambert, lights);
 
 
     for (auto triangle : mesh)
@@ -386,9 +386,9 @@ Scene *veach_door_scene(const float &aspect)
 
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 1280;
-    constexpr int ny = 720;
-    int ns = 100;
+    constexpr int nx = 640;
+    constexpr int ny = 360;
+    int ns = 23040000;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
@@ -418,7 +418,7 @@ int main(int argc, const char **argv)
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<path> render;
+    renderer<pssmlt> render;
 
     render.Render(scene.get(), film_viewer);
 
