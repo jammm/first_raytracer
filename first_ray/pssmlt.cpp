@@ -1,5 +1,6 @@
 #include "pssmlt.h"
 #include "material.h"
+#include <mutex>
 
 // primary space Markov chain
 inline double perturb(const float value, const float s1, const float s2, sampler &s) {
@@ -23,9 +24,11 @@ void AccumulatePathContribution(const pssmlt::PathContribution pc, const float m
     const int PixelWidth = v->nx;
     const int PixelHeight = v->ny;
     const float scale = PixelWidth * PixelHeight / float(v->ns);
+    static std::mutex m;
 
     if ((ix < 0) || (ix >= PixelWidth) || (iy < 0) || (iy >= PixelHeight))
         return;
+    std::lock_guard<std::mutex> guard(m);
     for (int comp=0;comp<3;++comp)
     {
         v->fout_image[((ix + iy * PixelWidth) * 3) + comp] += scale * c[comp];
