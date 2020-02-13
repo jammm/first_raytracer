@@ -24,7 +24,7 @@ struct path_prt
     // Coefficients for environment map 
     PRT::SHCoefficients Li_coeffs;
     std::unique_ptr<PRT::SHSample[]> samples;
-    std::vector<PRT::SHCoefficients[PRT::max_depth]> coeffs_buffer;
+    std::vector<std::array<PRT::SHCoefficients, PRT::max_depth>> coeffs_buffer;
 };
 
 #endif
