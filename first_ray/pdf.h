@@ -35,17 +35,6 @@ inline Vector3f hemisphere_to_cosine_direction(float &theta, float& phi, const V
     return Vector3f(x, y, sqrt(1 - r0));
 }
 
-
-inline Vector3f hemisphere_to_cosine_power_direction(const Vector2f& sample)
-{
-    const float &r0 = sample[0];
-    const float &r1 = sample[1];
-    const float sin_theta = sqrt(1 - r0);
-    const float r = 2 * (float)M_PI *r1;
-
-    return Vector3f(sin_theta*cos(r), sin_theta * sin(r), sqrt(r1));
-}
-
 inline Vector3f uniform_sample_sphere(const Vector2f &sample) {
     Vector2f u(sample);
     const float  z = 1 - 2 * u[0];
@@ -66,11 +55,24 @@ inline Vector3f random_to_sphere(const float &radius, const float &distance_squa
     return Vector3f(x, y, z);
 }
 
+class pdf;
+
+struct scatter_record
+{
+    ray specular_ray;
+    bool is_specular;
+    hit_record hrec;
+    float eta;
+    std::unique_ptr<pdf> pdf_ptr;
+
+    scatter_record(const hit_record &hrec_) : hrec(hrec_) {}
+};
+
 class pdf
 {
 public:
     virtual float value(const hit_record &, const Vector3f &) const = 0;
-    virtual Vector3f generate(const Vector2f &sample, const hit_record &hrec) const = 0;
+    virtual Vector3f generate(const Vector2f &sample, scatter_record &srec) const = 0;
     virtual ~pdf() = 0;
 };
 
@@ -85,7 +87,7 @@ public:
         return cosine / (float) (float)M_PI;
     }
 
-    Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
+    Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
     {
         return uvw.fromLocal(hemisphere_to_cosine_direction(sample));
     }
@@ -109,8 +111,9 @@ public:
         return specular_pdf * (specular_exponent + 1.0f) / (2 * (float)M_PI);
     }
 
-    Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
+    Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
     {
+        hit_record &hrec = srec.hrec;
         Vector3f R = reflect(-hrec.wi, uvw.w());
 
         /* Sample from a Phong lobe centered around (0, 0, 1) */
@@ -131,6 +134,54 @@ public:
     const ray r_in;
 };
 
+class dielectric_pdf : public pdf
+{
+public:
+    dielectric_pdf(const Vector3f &w, const float ref_idx_) : ref_idx(ref_idx_) { uvw.build_from_w(w); }
+    float value(const hit_record &hrec, const Vector3f &wo) const override
+    {
+        float cosThetaT;
+        //float cosWi = dot(hrec.wi, hrec.normal);
+        float F = fresnelDielectricExt(dot(hrec.wi, hrec.normal), cosThetaT, ref_idx);
+
+        if (dot(hrec.wi, hrec.normal) * dot(wo, hrec.normal) >= 0)
+        {
+            if (std::abs(dot(reflect(-hrec.wi, hrec.normal), wo) - 1) > DELTA_EPSILON)
+                return 0.0f;
+
+            return F;
+        }
+        else
+        {
+            if (std::abs(dot(refract(hrec.wi, hrec.normal, ref_idx, cosThetaT), wo)-1) > DELTA_EPSILON)
+                return 0.0f;
+
+            return 1.0f - F;
+        }
+    }
+
+    Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
+    {
+        hit_record &hrec = srec.hrec;
+        float cosThetaT;
+        float F = fresnelDielectricExt(dot(hrec.wi, hrec.normal), cosThetaT, ref_idx);
+
+        if (sample.x <= F) 
+        {
+            srec.eta = 1.0f;
+            return reflect(-hrec.wi, hrec.normal);
+        } 
+        else 
+        {
+            srec.eta = cosThetaT < 0 ? ref_idx : (1.0f / ref_idx);
+            return refract(hrec.wi, hrec.normal, ref_idx, cosThetaT);
+        }
+    }
+
+    float ref_idx;
+    onb uvw;
+};
+
 class constant_pdf : public pdf
 {
 public:
@@ -140,7 +191,7 @@ public:
         return p;
     }
     
-    Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
+    Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
     {
         throw std::runtime_error("Not implemented!");
     }
@@ -162,12 +213,12 @@ public:
         return prob_pdf*p[0]->value(rec, direction) + (1 - prob_pdf)*p[1]->value(rec, direction);
     }
 
-    Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
+    Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
     {
         if (rand_var < prob_pdf)
-            return p[0]->generate(sample, hrec);
+            return p[0]->generate(sample, srec);
 
-        return p[1]->generate(sample, hrec);
+        return p[1]->generate(sample, srec);
     }
 
     std::unique_ptr<pdf> p[2];
@@ -453,21 +504,15 @@ public:
         return m;
     }
 
-    Vector3f generate(const Vector2f &sample, const hit_record &hrec) const override
+    Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
     {
-
-        //if (dot(hrec.normal, hrec.wi) < 0)
-        //    return Vector3f(0.0f, 0.0f, 0.0f);
-
         /* Construct the microfacet distribution matching the
            roughness values at the current surface position. */
 
+        hit_record &hrec = srec.hrec;
         /* Sample M, the microfacet normal */
         float pdf;
         Vector3f m = sample_microfacet(uvw.toLocal(hrec.wi), sample, pdf, hrec);
-
-        //if (pdf == 0)
-        //    return Vector3f(0.0f, 0.0f, 0.0f);
 
         /* Perfect specular reflection based on the microfacet normal */
         Vector3f wo = reflect(-uvw.toLocal(hrec.wi), m);

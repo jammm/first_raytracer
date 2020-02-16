@@ -76,7 +76,7 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
                 else
                 {
                     //dielectric
-                    list[i++] = new sphere(center, 0.2f, new dielectric(1.5f));
+                    list[i++] = new sphere(center, 0.2f, new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))));
                 }
             }
         }
@@ -108,7 +108,7 @@ hitable *cornell_box(camera &cam, const float &aspect)
     list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
     list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
     list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
-    material *glass = new dielectric(1.5);
+    material *glass = new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)));
     list[i++] = new sphere(Vector3f(190, 90, 190), 90, glass);
     list[i++] = new translate(new rotate_y(
         new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), white), 15), Vector3f(265, 0, 295));
@@ -173,10 +173,10 @@ Scene *furnace_test_scene(const float &aspect)
 
     std::vector<hitable*> lights;
     //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
-#define DOORHANDLE_MATERIAL new rough_conductor(0.25f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "beckmann")
+#define TEST_MATERIAL new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))
     Matrix4x4 I;
     I.set_identity();
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, lambert, lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, TEST_MATERIAL, lights);
 
 
     for (auto triangle : mesh)
@@ -325,28 +325,28 @@ Scene *veach_door_scene(const float &aspect)
     // Table of objects
     obj objects[] =
     {
-        {"veach_ajar/models/light.obj"  , nullptr                                                                                                     , identity},
-        {"veach_ajar/models/Mesh000.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , pot3_Mesh000_toWorld},
-        {"veach_ajar/models/Mesh009.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , pot3_Mesh009_toWorld},
-        {"veach_ajar/models/Mesh000.obj", POT2_MATERIAL                                                                                               , pot2_Mesh000_toWorld},
-        {"veach_ajar/models/Mesh009.obj", POT2_MATERIAL                                                                                               , pot2_Mesh009_toWorld},                                                                                  
-        {"veach_ajar/models/Mesh000.obj", new dielectric(1.5f)                                                                                        , dielectric_pot_Mesh000_toWorld},
-        {"veach_ajar/models/Mesh009.obj", new dielectric(1.5f)                                                                                        , dielectric_pot_Mesh009_toWorld},
-        {"veach_ajar/models/Mesh001.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , identity},
-        {"veach_ajar/models/Mesh002.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , identity},
-        {"veach_ajar/models/Mesh003.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , identity},
-        {"veach_ajar/models/Mesh004.obj", new lambertian(new image_texture(std::make_unique<image>("veach_ajar/textures/Good Textures_005844.jpg")))  , identity},
-        {"veach_ajar/models/Mesh005.obj", new lambertian(new constant_texture(Vector3f(0.247059f, 0.168627f, 0.0901961f)))                            , identity},
-        {"veach_ajar/models/Mesh006.obj", new lambertian(new image_texture(std::make_unique<image>("veach_ajar/textures/cherry-wood-texture.jpg")))   , identity},
-        {"veach_ajar/models/Mesh007.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , identity},
-        {"veach_ajar/models/Mesh008.obj", new lambertian(new image_texture(std::make_unique<image>("veach_ajar/textures/landscape-with-a-lake.jpg"))) , identity},
-        {"veach_ajar/models/Mesh010.obj", HINGE_MATERIAL                                                                                              , identity},
-        {"veach_ajar/models/Mesh011.obj", FLOOR_MATERIAL                                                                                              , Mesh011_toWorld},
-        {"veach_ajar/models/Mesh012.obj", HINGE_MATERIAL                                                                                              , identity},
-        {"veach_ajar/models/Mesh013.obj", new lambertian(new constant_texture(Vector3f(0.258824f, 0.207843f, 0.145098f)))                             , identity},
-        {"veach_ajar/models/Mesh014.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                            , Mesh014_toWorld},
-        {"veach_ajar/models/Mesh015.obj", DOORHANDLE_MATERIAL                                                                                         , identity},
-        {"veach_ajar/models/Mesh016.obj", HINGE_MATERIAL                                                                                              , identity},
+        {"veach_ajar/models/light.obj"  , nullptr                                                                                                                  , identity},
+        {"veach_ajar/models/Mesh000.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , pot3_Mesh000_toWorld},
+        {"veach_ajar/models/Mesh009.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , pot3_Mesh009_toWorld},
+        {"veach_ajar/models/Mesh000.obj", POT2_MATERIAL                                                                                                            , pot2_Mesh000_toWorld},
+        {"veach_ajar/models/Mesh009.obj", POT2_MATERIAL                                                                                                            , pot2_Mesh009_toWorld},                                                                                  
+        {"veach_ajar/models/Mesh000.obj", new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , dielectric_pot_Mesh000_toWorld},
+        {"veach_ajar/models/Mesh009.obj", new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , dielectric_pot_Mesh009_toWorld},
+        {"veach_ajar/models/Mesh001.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
+        {"veach_ajar/models/Mesh002.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
+        {"veach_ajar/models/Mesh003.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
+        {"veach_ajar/models/Mesh004.obj", new lambertian(new image_texture(std::make_unique<image>("veach_ajar/textures/Good Textures_005844.jpg")))               , identity},
+        {"veach_ajar/models/Mesh005.obj", new lambertian(new constant_texture(Vector3f(0.247059f, 0.168627f, 0.0901961f)))                                         , identity},
+        {"veach_ajar/models/Mesh006.obj", new lambertian(new image_texture(std::make_unique<image>("veach_ajar/textures/cherry-wood-texture.jpg")))                , identity},
+        {"veach_ajar/models/Mesh007.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
+        {"veach_ajar/models/Mesh008.obj", new lambertian(new image_texture(std::make_unique<image>("veach_ajar/textures/landscape-with-a-lake.jpg")))              , identity},
+        {"veach_ajar/models/Mesh010.obj", HINGE_MATERIAL                                                                                                           , identity},
+        {"veach_ajar/models/Mesh011.obj", FLOOR_MATERIAL                                                                                                           , Mesh011_toWorld},
+        {"veach_ajar/models/Mesh012.obj", HINGE_MATERIAL                                                                                                           , identity},
+        {"veach_ajar/models/Mesh013.obj", new lambertian(new constant_texture(Vector3f(0.258824f, 0.207843f, 0.145098f)))                                          , identity},
+        {"veach_ajar/models/Mesh014.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , Mesh014_toWorld},
+        {"veach_ajar/models/Mesh015.obj", DOORHANDLE_MATERIAL                                                                                                      , identity},
+        {"veach_ajar/models/Mesh016.obj", HINGE_MATERIAL                                                                                                           , identity},
     };
     constexpr int num_objs = sizeof(objects) / sizeof(obj);
     
@@ -388,7 +388,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 640;
     constexpr int ny = 360;
-    int ns = 23040000;
+    int ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
@@ -411,14 +411,14 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(veach_door_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(furnace_test_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<pssmlt> render;
+    renderer<path> render;
 
     render.Render(scene.get(), film_viewer);
 

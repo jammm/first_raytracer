@@ -148,10 +148,9 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
 {
     hit_record hrec;
     auto &world = scene->world;
-    auto &lights = scene->lights;
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
-        scatter_record srec;
+        scatter_record srec(hrec);
         Vector3f Le = hrec.mat_ptr->emitted(r, hrec);
 
         // set path data
@@ -197,7 +196,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
 
                 Vector2f rnd_2d(st.prnds[st.PathRndsOffset + 0], st.prnds[st.PathRndsOffset + 1]);
                 st.PathRndsOffset += 2;
-                ray wo(hrec.p, srec.pdf_ptr->generate(rnd_2d, hrec));
+                ray wo(hrec.p, srec.pdf_ptr->generate(rnd_2d, srec));
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/

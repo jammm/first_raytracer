@@ -8,13 +8,13 @@ Vector3f ao::Li(const ray &r, Scene *scene, const int &depth, const hit_record &
     auto& world = scene->world;
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
-        scatter_record srec;
+        scatter_record srec(hrec);
 
         if (hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Sample BSDF to generate next ray direction for visibility check */
             hrec.p = hrec.p;
-            ray shadow_ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), hrec));
+            ray shadow_ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), srec));
             // Find approximate max. radius from bounding box
             // TODO: evaluate bounding sphere for every hitable geometry
             aabb bbox;

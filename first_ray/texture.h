@@ -68,6 +68,8 @@ public:
             i = modulo(i, nx);
         if (j < 0 || j > ny)
             j = modulo(j, ny);
+        if (i == nx) i = nx - 1;
+        if (j == ny) j = ny - 1;
         float r, g, b;
         const int idx = (j * nx + i) * 3;
         if (img->type == formats::STBI_HDR)

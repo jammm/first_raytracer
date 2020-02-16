@@ -157,7 +157,8 @@ void path_prt::SH_project_full_global_illumination()
                 hrec.normal = n;
                 hrec.u = uv.x;
                 hrec.v = uv.y;
-                const Vector3f v_direction = cosine_pdf(n).generate(random_sampler.get2d(), hrec);
+                scatter_record srec(hrec);
+                const Vector3f v_direction = cosine_pdf(n).generate(random_sampler.get2d(), srec);
                 ray r(v + (EPSILON * n), v_direction);
                 const Vector3f v_bsdf = tri->mat_ptr->eval_bsdf(r, hrec, r.direction());
                 // Set initial BSDF to be used in case current vertex is directly visible from envmap
@@ -165,7 +166,7 @@ void path_prt::SH_project_full_global_illumination()
 
                 for (unsigned int depth = 0; depth < max_depth; ++depth)
                 {
-                    scatter_record srec;
+                    scatter_record srec(hrec);
                     // Cast a ray to the scene
                     if (scene->world->hit(r, EPSILON, FLT_MAX, hrec))
                     {
@@ -176,7 +177,7 @@ void path_prt::SH_project_full_global_illumination()
 
                             /* Sample BSDF to generate next ray direction for indirect lighting */
                             hrec.p = hrec.p + (EPSILON * hrec.normal);
-                            r = ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), hrec));
+                            r = ray(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), srec));
                             const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, r.direction());
                             bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, r.direction());
                             /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
@@ -263,7 +264,7 @@ Vector3f path_prt::Li(const ray &r, Scene *scene, const int &depth, const hit_re
 
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
-        scatter_record srec;
+        scatter_record srec(hrec);
         if (hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             auto &tri_coeffs = dynamic_cast<triangle*>(hrec.obj)->coeffs;

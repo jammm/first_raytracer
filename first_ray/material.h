@@ -37,14 +37,6 @@ inline Vector3f random_on_unit_sphere(const Vector3f &sample)
     return unit_vector(p);
 }
 
-struct scatter_record
-{
-    ray specular_ray;
-    bool is_specular;
-    Vector3f attenuation;
-    std::unique_ptr<pdf> pdf_ptr;
-};
-
 class material
 {
 public:
@@ -63,7 +55,6 @@ public:
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         srec.is_specular = false;
-        srec.attenuation = albedo->value(hrec);
         srec.pdf_ptr = std::make_unique<cosine_pdf>(hrec.normal);
         return true;
     }
@@ -95,8 +86,7 @@ public:
         srec.is_specular = true;
 
         srec.pdf_ptr = std::make_unique<cosine_power_pdf>(r_in, hrec.normal, specular_exponent);
-        srec.attenuation = diffuse_reflectance->value(hrec);
-        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), hrec));
+        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), srec));
 
         return true;
     }
@@ -125,7 +115,6 @@ public:
     {
         Vector3f reflected = reflect(unit_vector(r_in.direction()), hrec.normal);
         srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere(sample));
-        srec.attenuation = albedo;
         srec.is_specular = true;
         srec.pdf_ptr = std::make_unique<constant_pdf>(1.0f);
         return true;
@@ -139,79 +128,51 @@ public:
     float fuzz;
 };
 
-static float schlick(const float &cosine, const float &ref_idx)
-{
-    float r0 = (1 - ref_idx) / (1 + ref_idx);
-    r0 = r0 * r0;
-    return r0 + (1 - r0)*pow((1 - cosine), 5);
-}
-
-static bool refract(const Vector3f &v, const Vector3f &n, float ni_over_nt, Vector3f &refracted)
-{
-    Vector3f uv = unit_vector(v);
-    float dt = dot(uv, n);
-    float discriminant = 1.0f - ni_over_nt*ni_over_nt*(1 - dt*dt);
-    if (discriminant > 0)
-    {
-        refracted = ni_over_nt*(uv - n*dt) - n*sqrt(discriminant);
-        return true;
-    }
-    return false;
-}
-
+/* Dielectric BSDF taken from mitsuba */
 class dielectric : public material
 {
 public:
-    dielectric(float ri) : ref_idx(ri) {}
+    dielectric(float ref_idx_, texture *specular_reflectance_, texture *specular_transmittance_)
+        : ref_idx(ref_idx_), specular_reflectance(specular_reflectance_), specular_transmittance(specular_transmittance_) {}
 
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
-        Vector3f outward_normal;
-        Vector3f reflected = reflect(r_in.direction(), hrec.normal);
-        float ni_over_nt;
         srec.is_specular = true;
-        srec.pdf_ptr = 0;
-        srec.attenuation = Vector3f(1.0f, 1.0f, 1.0f);
-        Vector3f refracted;
-        float reflect_prob;
-        float cosine;
-        if (dot(r_in.direction(), hrec.normal) > 0)
-        {
-            outward_normal = -hrec.normal;
-            ni_over_nt = ref_idx;
-            cosine = ref_idx * dot(r_in.direction(), hrec.normal) / r_in.direction().length();
-        }
-        else
-        {
-            outward_normal = hrec.normal;
-            ni_over_nt = 1.0f / ref_idx;
-            cosine = -dot(r_in.direction(), hrec.normal) / r_in.direction().length();
-        }
-        if (refract(r_in.direction(), outward_normal, ni_over_nt, refracted))
-        {
-            reflect_prob = schlick(cosine, ref_idx);
-        }
-        else
-        {
-            reflect_prob = 1.0f;
-        }
-        if (sample[0] < reflect_prob)
-        {
-            srec.specular_ray = ray(hrec.p, reflected);
-        }
-        else
-        {
-            srec.specular_ray = ray(hrec.p, refracted);
-        }
+        srec.pdf_ptr = std::make_unique<dielectric_pdf>(hrec.normal, ref_idx);
+        srec.specular_ray = ray(hrec.p, srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), srec));
 
         return true;
     }
-    Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
+    Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
     {
-        return Vector3f(1, 1, 1);
+        //const float cosWi = dot(hrec.wi, hrec.normal);
+        float cosThetaT;
+        float F = fresnelDielectricExt(dot(hrec.wi, hrec.normal), cosThetaT, ref_idx);
+
+        if (dot(hrec.wi, hrec.normal) * dot(wo, hrec.normal) >= 0)
+        {
+            if (std::abs(dot(reflect(-hrec.wi, hrec.normal), wo)-1) > DELTA_EPSILON)
+                return Vector3f(0.0f, 0.0f, 0.0f);
+
+            return specular_reflectance->value(hrec) * F;
+        } 
+        else 
+        {
+            //onb uvw(hrec.normal);
+            if (std::abs(dot(refract(hrec.wi, hrec.normal, ref_idx, cosThetaT), wo)-1) > DELTA_EPSILON)
+                return Vector3f(0.0f, 0.0f, 0.0f);
+
+            /* Radiance must be scaled to account for the solid angle compression
+               that occurs when crossing the interface. */
+            float factor = cosThetaT < 0 ? 1.0f/ref_idx : ref_idx;
+
+            return specular_reflectance->value(hrec) * factor * factor * (1 - F);
+        }
     }
 
     float ref_idx;
+    texture *specular_reflectance;
+    texture *specular_transmittance;
 };
 
 class diffuse_light : public material
@@ -290,7 +251,7 @@ public:
         srec.is_specular = true;
 
         srec.pdf_ptr = std::make_unique<roughconductor_pdf>(r_in, hrec.normal, alphaU, alphaV, distribution_type);
-        srec.specular_ray = ray(hrec.p, unit_vector(srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), hrec)));
+        srec.specular_ray = ray(hrec.p, unit_vector(srec.pdf_ptr->generate(Vector2f(sample[0], sample[1]), srec)));
 
         return true;
     }

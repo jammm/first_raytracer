@@ -9,7 +9,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
     auto &lights = scene->lights;
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
-        scatter_record srec;
+        scatter_record srec(hrec);
         Vector3f Le = hrec.mat_ptr->emitted(r, hrec);
 
         /* If we hit a light source, weight its contribution */
@@ -92,7 +92,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 }
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 hrec.p = hrec.p + (EPSILON * hrec.normal);
-                ray wo(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), hrec));
+                ray wo(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), srec));
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/

@@ -9,6 +9,7 @@
 
 constexpr float EPSILON = 1e-4f;
 constexpr float SHADOW_EPSILON = 1e-3f;
+constexpr float DELTA_EPSILON = 1e-4f;
 
 inline float unit_angle(const Vector3f& u, const Vector3f& v) {
 	if (dot(u, v) < 0)
@@ -75,6 +76,47 @@ inline Vector3f reflect(const Vector3f &v, const Vector3f &n)
 }
 
 /* All these functions below are taken from mitsuba */
+inline Vector3f refract(const Vector3f &wi, const Vector3f &n, float eta, float cosThetaT) {
+    if (cosThetaT < 0)
+        eta = 1 / eta;
+
+    return n * (dot(wi, n) * eta + cosThetaT) - wi * eta;
+}
+
+inline float fresnelDielectricExt(float cosThetaI_, float &cosThetaT_, float eta) {
+    if (eta == 1) 
+    {
+        cosThetaT_ = -cosThetaI_;
+        return 0.0f;
+    }
+
+    /* Using Snell's law, calculate the squared sine of the
+       angle between the normal and the transmitted ray */
+    float scale = (cosThetaI_ > 0) ? 1/eta : eta,
+          cosThetaTSqr = 1 - (1-cosThetaI_*cosThetaI_) * (scale*scale);
+
+    /* Check for total internal reflection */
+    if (cosThetaTSqr <= 0.0f)
+    {
+        cosThetaT_ = 0.0f;
+        return 1.0f;
+    }
+
+    /* Find the absolute cosines of the incident/transmitted rays */
+    float cosThetaI = std::abs(cosThetaI_);
+    float cosThetaT = std::sqrt(cosThetaTSqr);
+
+    float Rs = (cosThetaI - eta * cosThetaT)
+             / (cosThetaI + eta * cosThetaT);
+    float Rp = (eta * cosThetaI - cosThetaT)
+             / (eta * cosThetaI + cosThetaT);
+
+    cosThetaT_ = (cosThetaI_ > 0) ? -cosThetaT : cosThetaT;
+
+    /* No polarization -- return the unpolarized reflectance */
+    return 0.5f * (Rs * Rs + Rp * Rp);
+}
+
 inline float modulo(float a, float b) {
     float r = std::fmod(a, b);
     return (r < 0.0f) ? r+b : r;

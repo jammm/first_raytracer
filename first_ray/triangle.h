@@ -99,7 +99,6 @@ public:
 				hrec.uv.x = u;
 				hrec.uv.y = v;
                 hrec.mat_ptr = mat_ptr;
-                hrec.obj_name = mesh->name;
 				hrec.obj = (hitable*)this;
                 return true;
             }
@@ -152,7 +151,6 @@ public:
         rec.p = random_point;
         rec.normal = (1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]];
         rec.mat_ptr = mat_ptr;
-        rec.obj_name = mesh->name;
         Vector2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
         rec.u = uvhit.x;
         rec.v = uvhit.y;

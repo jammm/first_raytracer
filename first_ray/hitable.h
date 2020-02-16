@@ -30,7 +30,6 @@ struct hit_record
     Vector3f normal;
     material *mat_ptr;
 	hitable *obj;
-    std::string obj_name;
 };
 
 class hitable
