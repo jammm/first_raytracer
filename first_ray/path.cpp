@@ -24,7 +24,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             float distance_squared = (hrec.p - prev_hrec.p).squared_length();
             if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-            const float surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
+            float surface_bsdf_pdf = (dynamic_cast<dielectric*>(prev_hrec.mat_ptr) != nullptr) ? 0 : (prev_bsdf_pdf* cos_wo / distance_squared);
             const float light_pdf = lights.pdf_direct_sampling(hrec, r.direction());
 
             const float weight = miWeight(surface_bsdf_pdf, light_pdf);
@@ -47,7 +47,6 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                     return Vector3f(0, 0, 0);
                 }
                 //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
-                srec.specular_ray.o += (EPSILON * hrec.normal);
                 return surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) / surface_bsdf_pdf;
             }
             else

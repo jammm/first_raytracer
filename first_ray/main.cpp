@@ -163,7 +163,7 @@ Scene *furnace_test_scene(const float &aspect)
     //Vector3f reflectance(1.0f, 1.0f, 1.0f);
     //material *specular = new modified_phong(new constant_texture(Vector3f(0, 0, 0)),
     //                                    new constant_texture(reflectance), 100.0f);
-    material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
+    //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
     //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
     //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
@@ -388,7 +388,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 640;
     constexpr int ny = 360;
-    int ns = 100;
+    int ns = 23040000;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
@@ -411,14 +411,14 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(furnace_test_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(veach_door_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<path> render;
+    renderer<pssmlt> render;
 
     render.Render(scene.get(), film_viewer);
 
