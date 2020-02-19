@@ -118,10 +118,10 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
 void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
-    tf.parallel_for(150, 100, -1, [=](int y)
+    tf.parallel_for(film_viewer->ny - 1, -1, -1, [=](int y)
         {
             static thread_local sampler random_sampler(y * 39);
-            for (int x = 323; x < 391; x++)
+            for (int x = 0; x < film_viewer->nx; x++)
             {
                 //if (x == 360 && y == 127)
                 {
