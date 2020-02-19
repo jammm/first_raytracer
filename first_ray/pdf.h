@@ -166,12 +166,12 @@ public:
         float cosThetaT;
         float F = fresnelDielectricExt(dot(hrec.wi, hrec.normal), cosThetaT, ref_idx);
 
-        if (sample.x <= F) 
+        if (sample.x <= F)
         {
             srec.eta = 1.0f;
             return reflect(-hrec.wi, hrec.normal);
-        } 
-        else 
+        }
+        else
         {
             srec.eta = cosThetaT < 0 ? ref_idx : (1.0f / ref_idx);
             return refract(hrec.wi, hrec.normal, ref_idx, cosThetaT);

@@ -148,6 +148,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
 {
     hit_record hrec;
     auto &world = scene->world;
+    auto &lights = scene->lights;
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec(hrec);
@@ -167,7 +168,8 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
         {
             if ((st.depth == 0)
                 || (dynamic_cast<modified_phong*>(st.prev_hrec.mat_ptr) != nullptr)
-                || (dynamic_cast<metal*>(st.prev_hrec.mat_ptr) != nullptr))
+                || (dynamic_cast<metal*>(st.prev_hrec.mat_ptr) != nullptr)
+                || (dynamic_cast<dielectric*>(st.prev_hrec.mat_ptr) != nullptr))
                 return Le;
         }
 
@@ -182,12 +184,13 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
                     return Vector3f(0, 0, 0);
                 }
                 //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
-                srec.specular_ray.o += (EPSILON * hrec.normal);
+                const bool outside = dot(hrec.normal, srec.specular_ray.d) > 0;
+                srec.specular_ray.o = outside ? (srec.specular_ray.o + (EPSILON * hrec.normal)) : (srec.specular_ray.o - (EPSILON * hrec.normal));
                 st.depth += 1;
                 st.prev_bsdf_pdf = surface_bsdf_pdf;
                 st.prev_hrec = hrec;
                 
-                return surface_bsdf * Li(path, srec.specular_ray, scene, st) / surface_bsdf_pdf;
+                return Le + surface_bsdf * Li(path, srec.specular_ray, scene, st) / surface_bsdf_pdf;
             }
             else
             {
@@ -215,9 +218,6 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
         return Le;
     }
 
-    //Vector3f unit_direction = unit_vector(r.direction());
-    //float t = 0.5*(unit_direction.y() + 1.0);
-    //return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
     return scene->env_map->eval(r, st.prev_hrec, st.depth);
 }
 

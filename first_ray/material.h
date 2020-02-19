@@ -164,7 +164,7 @@ public:
 
             /* Radiance must be scaled to account for the solid angle compression
                that occurs when crossing the interface. */
-            float factor = cosThetaT < 0 ? 1.0f/ref_idx : ref_idx;
+            float factor = cosThetaT < 0 ? (1.0f/ref_idx) : (ref_idx);
 
             return specular_reflectance->value(hrec) * factor * factor * (1 - F);
         }

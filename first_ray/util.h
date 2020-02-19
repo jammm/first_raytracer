@@ -7,9 +7,9 @@
 #include <memory>
 #include "geometry.h"
 
-constexpr float EPSILON = 1e-4f;
-constexpr float SHADOW_EPSILON = 1e-3f;
-constexpr float DELTA_EPSILON = 1e-4f;
+constexpr float EPSILON = 1e-5f;
+constexpr float SHADOW_EPSILON = 1e-4f;
+constexpr float DELTA_EPSILON = 1e-5f;
 
 inline float unit_angle(const Vector3f& u, const Vector3f& v) {
 	if (dot(u, v) < 0)
@@ -72,7 +72,7 @@ static inline Vector3f FromSrgb(const Vector3f &v)
 
 inline Vector3f reflect(const Vector3f &v, const Vector3f &n)
 {
-    return v - 2 * dot(v, n)*n;
+    return unit_vector(v - 2 * dot(v, n)*n);
 }
 
 /* All these functions below are taken from mitsuba */
@@ -80,7 +80,7 @@ inline Vector3f refract(const Vector3f &wi, const Vector3f &n, float eta, float 
     if (cosThetaT < 0)
         eta = 1 / eta;
 
-    return n * (dot(wi, n) * eta + cosThetaT) - wi * eta;
+    return unit_vector(n * (dot(wi, n) * eta + cosThetaT) - wi * eta);
 }
 
 inline float fresnelDielectricExt(float cosThetaI_, float &cosThetaT_, float eta) {

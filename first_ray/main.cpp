@@ -205,7 +205,7 @@ Scene *cornell_box_obj(const float &aspect)
     hitable **list = new hitable*[300];
     int i = 0;
     std::vector<hitable*> lights;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-MIS-Test.obj", lights);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
 
     for (auto triangle : mesh)
     {
@@ -370,7 +370,7 @@ Scene *veach_door_scene(const float &aspect)
 
     Vector3f lookfrom(4.05402f, 1.61647f, -2.30652f);
     Vector3f lookat(3.064f, 1.58417f, -2.44373f);
-    constexpr float dist_to_focus = 100.0f;
+    constexpr float dist_to_focus = 100;
     constexpr float aperture = 0.0f;
     constexpr float vfov = 36.0f;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
