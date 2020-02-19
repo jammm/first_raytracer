@@ -41,6 +41,13 @@ bool parallel_bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &
     // Martin Lamber's BVH improvement https://twitter.com/Peter_shirley/status/1105292977423900673
     if (box.hit(r, t_min, t_max))
     {
+        float ray_min_t = t_min;
+        if (ray_min_t == EPSILON)
+            ray_min_t *= std::max(std::max(std::max(std::abs(r.o[0]),
+                std::abs(r.o[1])), std::abs(r.o[2])), EPSILON);
+
+        if (ray_min_t > t_min) t_min = ray_min_t;
+
         if (left->hit(r, t_min, t_max, rec))
         {
             right->hit(r, t_min, rec.t, rec);

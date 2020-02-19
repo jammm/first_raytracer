@@ -33,7 +33,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 10 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 15 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Direct light sampling */
             const int index = lights.pick_sample(random_sampler.get1d());
@@ -41,7 +41,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             {
                 /* Sample a random light source */
                 hit_record lrec;
-                Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
+                Vector3f offset_origin = hrec.p; //+ (EPSILON * hrec.normal);
                 Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin, random_sampler.get2d());
                 const float dist_to_light = to_light.length();
                 //to_light.make_unit_vector();

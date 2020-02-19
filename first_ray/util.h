@@ -7,9 +7,9 @@
 #include <memory>
 #include "geometry.h"
 
-constexpr float EPSILON = 1e-5f;
-constexpr float SHADOW_EPSILON = 1e-4f;
-constexpr float DELTA_EPSILON = 1e-5f;
+constexpr float EPSILON = 1e-4;
+constexpr float SHADOW_EPSILON = 1e-3f;
+constexpr float DELTA_EPSILON = 1e-3f;
 
 inline float unit_angle(const Vector3f& u, const Vector3f& v) {
 	if (dot(u, v) < 0)

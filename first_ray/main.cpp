@@ -388,7 +388,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 640;
     constexpr int ny = 360;
-    int ns = 23040000;
+    int ns = 1000;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
     viewer film_viewer(nx, ny, ns, comp);
@@ -418,7 +418,7 @@ int main(int argc, const char **argv)
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<pssmlt> render;
+    renderer<path> render;
 
     render.Render(scene.get(), film_viewer);
 
