@@ -515,9 +515,9 @@ public:
         Vector3f m = sample_microfacet(uvw.toLocal(hrec.wi), sample, pdf, hrec);
 
         /* Perfect specular reflection based on the microfacet normal */
-        Vector3f wo = reflect(-uvw.toLocal(hrec.wi), m);
+        Vector3f wo = reflect(-hrec.wi, uvw.fromLocal(m));
 
-        return uvw.fromLocal(wo);
+        return wo;
     }
 
     onb uvw;

@@ -155,6 +155,7 @@ public:
         rec.u = uvhit.x;
         rec.v = uvhit.y;
 		rec.obj = (hitable *)this;
+        rec.wi = unit_vector(o - random_point);
 
         return random_point - o;
     }

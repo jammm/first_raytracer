@@ -9,7 +9,7 @@
 constexpr static int PixelWidth = 640;
 constexpr static int PixelHeight = 360;
 constexpr static int MaxPathLength = 20;
-constexpr static int N_Init = 100000;
+constexpr static int N_Init = 1000000;
 constexpr static float LargeStepProb = 0.3f;
 
 constexpr static int NumRNGsPerEvent = 3;
