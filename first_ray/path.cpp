@@ -33,11 +33,11 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 10 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Direct light sampling */
             const int index = lights.pick_sample(random_sampler.get1d());
-            if (index >= 10 && (dynamic_cast<dielectric*>(hrec.mat_ptr) == nullptr))
+            if (index >= 0 && (dynamic_cast<dielectric*>(hrec.mat_ptr) == nullptr))
             {
                 /* Sample a random light source */
                 hit_record lrec;
@@ -117,7 +117,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
 void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
-    tf.parallel_for(100, -1, -1, [=](int y)
+    tf.parallel_for(film_viewer->ny - 1, -1, -1, [=](int y)
         {
             static thread_local sampler random_sampler(y * 39);
             for (int x = 0; x < film_viewer->nx ; x++)
