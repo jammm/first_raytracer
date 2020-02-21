@@ -148,7 +148,6 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
 {
     hit_record hrec;
     auto &world = scene->world;
-    auto &lights = scene->lights;
     if (world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec(hrec);
