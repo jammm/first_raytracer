@@ -49,10 +49,14 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
                 if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                 {
-                    const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
+                    Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
                     const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
                     const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
+                    if (srec.is_specular)
+                    {
+                        surface_bsdf *= std::abs(dot(hrec.normal, srec.specular_ray.d));
+                    }
                     if (cos_wo != 0)
                     {
                         float distance_squared = dist_to_light * dist_to_light;

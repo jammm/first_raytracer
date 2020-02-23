@@ -257,23 +257,23 @@ public:
         float eval_result;
         switch (distribution_type)
         {
-        case microfacet_distributions::beckmann:
-        {
-            /* Beckmann distribution function for Gaussian random surfaces - [Walter 2005] evaluation */
-            eval_result = fastexp(-beckmannExponent) /
-                (M_PI * alphaU * alphaV * cosTheta2 * cosTheta2);
-            break;
-        }
-        case microfacet_distributions::ggx:
-        {
-            /* GGX / Trowbridge-Reitz distribution function for rough surfaces */
-            float root = ((float)1 + beckmannExponent) * cosTheta2;
-            eval_result = (float)1 / (M_PI * alphaU * alphaV * root * root);
-            break;
-        }
-        default:
-            // invalid microfacet distribution type
-            return -1;
+            case microfacet_distributions::beckmann:
+            {
+                /* Beckmann distribution function for Gaussian random surfaces - [Walter 2005] evaluation */
+                eval_result = fastexp(-beckmannExponent) /
+                    (M_PI * alphaU * alphaV * cosTheta2 * cosTheta2);
+                break;
+            }
+            case microfacet_distributions::ggx:
+            {
+                /* GGX / Trowbridge-Reitz distribution function for rough surfaces */
+                float root = ((float)1 + beckmannExponent) * cosTheta2;
+                eval_result = (float)1 / (M_PI * alphaU * alphaV * root * root);
+                break;
+            }
+            default:
+                // invalid microfacet distribution type
+                return -1;
         }
 
         /* Prevent potential numerical issues in other stages of the model */
@@ -390,7 +390,7 @@ public:
         };
         break;
 
-        case  microfacet_distributions::ggx: 
+        case microfacet_distributions::ggx:
         {
             /* Special case (normal incidence) */
             if (thetaI < 1e-4f) {
@@ -493,7 +493,6 @@ public:
 
         return result;
     }
-
 
     inline Vector3f sample_microfacet(const Vector3f& wi, const Vector2f& sample, float& pdf, const hit_record &hrec) const
     {
