@@ -384,11 +384,86 @@ Scene *veach_door_scene(const float &aspect)
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
+Scene *glass_of_water(const float &aspect)
+{
+    hitable **list = new hitable*[1000000];
+    int i = 0;
+
+    struct obj
+    {
+        const char *obj_file;
+        material *bsdf;
+        Matrix4x4 toWorld;
+    };
+
+    Matrix4x4 identity;
+    identity.set_identity();
+
+#define BACKDROP_MATERIAL new rough_conductor(0.1f, 1.0f, Vector3f(4.27751f, 3.51315f, 2.76113f), Vector3f(3.49118f, 2.88936f, 3.1117f), new constant_texture(Vector3f(0.578596f, 0.578596f, 0.578596f)), "ggx")
+#define FLOOR_MAT new rough_conductor(0.1f, 1.0f, Vector3f(1.65746f, 0.880369f, 0.521229f), Vector3f(9.22387f, 6.26952f, 4.837f), new constant_texture(Vector3f(0.578596f, 0.578596f, 0.578596f)), "ggx")
+
+    // Table of objects
+    obj objects[] =
+    {
+        {"glass-of-water/models/light.obj"  , nullptr                                                                                                                    , identity},
+        {"glass-of-water/models/Mesh008.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh005.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh004.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh003.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
+        {"glass-of-water/models/Mesh010.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh009.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
+        {"glass-of-water/models/Mesh012.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
+        {"glass-of-water/models/Mesh014.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh015.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
+        {"glass-of-water/models/Mesh006.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh002.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
+        {"glass-of-water/models/Mesh001.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh007.obj", BACKDROP_MATERIAL                                                                                                          , identity},
+        {"glass-of-water/models/Mesh011.obj", FLOOR_MAT                                                                                                                  , identity},
+        {"glass-of-water/models/Mesh013.obj", new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))   , identity},
+        {"glass-of-water/models/Mesh000.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+    };
+    constexpr int num_objs = sizeof(objects) / sizeof(obj);
+    
+    static std::vector<std::vector<std::shared_ptr<hitable>>> triangle_soup;
+    std::vector<hitable*> lights;
+
+    std::cout << std::endl;
+    for (int j = 0; j < num_objs; ++j)
+    {
+        std::cout << "\nProcessing mesh #" << j;
+        triangle_soup.push_back(create_triangle_mesh(objects[j].obj_file, objects[j].toWorld, objects[j].bsdf, lights));
+    }
+
+    for (auto &mesh : triangle_soup)
+    {
+        for (auto triangle : mesh)
+        {
+            list[i++] = triangle.get();
+        }
+    }
+
+    Vector3f lookfrom(-0.0893585f, 2.69412f, 25.6726f);
+    Vector3f lookat(-0.085623f, 2.70998f, 24.6727f);
+    constexpr float dist_to_focus = 300.0f;
+    constexpr float aperture = 0.0f;
+    constexpr float vfov = 21.0f;
+    camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+
+    return new Scene(
+        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+        cam, lights
+    );
+    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new hitable_list(std::vector<hitable*>(list, list + i), i);
+}
+
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 1280;
-    constexpr int ny = 720;
-    int ns = 1000;
+    constexpr int nx = 720;
+    constexpr int ny = 360;
+    int ns = 128;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -411,7 +486,7 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(veach_door_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(glass_of_water(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
