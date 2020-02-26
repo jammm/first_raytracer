@@ -33,7 +33,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 10 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 11 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Direct light sampling */
             const int index = lights.pick_sample(random_sampler.get1d());
@@ -55,7 +55,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                     const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
                     if (srec.is_specular)
                     {
-                        surface_bsdf *= std::abs(dot(hrec.normal, srec.specular_ray.d));
+                        surface_bsdf *= cos_wi;
                     }
                     if (cos_wo != 0)
                     {
@@ -94,7 +94,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             else
             {
                 /* Sample BSDF to generate next ray direction for indirect lighting */
-                ray wo(hrec.p, srec.pdf_ptr->generate(random_sampler.get2d(), srec));
+                ray wo(hrec.p + EPSILON * (hrec.normal), srec.pdf_ptr->generate(random_sampler.get2d(), srec));
                 const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
