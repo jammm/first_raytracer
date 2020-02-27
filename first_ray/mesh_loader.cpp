@@ -7,7 +7,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
     std::vector<std::shared_ptr<triangle_mesh>> meshes;
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(file, aiProcessPreset_TargetRealtime_Fast);
+    const aiScene *scene = importer.ReadFile(file, (aiProcessPreset_TargetRealtime_Fast & ~aiProcess_GenNormals) | aiProcess_GenSmoothNormals);
     // If the import failed, report it
     if (!scene)
     {
@@ -36,6 +36,12 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
                 uv[j].x = mesh->mTextureCoords[0][j].x;
                 uv[j].y = mesh->mTextureCoords[0][j].y;
             }
+			if (mesh->HasNormals())
+			{
+				normals[j][0] = mesh->mNormals[j].x;
+				normals[j][1] = mesh->mNormals[j].y;
+				normals[j][2] = mesh->mNormals[j].z;
+			}
 		}
 		//Store indices
 		for (unsigned int k = 0; k < mesh->mNumFaces; ++k)
@@ -80,36 +86,39 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
             name = aiString("unknown");
         }
 
-		memset(normals, 0, sizeof(Vector3f) * mesh->mNumVertices);
-		// Generate well-behaved normals
-		// Based on "Computing Vertex Normals from Polygonal Facets" - Grit Thuermer and Charles A. Wuethrich,
-		// JGT 1998, Vol 3
-		for (int j = 0; j < mesh->mNumFaces; ++j)
+		if (!(mesh->HasNormals()))
 		{
-			Vector3f n(0.0f, 0.0f, 0.0f);
-			const int* V = &indices[3 * j];
-			for (int i = 0; i < 3; ++i)
+			memset(normals, 0, sizeof(Vector3f) * mesh->mNumVertices);
+			// Generate well-behaved normals
+			// Based on "Computing Vertex Normals from Polygonal Facets" - Grit Thuermer and Charles A. Wuethrich,
+			// JGT 1998, Vol 3
+			for (int j = 0; j < mesh->mNumFaces; ++j)
 			{
-				const Vector3f& v0 = vertices[V[i]];
-				const Vector3f& v1 = vertices[V[(i+1)%3]];
-				const Vector3f& v2 = vertices[V[(i+2)%3]];
-				const Vector3f edge1 = v1 - v0;
-				const Vector3f edge2 = v2 - v0;
-
-				if (i == 0)
+				Vector3f n(0.0f, 0.0f, 0.0f);
+				const int* V = &indices[3 * j];
+				for (int i = 0; i < 3; ++i)
 				{
-					n = cross(edge1, edge2);
-					float length = n.length();
-					if (length == 0) break;
-					n /= length;
-				}
-				float angle = unit_angle(unit_vector(edge1), unit_vector(edge2));
-				normals[V[i]] += n * angle;
-			}
+					const Vector3f& v0 = vertices[V[i]];
+					const Vector3f& v1 = vertices[V[(i + 1) % 3]];
+					const Vector3f& v2 = vertices[V[(i + 2) % 3]];
+					const Vector3f edge1 = v1 - v0;
+					const Vector3f edge2 = v2 - v0;
 
+					if (i == 0)
+					{
+						n = cross(edge1, edge2);
+						float length = n.length();
+						if (length == 0) break;
+						n /= length;
+					}
+					float angle = unit_angle(unit_vector(edge1), unit_vector(edge2));
+					normals[V[i]] += n * angle;
+				}
+
+			}
+			for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
+				normals[j].make_unit_vector();
 		}
-		for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
-			normals[j].make_unit_vector();
 
 
 
