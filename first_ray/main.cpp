@@ -461,9 +461,9 @@ Scene *glass_of_water(const float &aspect)
 
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 720;
+    constexpr int nx = 640;
     constexpr int ny = 360;
-    int ns = 128;
+    int ns = 640*360*100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -493,7 +493,7 @@ int main(int argc, const char **argv)
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<path> render;
+    renderer<pssmlt> render;
 
     render.Render(scene.get(), film_viewer);
 

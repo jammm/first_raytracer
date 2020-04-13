@@ -182,7 +182,7 @@ public:
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override { return false; }
     Vector3f emitted(const ray &r_in, const hit_record &rec) const override
     {
-        if (dot(rec.normal, rec.wi) > 0)
+        if (dot(rec.normal, r_in.d) < 0)
             return emit->value(rec);
         else
             return Vector3f(0, 0, 0);

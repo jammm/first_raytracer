@@ -58,6 +58,7 @@ public:
         mat_ptr(mesh->mat.get())
     {
         V = &mesh->indices[3 * tri_num];
+        inv_area = 1 / (0.5f * cross(edge1, edge2).length() * mesh->nTriangles);
     }
 
     //Use M�ller�Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
@@ -128,11 +129,9 @@ public:
 
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
-        const float area = 0.5f * cross(edge1, edge2).length();
-
         // This is explicitly converting to area measure
         // TODO: Allow switching between solid angle/area measure
-        return 1.0f / area;
+        return inv_area;
     }
     virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
     {
@@ -145,15 +144,17 @@ public:
         float b0 = 1 - su0;
         float b1 = u.y * su0;
 
-        Vector3f random_point = v0 * b0 + v1 * b1 + v2 * (1 - b0 - b1);
+        Vector3f random_point = (1 - b0 - b1) * v0 + b0 * v1 + b1 * v2;
 
         rec.t = 1.0f;
         rec.p = random_point;
-        rec.normal = (1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]];
+        rec.normal = unit_vector((1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]]);
         rec.mat_ptr = mat_ptr;
         Vector2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
         rec.u = uvhit.x;
         rec.v = uvhit.y;
+        rec.uv.x = b0;
+        rec.uv.y = b1;
 		rec.obj = (hitable *)this;
         rec.wi = unit_vector(o - random_point);
 
@@ -162,6 +163,7 @@ public:
 
     // Triangle vertex index data
     const int *V;
+    float inv_area;
     // Store edges here so we don't calculate for every intersection test
     const Vector3f edge1;
     const Vector3f edge2;
