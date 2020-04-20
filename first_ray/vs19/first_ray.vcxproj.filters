@@ -161,5 +161,8 @@
     <ClInclude Include="..\microfacet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\point_light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

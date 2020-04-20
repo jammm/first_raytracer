@@ -213,6 +213,7 @@
     <ClInclude Include="..\path.h" />
     <ClInclude Include="..\path_prt.h" />
     <ClInclude Include="..\pdf.h" />
+    <ClInclude Include="..\point_light.h" />
     <ClInclude Include="..\prt.h" />
     <ClInclude Include="..\pssmlt.h" />
     <ClInclude Include="..\sampler.h" />

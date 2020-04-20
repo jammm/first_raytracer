@@ -190,6 +190,18 @@ public:
     texture *emit;
 };
 
+class point_light_mat : public material
+{
+public:
+    point_light_mat(texture* a) : emit(a) {}
+    bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec, const Vector3f& sample) const override { return false; }
+    Vector3f emitted(const ray& r_in, const hit_record& rec) const override
+    {
+        return emit->value(rec) / (r_in.o - rec.p).squared_length();
+    }
+    texture* emit;
+};
+
 class environment_map : public material
 {
 public:

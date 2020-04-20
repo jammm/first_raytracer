@@ -1,0 +1,6 @@
+[submodule "first_raytracer_dependencies"]
+	path = first_raytracer_dependencies
+	url = https://github.com/jammm/first_raytracer_dependencies.git
+[submodule "first_ray/dependencies"]
+	path = first_ray/dependencies
+	url = https://github.com/jammm/first_raytracer_dependencies.git
