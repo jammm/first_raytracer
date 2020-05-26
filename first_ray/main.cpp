@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include "sphere.h"
 #include "triangle.h"
+#include "point_light.h"
 #include "material.h"
 #include "camera.h"
 #include "image.h"
@@ -15,6 +16,9 @@
 #include "viewer.h"
 #include "sampler.h"
 
+// Test scenes
+#include "ass1_test_scenes.hpp"
+
 // Include renderers
 #include "integrator.h"
 #include "path.h"
@@ -22,6 +26,7 @@
 #include "ao.h"
 #include "debug_renderer.h"
 #include "pssmlt.h"
+#include "assignment_1.hpp"
 
 // Other includes
 #include <float.h>
@@ -206,6 +211,7 @@ Scene *cornell_box_obj(const float &aspect)
     int i = 0;
     std::vector<hitable*> lights;
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
+    lights.push_back(new point_light(Vector3f(0, 1.5f, 1.9f), new point_light_mat(new constant_texture(Vector3f(100, 100, 100)))));
 
     for (auto triangle : mesh)
     {
@@ -461,9 +467,9 @@ Scene *glass_of_water(const float &aspect)
 
 int main(int argc, const char **argv)
 {
-    constexpr int nx = 640;
-    constexpr int ny = 360;
-    int ns = 640*360*100;
+    constexpr int nx = 512;
+    constexpr int ny = 512;
+    int ns = 1;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -486,14 +492,14 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(glass_of_water(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(bunny_20_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<pssmlt> render;
+    renderer<ass_1_renderer> render;
 
     render.Render(scene.get(), film_viewer);
 

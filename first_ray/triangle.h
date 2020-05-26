@@ -8,6 +8,7 @@
 #include "hitable.h"
 #include "material.h"
 #include "SHSample.h"
+#include "Scene.h"
 
 
 class triangle_mesh
@@ -64,6 +65,7 @@ public:
     //Use M�ller�Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hrec) const
     {
+        ++Scene::num_ray_tri_intersections;
         float a, f, u, v;
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f h = cross(r.d, edge2);

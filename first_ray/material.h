@@ -197,7 +197,7 @@ public:
     bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec, const Vector3f& sample) const override { return false; }
     Vector3f emitted(const ray& r_in, const hit_record& rec) const override
     {
-        return emit->value(rec) / (r_in.o - rec.p).squared_length();
+        return emit->value(rec) / (rec.p - r_in.o).squared_length();
     }
     texture* emit;
 };

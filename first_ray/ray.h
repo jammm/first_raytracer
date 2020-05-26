@@ -16,4 +16,22 @@ struct ray
     Vector3f d;
 };
 
+struct ray4
+{
+    union
+    {
+        __m128 ox4, oy4, oz4;
+        float o[4];
+    };
+    union
+    {
+        __m128 dx4, dy4, dz4;
+        float d[4];
+    };
+    union {
+        __m128 t4;
+        float t[4];
+    };
+};
+
 #endif

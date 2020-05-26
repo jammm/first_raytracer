@@ -102,7 +102,7 @@ void viewer::background_thread(const std::shared_future<void>& future, GLFWwindo
         {
             to_exit = true;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(9));
     }
 }
 

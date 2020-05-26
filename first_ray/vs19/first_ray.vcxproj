@@ -41,7 +41,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>ClangCL</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -104,22 +104,29 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <OpenMPSupport>false</OpenMPSupport>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <FloatingPointModel>Strict</FloatingPointModel>
+      <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <AdditionalOptions>
       </AdditionalOptions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <CallingConvention>Cdecl</CallingConvention>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <PerUserRedirection>true</PerUserRedirection>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,21 +150,23 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <OpenMPSupport>false</OpenMPSupport>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <FloatingPointModel>Strict</FloatingPointModel>
-      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
       <AdditionalOptions>
       </AdditionalOptions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <CallingConvention>Cdecl</CallingConvention>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -166,6 +175,7 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <PerUserRedirection>true</PerUserRedirection>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -173,6 +183,7 @@
     <ClCompile Include="../mesh_loader.cpp" />
     <ClCompile Include="../triangle.cpp" />
     <ClCompile Include="..\ao.cpp" />
+    <ClCompile Include="..\assignment_1.cpp" />
     <ClCompile Include="..\hitable.cpp" />
     <ClCompile Include="..\hitable_list.cpp" />
     <ClCompile Include="..\image.cpp" />
@@ -181,6 +192,7 @@
     <ClCompile Include="..\path_prt.cpp" />
     <ClCompile Include="..\pdf.cpp" />
     <ClCompile Include="..\pssmlt.cpp" />
+    <ClCompile Include="..\scene.cpp" />
     <ClCompile Include="..\texture.cpp" />
     <ClCompile Include="..\viewer.cpp" />
   </ItemGroup>
@@ -200,8 +212,10 @@
     <ClInclude Include="../util.h" />
     <ClInclude Include="../geometry.h" />
     <ClInclude Include="..\aabb.h" />
+    <ClInclude Include="..\aabb_sse.hpp" />
     <ClInclude Include="..\aarect.h" />
     <ClInclude Include="..\ao.h" />
+    <ClInclude Include="..\assignment_1.hpp" />
     <ClInclude Include="..\box.h" />
     <ClInclude Include="..\bvh.h" />
     <ClInclude Include="..\debug_renderer.h" />
@@ -219,6 +233,9 @@
     <ClInclude Include="..\sampler.h" />
     <ClInclude Include="..\Scene.h" />
     <ClInclude Include="..\SHSample.h" />
+    <ClInclude Include="..\split_bvh.h" />
+    <ClInclude Include="..\ass1_test_scenes.hpp" />
+    <ClInclude Include="..\triangle_sse.hpp" />
     <ClInclude Include="..\viewer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

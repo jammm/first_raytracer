@@ -2,7 +2,7 @@
 #define HITABLE_H_
 
 #include "ray.h"
-#include "aabb.h"
+#include "aabb_sse.hpp"
 #include <cfloat>
 
 
@@ -32,14 +32,45 @@ struct hit_record
 	hitable *obj;
 };
 
+struct hit_record4
+{
+    union
+    {
+        __m128 t4;
+        float t[4];
+    };
+    // Global texture coordinates
+    union
+    {
+        __m128 u4;
+        float u[4];
+    };
+    union
+    {
+        __m128 v4;
+        float v[4];
+    };
+    __m128 px4, py4, pz4;
+    __m128 wix4, wiy4, wiz4;
+    __m128 nx4, ny4, nz4;
+    material *mat_ptr;
+    hitable *obj;
+};
+
 class hitable
 {
 public:
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const = 0;
+    virtual int hit_simd(ray4 &r4, float t_min, float t_max, hit_record4 &hrec4) const { std::cout << "hit_sse Not implemented!"; return false; }
 	virtual bool bounding_box(float t0, float t1, aabb &box) const = 0;
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const { return 0.0f; }
     virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f &sample) const { return Vector3f(1, 0, 0); }
     virtual ~hitable() = 0;
+
+    // Some global members for SSE stuff
+    static const __m128 EPS4;
+    static const __m128 MINUSEPS4;
+    static const __m128 ONE4;
 };
 
 class flip_normals : public hitable

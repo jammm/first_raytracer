@@ -9,6 +9,10 @@
 #endif
 #include <iostream>
 #include <stdlib.h>
+#include <stdint.h>
+#include <float.h>
+#include <xmmintrin.h>
+#include <smmintrin.h>
 #include <cassert>
 #include <cstring>
 
@@ -338,7 +342,7 @@ struct Vector3
     inline void make_unit_vector();
 
     // Vector3 data
-    T e[3] = {0, 0, 0};
+    T _MM_ALIGN16 e[4];
 };
 
 typedef Vector3<float> Vector3f;
@@ -831,6 +835,84 @@ template <int M, int N, typename T> struct Matrix {
     }
 };
 
+template <typename T, int M1, int N1, int M2, int N2> inline Matrix<M1, N2, T>
+    operator*(const Matrix<M1, N1, T> &mat1, const Matrix<M2, N2, T> &mat2) {
+        static_assert(N1 == M2);
+        Matrix<M1, N2, T> result;
+        for (int i = 0; i < M1; ++i) {
+            for (int j = 0; j < N2; ++j) {
+                T sum = 0;
+                for (int k = 0; k < N1; ++k)
+                    sum += mat1.m[i][k] * mat2.m[k][j];
+                result.m[i][j] = sum;
+            }
+        }
+        return result;
+    }
+
+    // Matrix inversion taken from mitsuba
+    template <int M, int N, typename T> bool Matrix<M, N, T>::invert(Matrix &target) const {
+        static_assert(M == N);
+
+        int indxc[N], indxr[N];
+        int ipiv[N];
+        memset(ipiv, 0, sizeof(int) * N);
+        std::memcpy(target.m, m, M * N * sizeof(T));
+
+        for (int i = 0; i < N; i++) {
+            int irow = -1, icol = -1;
+            T big = 0;
+            for (int j = 0; j < N; j++) {
+                if (ipiv[j] != 1) {
+                    for (int k = 0; k < N; k++) {
+                        if (ipiv[k] == 0) {
+                            if (std::abs(target.m[j][k]) >= big) {
+                                big = std::abs(target.m[j][k]);
+                                irow = j;
+                                icol = k;
+                            }
+                        }
+                        else if (ipiv[k] > 1) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            ++ipiv[icol];
+            if (irow != icol) {
+                for (int k = 0; k < N; ++k)
+                    std::swap(target.m[irow][k], target.m[icol][k]);
+            }
+            indxr[i] = irow;
+            indxc[i] = icol;
+            if (target.m[icol][icol] == 0)
+                return false;
+            T pivinv = 1.f / target.m[icol][icol];
+            target.m[icol][icol] = 1.f;
+            for (int j = 0; j < N; j++)
+                target.m[icol][j] *= pivinv;
+            for (int j = 0; j < N; j++) {
+                if (j != icol) {
+                    T save = target.m[j][icol];
+                    target.m[j][icol] = 0;
+                    for (int k = 0; k < N; k++)
+                        target.m[j][k] -= target.m[icol][k] * save;
+                }
+            }
+        }
+        for (int j = N - 1; j >= 0; j--) {
+            if (indxr[j] != indxc[j]) {
+                for (int k = 0; k < N; k++)
+                    std::swap(target.m[k][indxr[j]], target.m[k][indxc[j]]);
+            }
+        }
+        return true;
+    }
+
+    template <typename T, int M, int N> inline Matrix<M, N, T> operator*(T f, const Matrix<M, N, T> &m) {
+        return m * f;
+    }
+
 struct Matrix4x4 : public Matrix<4, 4, float> 
 {
     inline Matrix4x4() { }
@@ -928,83 +1010,55 @@ struct Matrix4x4 : public Matrix<4, 4, float>
             m[0][i], m[1][i], m[2][i], m[3][i]
         );
     }
+
+    inline Matrix4x4 translate(const float x, const float y, const float z)
+    {
+        m[0][3] += x;
+        m[1][3] += y;
+        m[2][3] += z;
+
+        return *this;
+    }
+
+    inline Matrix4x4 scale(const float x, const float y, const float z)
+    {
+        m[0][0] *= x;
+        m[1][1] *= y;
+        m[2][2] *= z;
+
+        return *this;
+    }
+
+    inline Matrix4x4 rotate(const float angle, const float x, const float y, const float z)
+    {
+        float rad = angle * (M_PI / 180.0f);
+
+        Vector3f axis(x, y, z);
+        //axis.make_unit_vector();
+
+        float x2 = axis[0] * axis[0];
+        float y2 = axis[1] * axis[1];
+        float z2 = axis[2] * axis[2];
+        float c = cos(rad);
+        float cinv = 1 - c;
+        float s = sin(rad);
+        float xy = axis[0] * axis[1];
+        float xz = axis[0] * axis[2];
+        float yz = axis[1] * axis[2];
+        float xs = axis[0] * s;
+        float ys = axis[1] * s;
+        float zs = axis[2] * s;
+        float xzcinv = xz * cinv;
+        float xycinv = xy * cinv;
+        float yzcinv = yz * cinv;
+
+        Matrix4x4 rot_mat(x2 + c * (1 - x2), xy * cinv + zs, xzcinv - ys, 0,
+            xycinv - zs, y2 + c * (1 - y2), yzcinv + xs, 0,
+            xzcinv + ys, yzcinv - xs, z2 + c * (1 - z2), 0,
+            0, 0, 0, 1);
+
+        return (*this) * rot_mat;
+    }
 };
-
-template <typename T, int M1, int N1, int M2, int N2> inline Matrix<M1, N2, T>
-        operator*(const Matrix<M1, N1, T> &mat1, const Matrix<M2, N2, T> &mat2) {
-    static_assert(N1 == M2);
-    Matrix<M1, N2, T> result;
-    for (int i=0; i<M1; ++i) {
-        for (int j=0; j<N2; ++j) {
-            T sum = 0;
-            for (int k=0; k<N1; ++k)
-                sum += mat1.m[i][k] * mat2.m[k][j];
-            result.m[i][j] = sum;
-        }
-    }
-    return result;
-}
-
-// Matrix inversion taken from mitsuba
-template <int M, int N, typename T> bool Matrix<M, N, T>::invert(Matrix &target) const {
-    static_assert(M == N);
-
-    int indxc[N], indxr[N];
-    int ipiv[N];
-    memset(ipiv, 0, sizeof(int)*N);
-    std::memcpy(target.m, m, M*N*sizeof(T));
-
-    for (int i = 0; i < N; i++) {
-        int irow = -1, icol = -1;
-        T big = 0;
-        for (int j = 0; j < N; j++) {
-            if (ipiv[j] != 1) {
-                for (int k = 0; k < N; k++) {
-                    if (ipiv[k] == 0) {
-                        if (std::abs(target.m[j][k]) >= big) {
-                            big = std::abs(target.m[j][k]);
-                            irow = j;
-                            icol = k;
-                        }
-                    } else if (ipiv[k] > 1) {
-                        return false;
-                    }
-                }
-            }
-        }
-        ++ipiv[icol];
-        if (irow != icol) {
-            for (int k = 0; k < N; ++k)
-                std::swap(target.m[irow][k], target.m[icol][k]);
-        }
-        indxr[i] = irow;
-        indxc[i] = icol;
-        if (target.m[icol][icol] == 0)
-            return false;
-        T pivinv = 1.f / target.m[icol][icol];
-        target.m[icol][icol] = 1.f;
-        for (int j = 0; j < N; j++)
-            target.m[icol][j] *= pivinv;
-        for (int j = 0; j < N; j++) {
-            if (j != icol) {
-                T save = target.m[j][icol];
-                target.m[j][icol] = 0;
-                for (int k = 0; k < N; k++)
-                    target.m[j][k] -= target.m[icol][k]*save;
-            }
-        }
-    }
-    for (int j = N-1; j >= 0; j--) {
-        if (indxr[j] != indxc[j]) {
-            for (int k = 0; k < N; k++)
-                std::swap(target.m[k][indxr[j]], target.m[k][indxc[j]]);
-        }
-    }
-    return true;
-}
-
-template <typename T, int M, int N> inline Matrix<M, N, T> operator*(T f, const Matrix<M, N, T> &m) {
-    return m*f;
-}
 
 #endif

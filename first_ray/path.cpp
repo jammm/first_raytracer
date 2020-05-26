@@ -33,7 +33,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 30 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 0 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Direct light sampling */
             const int index = lights.pick_sample(random_sampler.get1d());
@@ -110,9 +110,6 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
         return Le;
     }
 
-    //Vector3f unit_direction = unit_vector(r.direction());
-    //float t = 0.5*(unit_direction.y() + 1.0);
-    //return (1.0 - t)*Vector3f(1.0, 1.0, 1.0) + t * Vector3f(0.5, 0.7, 1.0);
     return scene->env_map->eval(r, prev_hrec, depth);
 }
 

@@ -7,7 +7,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
     std::vector<std::shared_ptr<triangle_mesh>> meshes;
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(file, (aiProcessPreset_TargetRealtime_Fast));
+    const aiScene *scene = importer.ReadFile(file, (aiProcessPreset_TargetRealtime_Fast & ~aiProcess_GenNormals));
     // If the import failed, report it
     if (!scene)
     {
@@ -52,7 +52,6 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			indices.push_back(face.mIndices[1]);
 			indices.push_back(face.mIndices[2]);
 		}
-
 
         //std::unique_ptr<image> img = std::make_unique<image>("cube/default.png");
         //std::unique_ptr<material> mati = std::make_unique<lambertian>(new image_texture(img));
@@ -119,8 +118,6 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
 				normals[j].make_unit_vector();
 		}
-
-
 
         meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), name.C_Str(), true));
 	}

@@ -38,9 +38,11 @@ bool parallel_bvh_node::bounding_box(float t0, float t1, aabb &b) const
 
 bool parallel_bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
 {
+    ++Scene::num_rays_traversed;
     // Martin Lamber's BVH improvement https://twitter.com/Peter_shirley/status/1105292977423900673
     if (box.hit(r, t_min, t_max))
     {
+        ++Scene::num_ray_box_intersections;
         float ray_min_t = t_min;
         if (ray_min_t == EPSILON)
             ray_min_t *= std::max(std::max(std::max(std::abs(r.o[0]),
@@ -65,6 +67,7 @@ bool parallel_bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &
 parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, const int &n, const int &g_index, float time0, float time1)
     : hitable_list(std::vector<hitable*>(l, l + n), n), left(nullptr), right(nullptr)
 {
+    ++Scene::num_bvh_nodes;
     if (!parallel_bvh_node::g_boxes)
     {
         parallel_bvh_node::g_boxes = std::make_unique<aabb[]>(n);
@@ -124,7 +127,12 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
     }
 
     if (min_SAH_idx == 0)
+    {
+        // reached a leaf node
+        ++Scene::num_bvh_nodes;
+        ++Scene::num_bvh_leaf_nodes;
         left.reset(l[0]);
+    }
     else
     {
         subflow.emplace([&left = left , l, time0, time1, min_SAH_idx, g_index](tf::SubflowBuilder& subflow2)
@@ -133,7 +141,12 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
         }).name("left");
     }
     if (min_SAH_idx == n - 2)
+    {
+        // reached another leaf node
+        ++Scene::num_bvh_nodes;
+        ++Scene::num_bvh_leaf_nodes;
         right.reset(l[min_SAH_idx + 1]);
+    }
     else
     {
         subflow.emplace([&right = right, l, n, time0, time1, min_SAH_idx, g_index](tf::SubflowBuilder& subflow2) {

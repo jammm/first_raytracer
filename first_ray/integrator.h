@@ -16,7 +16,7 @@ struct renderer : public integrator
         // Initialize viewer and create gl window
         GLFWwindow* window = film_viewer.init();
         // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
-        tf::Taskflow tf;
+        tf::Taskflow tf(1);
 
         integrator::Render(scene, &film_viewer, tf);
 
@@ -35,6 +35,12 @@ struct renderer : public integrator
         std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
         std::cout << "\nIt took me " << time_span.count() << " seconds to render." << std::endl;
+        std::cout << "\n Number of ray traversals: " << Scene::num_rays_traversed;
+        std::cout << "\n Number of ray-box intersections: " << Scene::num_ray_box_intersections;
+        std::cout << "\n Number of ray-triangle intersections: " << Scene::num_ray_tri_intersections;
+        std::cout << "\n Number of BVH nodes: " << Scene::num_bvh_nodes;
+        std::cout << "\n Number of BVH leaves: " << Scene::num_bvh_leaf_nodes;
+        std::cout << "\n Rays/second: " << (Scene::num_rays_traversed / time_span.count())/1e+6 << "M/sec" << std::endl;
     }
 };
 
