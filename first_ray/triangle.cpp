@@ -1,4 +1,8 @@
+#ifdef USE_SSE
+#include "triangle_sse.hpp"
+#else
 #include "triangle.h"
+#endif
 #include "mesh_loader.h"
 
 

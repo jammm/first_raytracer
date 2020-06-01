@@ -114,8 +114,10 @@ bvh_node::bvh_node(hitable **l, int n, float time0, float time1)
         qsort(l, n, sizeof(hitable *), box_x_compare);
     else if(axis == 1)
         qsort(l, n, sizeof(hitable *), box_y_compare);
-    else
-        qsort(l, n, sizeof(hitable *), box_z_compare);
+	else
+	{
+		qsort(l, n, sizeof(hitable *), box_z_compare);
+	}
 
 	for (int i = 0; i < n; ++i)
 		l[i]->bounding_box(time0, time1, boxes[i]);

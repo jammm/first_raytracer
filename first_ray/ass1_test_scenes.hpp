@@ -2,7 +2,12 @@
 #define TEST_SCENES_H
 
 #include "hitable.h"
+
+#ifdef USE_SSE
+#include "triangle_sse.hpp"
+#else
 #include "triangle.h"
+#endif
 #include "parallel_bvh.h"
 #include "material.h"
 #include "camera.h"
@@ -262,7 +267,7 @@ Scene *teapot_scene(const float &aspect)
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        new hitable_list(std::vector<hitable *>(list, list + i), i),
+        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
         new environment_map(std::make_unique<constant_texture>(Vector3f(0, 0, 0.2f))),
         cam, lights
     );

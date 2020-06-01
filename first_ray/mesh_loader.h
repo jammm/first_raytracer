@@ -1,7 +1,11 @@
 #ifndef MESH_LOADER_H_
 #define MESH_LOADER_H_
 
+#ifdef USE_SSE
+#include "triangle_sse.hpp"
+#else
 #include "triangle.h"
+#endif
 #include <memory>
 #include <vector>
 #include <assert.h>

@@ -1,6 +1,10 @@
 #include "path_prt.h"
 #include "prt.h"
+#ifdef USE_SSE
+#include "triangle_sse.hpp"
+#else
 #include "triangle.h"
+#endif
 #include <taskflow/taskflow.hpp>
 
 using namespace PRT;

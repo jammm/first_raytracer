@@ -1,7 +1,11 @@
 #include <iostream>
 #include "Scene.h"
 #include "sphere.h"
+#ifdef USE_SSE
+#include "triangle_sse.hpp"
+#else
 #include "triangle.h"
+#endif
 #include "point_light.h"
 #include "material.h"
 #include "camera.h"
@@ -492,7 +496,7 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(bunny_20_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(sponza_scene(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);

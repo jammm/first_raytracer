@@ -2,9 +2,12 @@
 #define HITABLE_H_
 
 #include "ray.h"
+#ifdef USE_SSE
 #include "aabb_sse.hpp"
+#else
+#include "aabb.h"
+#endif
 #include <cfloat>
-
 
 class material;
 class hitable;
@@ -17,12 +20,11 @@ inline void get_sphere_uv(const Vector3f &p, float &u, float &v)
     v = (theta + M_PI / 2) / M_PI;
 }
 
-struct hit_record
+struct _MM_ALIGN16 hit_record
 {
     float t;
 	// Global texture coordinates
     float u;
-    float v;
 	// Local barycentric coordinates
 	Vector2f uv;
     Vector3f p;
@@ -30,38 +32,13 @@ struct hit_record
     Vector3f normal;
     material *mat_ptr;
 	hitable *obj;
-};
-
-struct hit_record4
-{
-    union
-    {
-        __m128 t4;
-        float t[4];
-    };
-    // Global texture coordinates
-    union
-    {
-        __m128 u4;
-        float u[4];
-    };
-    union
-    {
-        __m128 v4;
-        float v[4];
-    };
-    __m128 px4, py4, pz4;
-    __m128 wix4, wiy4, wiz4;
-    __m128 nx4, ny4, nz4;
-    material *mat_ptr;
-    hitable *obj;
+    float v;
 };
 
 class hitable
 {
 public:
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const = 0;
-    virtual int hit_simd(ray4 &r4, float t_min, float t_max, hit_record4 &hrec4) const { std::cout << "hit_sse Not implemented!"; return false; }
 	virtual bool bounding_box(float t0, float t1, aabb &box) const = 0;
     virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const { return 0.0f; }
     virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f &sample) const { return Vector3f(1, 0, 0); }

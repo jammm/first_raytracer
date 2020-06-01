@@ -8,147 +8,154 @@
 #include "material.h"
 #include "SHSample.h"
 #include "Scene.h"
-#include "triangle.h"
 
-class triangle_sse : public triangle
+#ifdef __GNUC__
+#define _MM_ALIGN16 __attribute__ ((aligned (16)))
+#endif
+
+// Yet Faster Ray-Triangle Intersection (Using SSE4)
+// Jiri Havel and Adam Herout
+
+class triangle_mesh
 {
 public:
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const { std::cout << "hit Not implemented in triangle_sse!"; return false; }
-    //Use Moller-Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
-    virtual int hit_simd(ray4 &r4, float t_min, float t_max, hit_record4 &hrec4) const override
+
+	triangle_mesh() {}
+
+    triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
+        const int *indices, Vector3f *n, Vector2f *_uv, std::unique_ptr<material> mat, std::string name, const bool &shallow_copy = false)
+        : nTriangles(nTriangles),
+        nVertices(nVertices),
+        indices(indices, indices + 3 * nTriangles), mat(move(mat)),
+        name(name)
+    {
+
+        vertices.reset(shallow_copy ? v : new Vector3f[nVertices]);
+        normals.reset(shallow_copy ? n : new Vector3f[nVertices]);
+        uv.reset(shallow_copy ? _uv : new Vector2f[nVertices]);
+
+        if (!shallow_copy)
+        {
+            std::memcpy(vertices.get(), v, sizeof(Vector3f) * nVertices);
+            std::memcpy(normals.get(), v, sizeof(Vector3f) * nVertices);
+            std::memcpy(uv.get(), v, sizeof(Vector2f) * nVertices);
+        }
+
+    }
+
+    int nTriangles;
+    int nVertices;
+    std::vector<int> indices;
+    std::unique_ptr<Vector3f[]> vertices;
+    std::unique_ptr<Vector3f[]> normals;
+    std::unique_ptr<Vector2f[]> uv;
+    std::unique_ptr<material> mat;
+    // Name of the object this mesh belongs to
+    std::string name;
+};
+
+struct _MM_ALIGN16 PrecomputedTriangle
+{
+    float nx, ny, nz, nd;
+    float ux, uy, uz, ud;
+    float vx, vy, vz, vd;
+};
+
+const float int_coef_arr[4] = { -1, -1, -1, 1 };
+const __m128 int_coef = _mm_load_ps(int_coef_arr);
+
+const float inv_coef_p_arr[4] = { 1, 1, 1, 1 };
+const __m128 inv_coef_p = _mm_load_ps(inv_coef_p_arr);
+
+class triangle : public hitable
+{
+public:
+    triangle(const std::shared_ptr<triangle_mesh> &mesh, const int &tri_num) :
+        edge1(mesh->vertices[mesh->indices[3 * tri_num + 1]] - mesh->vertices[mesh->indices[3 * tri_num]]),
+        edge2(mesh->vertices[mesh->indices[3 * tri_num + 2]] - mesh->vertices[mesh->indices[3 * tri_num]]),
+        mesh(mesh),
+        mat_ptr(mesh->mat.get())
+    {
+        V = &mesh->indices[3 * tri_num];
+        inv_area = 1 / (0.5f * cross(edge1, edge2).length() * mesh->nTriangles);
+
+        Vector3f A = mesh->vertices[V[0]];
+
+        Vector3f n = cross(edge1, edge2);
+        if (n.squared_length() == 0)
+            n = mesh->normals[V[0]];
+
+        float n_sq_len = n.squared_length();
+
+        p.nx = n.x();
+        p.ny = n.y();
+        p.nz = n.z();
+        p.nd = dot(A, n);
+
+        const float inv_n_sq_len = 1.0f / n_sq_len;
+
+        Vector3f n1 = cross(edge2, n) * inv_n_sq_len;
+        p.ux = n1.x();
+        p.uy = n1.y();
+        p.uz = n1.z();
+        p.ud = -dot(n1, A);
+
+        Vector3f n2 = cross(n, edge1) * inv_n_sq_len;
+        p.vx = n2.x();
+        p.vy = n2.y();
+        p.vz = n2.z();
+        p.vd = -dot(n2, A);
+    }
+
+    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hrec) const
     {
         ++Scene::num_ray_tri_intersections;
-        const Vector3f &v0 = mesh->vertices[V[0]];
-        const Vector3f &v1 = mesh->vertices[V[1]];
-        const Vector3f &v2 = mesh->vertices[V[2]];
+        ray r_new = r;
+        r_new.o.e[3] = 1.0f;
+        r_new.d.e[3] = 0.0f;
+        const __m128 o = _mm_load_ps(&(r_new.o.e[0]));
+        const __m128 d = _mm_load_ps(&(r_new.d.e[0]));
+        const __m128 n = _mm_load_ps(&(p.nx));
+        const __m128 det = _mm_dp_ps(n, d, 0x7f);
+        const __m128 dett = _mm_dp_ps(
+            _mm_mul_ps(int_coef, n), o, 0xff);
+        {
+            const __m128 detp = _mm_add_ps(_mm_mul_ps(o, det),
+                _mm_mul_ps(dett, d));
+            const __m128 detu = _mm_dp_ps(detp,
+                _mm_load_ps(&p.ux), 0xf1);
+            if ((_mm_movemask_ps(_mm_xor_ps(detu,
+                _mm_sub_ss(det, detu))) & 1) == 0)
+            {
+                const __m128 detv = _mm_dp_ps(detp, _mm_load_ps(&p.vx), 0xf1);
+                if ((_mm_movemask_ps(_mm_xor_ps(detv,
+                    _mm_sub_ss(det, _mm_add_ss(detu, detv)))) & 1) == 0)
+                {
+                    const __m128 inv_det = _mm_rcp_ps(det);
+                    _mm_store_ss(&hrec.t, _mm_mul_ss(dett, inv_det));
+                    if ((hrec.t > t_min) && (hrec.t < t_max))
+                    {
+                        _mm_store_ss(&hrec.uv.x, _mm_mul_ss(detu, inv_det));
+                        _mm_store_ss(&hrec.uv.y, _mm_mul_ss(detv, inv_det));
+                        _mm_store_ps(&hrec.p.e[0], _mm_mul_ps(detp,
+                            _mm_shuffle_ps(inv_det, inv_det, 0)));
 
-        // Vector3f e1 = v1 - v0;
-        // Vector3f e2 = v2 - v0;
-        __m128 e1x4 = _mm_set1_ps(v1.x() - v0.x());
-        __m128 e1y4 = _mm_set1_ps(v1.y() - v0.y());
-        __m128 e1z4 = _mm_set1_ps(v1.z() - v0.z());
-        __m128 e2x4 = _mm_set1_ps(v2.x() - v0.x());
-        __m128 e2y4 = _mm_set1_ps(v2.y() - v0.y());
-        __m128 e2z4 = _mm_set1_ps(v2.z() - v0.z());
+                        const float u = hrec.uv.x;
+                        const float v = hrec.uv.y;
+                        hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+                        Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
+                        hrec.u = uvhit.x;
+                        hrec.v = uvhit.y;
+                        hrec.wi = -unit_vector(r_new.d);
+                        hrec.mat_ptr = mat_ptr;
+                        hrec.obj = (hitable *)this;
 
-        // const Vector3f h = cross(r.d, edge2);
-        __m128 Px4 = _mm_sub_ps(
-            _mm_mul_ps(r4.dy4, e2z4),
-            _mm_mul_ps(r4.dz4, e2y4)
-        );
-        __m128 Py4 = _mm_sub_ps(
-            _mm_mul_ps(r4.dz4, e2x4),
-            _mm_mul_ps(r4.dx4, e2z4)
-        );
-        __m128 Pz4 = _mm_sub_ps(
-            _mm_mul_ps(r4.dx4, e2y4),
-            _mm_mul_ps(r4.dy4, e2x4)
-        );
-
-        //a = dot(edge1, h);
-        __m128 det4 = _mm_add_ps(
-            _mm_add_ps(
-                _mm_mul_ps(e1x4, Px4),
-                _mm_mul_ps(e1y4, Py4)
-            ),
-            _mm_mul_ps(e1z4, Pz4)
-        );
-
-        // Check if this ray is parallel to this triangle's plane.
-        //if (a == 0)
-        //    return false;
-        __m128 mask1 = _mm_or_ps(
-            _mm_cmple_ps(det4, MINUSEPS4),
-            _mm_cmpge_ps(det4, EPS4)
-        );
-
-        // f = 1.0f / a;
-        __m128 inv_det4 = _mm_rcp_ps(det4);
-
-        // Vector3f s = r.o - v0;
-        __m128 Tx4 = _mm_sub_ps(r4.ox4, _mm_set_ps1(v1.x));
-        __m128 Ty4 = _mm_sub_ps(r4.oy4, _mm_set_ps1(v1.y));
-        __m128 Tz4 = _mm_sub_ps(r4.oz4, _mm_set_ps1(v1.z));
-        __m128 u4 = _mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(Tx4, Px4), _mm_mul_ps(Ty4, Py4)), _mm_mul_ps(Tz4, Pz4)), inv_det4);
-        __m128 mask2 = _mm_and_ps(_mm_cmpge_ps(u4, _mm_setzero_ps()), _mm_cmple_ps(u4, ONE4));
-        __m128 Qx4 = _mm_sub_ps(_mm_mul_ps(Ty4, e1z4), _mm_mul_ps(Tz4, e1y4));
-        __m128 Qy4 = _mm_sub_ps(_mm_mul_ps(Tz4, e1x4), _mm_mul_ps(Tx4, e1z4));
-        __m128 Qz4 = _mm_sub_ps(_mm_mul_ps(Tx4, e1y4), _mm_mul_ps(Ty4, e1x4));
-        __m128 v4 = _mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(r4.dx4, Qx4), _mm_mul_ps(r4.dy4, Qy4)), _mm_mul_ps(r4.dz4, Qz4)), inv_det4);
-        __m128 mask3 = _mm_and_ps(_mm_cmpge_ps(v4, _mm_setzero_ps()), _mm_cmple_ps(_mm_add_ps(u4, v4), ONE4));
-        __m128 t4 = _mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(e2x4, Qx4), _mm_mul_ps(e2y4, Qy4)), _mm_mul_ps(e2z4, Qz4)), inv_det4);
-        __m128 mask4 = _mm_cmpgt_ps(t4, _mm_setzero_ps());
-        __m128 mask5 = _mm_cmplt_ps(t4, r4.t4);
-
-        //__m128 mask6 = _mm_and_ps(
-        //    _mm_cmpge_ps(det4, _mm_set_ps1(t_min)),
-        //    _mm_cmple_ps(det4, _mm_set_ps1(t_max))
-        //);
-
-        __m128 combined_mask = _mm_and_ps(_mm_and_ps(_mm_and_ps(_mm_and_ps(mask1, mask2), mask3), mask4), mask5);
-
-        // hrec.t = t;
-        r4.t4 = _mm_blendv_ps(r4.t4, t4, combined_mask);
-        hrec4.t4 = r4.t4;
-
-        // hrec.wi = -unit_vector(r.d);
-        __m128 sqX4 = _mm_mul_ps(r4.ox4, r4.ox4);
-        __m128 sqY4 = _mm_mul_ps(r4.oy4, r4.oy4);
-        __m128 sqZ4 = _mm_mul_ps(r4.oz4, r4.oz4);
-        __m128 len4 = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(sqX4, sqY4), sqZ4)); // reciprocal square root
-
-        // A lot of unreadable code, but it basically combines negation and multiplication with reciprocal sqrt
-        hrec4.wix4 = _mm_xor_ps(_mm_mul_ps(r4.ox4, len4), _mm_set1_ps(-0.f));
-        hrec4.wiy4 = _mm_xor_ps(_mm_mul_ps(r4.oy4, len4), _mm_set1_ps(-0.f));
-        hrec4.wiz4 = _mm_xor_ps(_mm_mul_ps(r4.oz4, len4), _mm_set1_ps(-0.f));
-
-        // Use u, v to find interpolated normals and texture coords
-        // P = (1 - u - v) * V0 + u * V1 + v * V2
-        //hrec.normal = unit_vector(cross(edge1, edge2));
-        //hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
-        const Vector3f &n0 = mesh->normals[V[0]];
-        const Vector3f &n1 = mesh->normals[V[1]];
-        const Vector3f &n2 = mesh->normals[V[2]];
-
-        __m128 n0x4 = _mm_set1_ps(n0.x());
-        __m128 n0y4 = _mm_set1_ps(n0.y());
-        __m128 n0z4 = _mm_set1_ps(n0.z());
-        __m128 n1x4 = _mm_set1_ps(n1.x());
-        __m128 n1y4 = _mm_set1_ps(n1.y());
-        __m128 n1z4 = _mm_set1_ps(n1.z());
-        __m128 n2x4 = _mm_set1_ps(n2.x());
-        __m128 n2y4 = _mm_set1_ps(n2.y());
-        __m128 n2z4 = _mm_set1_ps(n2.z());
-        
-        // (1-u-v) factor i.e., w for the u,v
-        __m128 w4 = _mm_sub_ps(_mm_set_ps1(1.0f), _mm_sub_ps(u4, v4));
-
-        hrec4.nx4 = _mm_add_ps(_mm_mul_ps(w4, n0x4), _mm_add_ps(_mm_mul_ps(u4, n1x4), _mm_mul_ps(v4, n2x4)));
-        hrec4.ny4 = _mm_add_ps(_mm_mul_ps(w4, n0y4), _mm_add_ps(_mm_mul_ps(u4, n1y4), _mm_mul_ps(v4, n2y4)));
-        hrec4.nz4 = _mm_add_ps(_mm_mul_ps(w4, n0z4), _mm_add_ps(_mm_mul_ps(u4, n1z4), _mm_mul_ps(v4, n2z4)));
-
-        //Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
-        //hrec.u = uvhit.x;
-        //hrec.v = uvhit.y;
-        const Vector2f &uv0 = mesh->uv[V[0]];
-        const Vector2f &uv1 = mesh->uv[V[1]];
-        const Vector2f &uv2 = mesh->uv[V[2]];
-
-        __m128 u0_4 = _mm_set1_ps(uv0.x);
-        __m128 v0_4 = _mm_set1_ps(uv0.y);
-        __m128 u1_4 = _mm_set1_ps(uv1.x);
-        __m128 v1_4 = _mm_set1_ps(uv1.y);
-        __m128 u2_4 = _mm_set1_ps(uv2.x);
-        __m128 v2_4 = _mm_set1_ps(uv2.y);
-
-        hrec4.u4 = _mm_add_ps(_mm_mul_ps(w4, u0_4), _mm_add_ps(_mm_mul_ps(u4, u1_4), _mm_mul_ps(v4, u2_4)));
-        hrec4.v4 = _mm_add_ps(_mm_mul_ps(w4, v0_4), _mm_add_ps(_mm_mul_ps(u4, v1_4), _mm_mul_ps(v4, v2_4)));
-
-        hrec4.mat_ptr = mat_ptr;
-        hrec4.obj = (hitable *)this;
-
-
-        return _mm_movemask_ps(combined_mask);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     virtual bool bounding_box(float t0, float t1, aabb &b) const
@@ -158,12 +165,12 @@ public:
         const Vector3f &v2 = mesh->vertices[V[2]];
 
         Vector3f minv(fmin(fmin(v0.x(), v1.x()), v2.x()),
-            fmin(fmin(v0.y(), v1.y()), v2.y()),
-            fmin(fmin(v0.z(), v1.z()), v2.z()));
+                      fmin(fmin(v0.y(), v1.y()), v2.y()),
+                      fmin(fmin(v0.z(), v1.z()), v2.z()));
 
         Vector3f maxv(fmax(fmax(v0.x(), v1.x()), v2.x()),
-            fmax(fmax(v0.y(), v1.y()), v2.y()),
-            fmax(fmax(v0.z(), v1.z()), v2.z()));
+                      fmax(fmax(v0.y(), v1.y()), v2.y()),
+                      fmax(fmax(v0.z(), v1.z()), v2.z()));
 
         b = aabb(minv, maxv);
 
@@ -176,7 +183,7 @@ public:
         // TODO: Allow switching between solid angle/area measure
         return inv_area;
     }
-    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f &sample) const
+    virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
     {
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f &v1 = mesh->vertices[V[1]];
@@ -198,11 +205,13 @@ public:
         rec.v = uvhit.y;
         rec.uv.x = b0;
         rec.uv.y = b1;
-        rec.obj = (hitable *)this;
+		rec.obj = (hitable *)this;
         rec.wi = unit_vector(o - random_point);
 
         return random_point - o;
     }
+
+    _MM_ALIGN16 PrecomputedTriangle p;
 
     // Triangle vertex index data
     const int *V;
@@ -212,6 +221,10 @@ public:
     const Vector3f edge2;
     std::shared_ptr<triangle_mesh> mesh;
     material *mat_ptr;
-    // For PRT
-    std::unique_ptr<PRT::SHCoefficients[]> coeffs;
+	// For PRT
+	std::unique_ptr<PRT::SHCoefficients[]> coeffs;
 };
+
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable*> &lights);
+

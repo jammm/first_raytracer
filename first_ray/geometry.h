@@ -294,7 +294,7 @@ inline Vector4<T>& Vector4<T>::operator/=(const T& t)
 
 template <typename T>
 // Vector3 stuff
-struct Vector3
+struct _MM_ALIGN16 Vector3
 {
     constexpr Vector3() = default;
     constexpr Vector3(const float e1, const float e2, const float e3) 
@@ -342,10 +342,13 @@ struct Vector3
     inline void make_unit_vector();
 
     // Vector3 data
-    T _MM_ALIGN16 e[4];
+    T e[4] = { std::numeric_limits<T>::quiet_NaN(),
+               std::numeric_limits<T>::quiet_NaN(),
+               std::numeric_limits<T>::quiet_NaN(),
+               0 };
 };
 
-typedef Vector3<float> Vector3f;
+typedef Vector3<float> _MM_ALIGN16 Vector3f;
 
 template <typename T>
 inline std::istream& operator >> (std::istream &is, Vector3<T> &t)
