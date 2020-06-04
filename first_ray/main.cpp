@@ -215,7 +215,6 @@ Scene *cornell_box_obj(const float &aspect)
     int i = 0;
     std::vector<hitable*> lights;
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
-    lights.push_back(new point_light(Vector3f(0, 1.5f, 1.9f), new point_light_mat(new constant_texture(Vector3f(100, 100, 100)))));
 
     for (auto triangle : mesh)
     {
@@ -473,7 +472,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 512;
     constexpr int ny = 512;
-    int ns = 1;
+    int ns = 76214400;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -496,14 +495,14 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(sponza_scene(float(nx) / float(ny)));
+    std::unique_ptr<Scene> scene(cornell_box_obj(float(nx) / float(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<ass_1_renderer> render;
+    renderer<pssmlt> render;
 
     render.Render(scene.get(), film_viewer);
 

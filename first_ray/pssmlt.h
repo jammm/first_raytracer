@@ -6,8 +6,8 @@
 /* Implements the PSSMLT paper "Simple and Robust Mutation Strategy for Metropolis Light Transport Algorithm"
    - Csaba Kelemen and László Szirmay-Kalos */
 /* Reference: smallpssmlt by Professor Toshiya Hachisuka https://www.ci.i.u-tokyo.ac.jp/~hachisuka/smallpssmlt.cpp */
-constexpr static int PixelWidth = 640;
-constexpr static int PixelHeight = 360;
+constexpr static int PixelWidth = 512;
+constexpr static int PixelHeight = 512;
 constexpr static int MaxPathLength = 20;
 constexpr static int N_Init = 1000000;
 constexpr static float LargeStepProb = 0.3f;

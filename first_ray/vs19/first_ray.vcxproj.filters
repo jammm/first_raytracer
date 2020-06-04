@@ -98,9 +98,6 @@
     <ClInclude Include="../texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="../triangle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="../util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -183,6 +180,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\aabb_sse.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\triangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
