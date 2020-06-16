@@ -54,7 +54,7 @@ public:
     std::string name;
 };
 
-struct _MM_ALIGN16 PrecomputedTriangle
+struct alignas(16) PrecomputedTriangle
 {
     float nx, ny, nz, nd;
     float ux, uy, uz, ud;
@@ -211,7 +211,7 @@ public:
         return random_point - o;
     }
 
-    _MM_ALIGN16 PrecomputedTriangle p;
+    alignas(16) PrecomputedTriangle p;
 
     // Triangle vertex index data
     const int *V;

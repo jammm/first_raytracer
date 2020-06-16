@@ -11,7 +11,7 @@
 template <typename integrator>
 struct renderer : public integrator
 {
-    void Render(Scene *scene, viewer& film_viewer)
+    double Render(Scene *scene, viewer& film_viewer)
     {
         // Initialize viewer and create gl window
         GLFWwindow* window = film_viewer.init();
@@ -41,6 +41,8 @@ struct renderer : public integrator
         std::cout << "\n Number of BVH nodes: " << Scene::num_bvh_nodes;
         std::cout << "\n Number of BVH leaves: " << Scene::num_bvh_leaf_nodes;
         std::cout << "\n Rays/second: " << (Scene::num_rays_traversed / time_span.count())/1e+6 << "M/sec" << std::endl;
+
+        return time_span.count();
     }
 };
 

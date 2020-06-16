@@ -12,7 +12,7 @@ struct viewer
 	GLFWwindow* init();
 	void background_thread(const std::shared_future<void> &future, GLFWwindow* window);
 	void add_sample(const Vector2i &pixel, Vector3f sample);
-	void save_and_destroy();
+	void save_and_destroy(const std::string &filename);
 
 	// Stop rendering if to_exit is set to true by background_thread()
 	bool to_exit;

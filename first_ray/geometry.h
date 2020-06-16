@@ -294,7 +294,7 @@ inline Vector4<T>& Vector4<T>::operator/=(const T& t)
 
 template <typename T>
 // Vector3 stuff
-struct _MM_ALIGN16 Vector3
+struct alignas(16) Vector3
 {
     constexpr Vector3() = default;
     constexpr Vector3(const float e1, const float e2, const float e3) 

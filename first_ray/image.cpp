@@ -21,9 +21,10 @@ image::image(const std::string &filename, const formats &format) : loaded_from_s
     }
 }
 
-int image::save_image(formats type)
+int image::save_image(const std::string _filename, formats type)
 {
     std::string to_save;
+    filename = _filename;
 
     // Flip output image vertically
     stbi_flip_vertically_on_write(true);

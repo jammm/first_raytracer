@@ -51,8 +51,8 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 {
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
-                    const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
-                    const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
+                    const float cos_wi = dot(hrec.normal, unit_vector(to_light));
+                    const float cos_wo = dot(lrec.normal, -unit_vector(to_light));
                     if (srec.is_specular)
                     {
                         surface_bsdf *= cos_wi;
@@ -68,7 +68,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
                         if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                        const float G = cos_wi * cos_wo / distance_squared;
+                        const float G = std::abs(cos_wi * cos_wo / distance_squared);
 
                         const float weight = miWeight(light_pdf, surface_bsdf_pdf);
 

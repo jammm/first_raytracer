@@ -23,10 +23,9 @@ public:
     image(const std::string& filename, const formats &format = formats::STBI_JPG);
 
     image(unsigned char *data, const int &nx, const int &ny, const int &nn) : loaded_from_stbi(false), filename("out_test"), data(data), nx(nx), ny(ny), nn(nn)
-																			   
-	{}
+    {}
 
-    int save_image(formats type);
+    int save_image(const std::string _filename, formats type);
 
     ~image();
 
@@ -50,7 +49,7 @@ public:
         load_image(filename);
     }
 
-    void load_image(std::string filename)
+    void load_image(const std::string &filename)
     {
         std::ifstream is(filename, std::ios::binary | std::ios::in);
         if (!is.is_open()) throw std::runtime_error("cannot find specified PFM file");
@@ -87,7 +86,7 @@ public:
         is.close();
     }
 
-    void save_image(std::string filename)
+    void save_image(const std::string filename)
     {
         int &width = nx;
         int &height = ny;

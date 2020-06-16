@@ -20,7 +20,7 @@ inline void get_sphere_uv(const Vector3f &p, float &u, float &v)
     v = (theta + M_PI / 2) / M_PI;
 }
 
-struct _MM_ALIGN16 hit_record
+struct alignas(16) hit_record
 {
     float t;
 	// Global texture coordinates

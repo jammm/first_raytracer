@@ -472,7 +472,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 512;
     constexpr int ny = 512;
-    int ns = 76214400;
+    int ns = 10;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -502,12 +502,12 @@ int main(int argc, const char **argv)
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<pssmlt> render;
+    renderer<path> render;
 
-    render.Render(scene.get(), film_viewer);
+    double render_time = render.Render(scene.get(), film_viewer);
 
     // Save film to file(s) (currently JPG,PNG and PFM)
-    film_viewer.save_and_destroy();
+    film_viewer.save_and_destroy(std::string("out_test_") + std::to_string(render_time) + "s");
 
     return 0;
 }

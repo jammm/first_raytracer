@@ -174,6 +174,46 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
 
         if (st.depth <= MaxPathLength && hrec.mat_ptr->scatter(r, hrec, srec, rnd))
         {
+            /* Direct light sampling */
+            rnd0 = st.prnds[st.PathRndsOffset + 0];
+            rnd1 = st.prnds[st.PathRndsOffset + 1];
+            rnd2 = st.prnds[st.PathRndsOffset + 2];
+            st.PathRndsOffset += NumRNGsPerEvent;
+            const int index = scene->lights.pick_sample(rnd0);
+            if (index >= 0 && (dynamic_cast<dielectric *>(hrec.mat_ptr) == nullptr))
+            {
+                /* Sample a random light source */
+                hit_record lrec;
+                Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
+                Vector3f to_light = scene->lights[index]->sample_direct(lrec, offset_origin, Vector2f(rnd1, rnd2));
+                const float dist_to_light = to_light.length();
+
+                ray shadow_ray = ray(offset_origin, to_light);
+
+                if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
+                {
+                    Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
+                    // Calculate geometry term
+                    const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
+                    const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
+                    if (srec.is_specular)
+                    {
+                        surface_bsdf *= cos_wi;
+                    }
+                    if (cos_wo != 0)
+                    {
+                        float distance_squared = dist_to_light * dist_to_light;
+
+                        float light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light);
+                        light_pdf *= distance_squared / cos_wo;
+                        // Visibility term is always 1
+                        // because of the invariant imposed on these objects by the if above.
+                        if (distance_squared <= EPSILON) distance_squared = EPSILON;
+
+                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf / light_pdf;
+                    }
+                }
+            }
             if (srec.is_specular)
             {
                 const float surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0f;
