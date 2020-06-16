@@ -348,7 +348,7 @@ struct alignas(16) Vector3
                0 };
 };
 
-typedef Vector3<float> _MM_ALIGN16 Vector3f;
+typedef Vector3<float> Vector3f;
 
 template <typename T>
 inline std::istream& operator >> (std::istream &is, Vector3<T> &t)

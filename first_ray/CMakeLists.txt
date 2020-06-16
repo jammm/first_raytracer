@@ -50,4 +50,4 @@ set(extLibs
 # add the executable
 add_executable(main ${MY_CPP_FILES})
 
-target_link_libraries(main assimp GLEW glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} ${ASSIMP_LIBRARIES})
+target_link_libraries(main assimp GLEW glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} ${ASSIMP_LIBRARIES} -lpthread)

@@ -86,7 +86,7 @@ public:
         is.close();
     }
 
-    void save_image(const std::string filename)
+    void save_image(std::string filename)
     {
         int &width = nx;
         int &height = ny;
