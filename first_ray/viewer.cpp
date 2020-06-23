@@ -114,9 +114,11 @@ void viewer::add_sample(const Vector2i& pixel, Vector3f &sample)
     const double &fg = sample[1];
     const double &fb = sample[2];
 
-    const int ir = std::min(int(pow(fr, 1.0 / 2.2f) * 255.9999), 255);
-    const int ig = std::min(int(pow(fg, 1.0 / 2.2f) * 255.9999), 255);
-    const int ib = std::min(int(pow(fb, 1.0 / 2.2f) * 255.9999), 255);
+    // Tonemapping and gamma correction
+    const int ir = int(pow(1 - exp(-fr), 1 / 2.2) * 255 + .5);
+    const int ig = int(pow(1 - exp(-fg), 1 / 2.2) * 255 + .5);
+    const int ib = int(pow(1 - exp(-fb), 1 / 2.2) * 255 + .5);
+
     const int index = (pixel[1] * nx + pixel[0]) * num_channels;
 
     // Store output pixels
