@@ -7,8 +7,8 @@
 #endif
 
 // turn those verbose intrinsics into something readable.
-#define loadps(mem)			_mm_load_ps((const float * const)(mem))
-#define storess(ss,mem)		_mm_store_ss((float * const)(mem),(ss))
+#define loadps(mem)			_mm_load_ps((const double * const)(mem))
+#define storess(ss,mem)		_mm_store_ss((double * const)(mem),(ss))
 #define minss				_mm_min_ss
 #define maxss				_mm_max_ss
 #define minps				_mm_min_ps
@@ -19,8 +19,8 @@
 #define muxhps(low,high)	_mm_movehl_ps((low),(high))	// low{a,b,c,d}|high{e,f,g,h} = {c,d,g,h}
 
 
-static const float flt_plus_inf = -logf(0);	// let's keep C and C++ compilers happy.
-static const float _MM_ALIGN16
+static const double flt_plus_inf = -logf(0);	// let's keep C and C++ compilers happy.
+static const double _MM_ALIGN16
 	ps_cst_plus_inf[4] = { flt_plus_inf,  flt_plus_inf,  flt_plus_inf,  flt_plus_inf },
 	ps_cst_minus_inf[4] = { -flt_plus_inf, -flt_plus_inf, -flt_plus_inf, -flt_plus_inf };
 
@@ -30,11 +30,11 @@ struct aabb
 	aabb(const Vector3f &bmin, const Vector3f &bmax) : min(bmin), max(bmax), size(max - min) {}
 
 	// AABB intersection using slab method as described by peter shirley's ray tracing the next week book.
-	bool __vectorcall hit(const ray &r, float tmin, float tmax) const
+	bool __vectorcall hit(const ray &r, double tmin, double tmax) const
 	{
 		// you may already have those values hanging around somewhere
-		static const float _MM_ALIGN16 tmax_arr[4] = { tmax, tmax, tmax, tmax };
-		static const float _MM_ALIGN16 tmin_arr[4] = { tmin, tmin, tmin, tmin };
+		static const double _MM_ALIGN16 tmax_arr[4] = { tmax, tmax, tmax, tmax };
+		static const double _MM_ALIGN16 tmin_arr[4] = { tmin, tmin, tmin, tmin };
 
 		const __m128
 			tmax4 = loadps(tmax_arr),
@@ -97,7 +97,7 @@ struct aabb
 	}
 
 	// Returns surface area of AABB
-	inline float area() const
+	inline double area() const
 	{
 		return 2 * ((size.x() * size.y()) + (size.y() * size.z()) + (size.x() * size.z()));
 	}

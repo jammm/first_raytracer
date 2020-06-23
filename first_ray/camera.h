@@ -7,12 +7,12 @@
 struct camera
 {
     camera() {}
-    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, float vfov, float aspect, float aperture, float focus_dist)
+    camera(Vector3f lookfrom, Vector3f lookat, Vector3f vup, double vfov, double aspect, double aperture, double focus_dist)
     {
         lens_radius = aperture / 2;
-        float theta = vfov * (float)M_PI / 180.0f;
-        float half_height = tan(theta / 2);
-        float half_width = aspect * half_height;
+        double theta = vfov * (double)M_PI / 180.0;
+        double half_height = tan(theta / 2);
+        double half_width = aspect * half_height;
 
         origin = lookfrom;
         w = unit_vector(lookfrom - lookat);
@@ -23,18 +23,18 @@ struct camera
         horizontal = 2*half_width*focus_dist*u;
         vertical = 2*half_height*focus_dist*v;
 
-        dist = 512.0f / (2 * half_height);
+        dist = 512.0 / (2 * half_height);
 
     }
 
-    ray get_ray(const float s, const float t, const Vector2f &sample)
+    ray get_ray(const double s, const double t, const Vector2f &sample)
     {
         Vector2f rd = (lens_radius == 0) ? Vector2f(lens_radius, lens_radius) : (lens_radius * random_in_unit_disk(sample));
         Vector3f offset = u * rd[0] + v * rd[1];
         return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset);
     }
 
-    ray get_ray_as_pinhole(const float s, const float t)
+    ray get_ray_as_pinhole(const double s, const double t)
     {
         return ray(origin, lower_left_corner + s * horizontal + t * vertical - origin);
     }
@@ -44,8 +44,8 @@ struct camera
     Vector3f horizontal;
     Vector3f vertical;
     Vector3f u, v, w;
-    float lens_radius;
-    float dist;
+    double lens_radius;
+    double dist;
 
 };
 

@@ -3,27 +3,27 @@
 #include <mutex>
 
 // primary space Markov chain
-inline double perturb(const float value, const float s1, const float s2, sampler &s) {
+inline double perturb(const double value, const double s1, const double s2, sampler &s) {
 	double Result;
     double r = s.get1d();
 	if (r < 0.5) {
 		r = r * 2.0;
-		Result = value + s2 * std::exp(-std::log(s2 / s1) * r); if (Result > 1.0f) Result -= 1.0f;
+		Result = value + s2 * std::exp(-std::log(s2 / s1) * r); if (Result > 1.0) Result -= 1.0;
 	} else {
 		r = (r - 0.5) * 2.0;
-		Result = value - s2 * std::exp(-std::log(s2 / s1) * r); if (Result < 0.0f) Result += 1.0f;
+		Result = value - s2 * std::exp(-std::log(s2 / s1) * r); if (Result < 0.0) Result += 1.0;
 	}
 	return Result;
 }
 
-void AccumulatePathContribution(const pssmlt::PathContribution pc, const float mScaling, viewer *v) {
+void AccumulatePathContribution(const pssmlt::PathContribution pc, const double mScaling, viewer *v) {
     if (pc.sc == 0) return;
     const int ix = int(pc.x);
     const int iy = int(pc.y);
     const Vector3f c = pc.c * mScaling;
     const int PixelWidth = v->nx;
     const int PixelHeight = v->ny;
-    const float scale = PixelWidth * PixelHeight / float(v->ns);
+    const double scale = PixelWidth * PixelHeight / double(v->ns);
     static std::mutex m;
 
     if ((ix < 0) || (ix >= PixelWidth) || (iy < 0) || (iy >= PixelHeight))
@@ -39,7 +39,7 @@ void AccumulatePathContribution(const pssmlt::PathContribution pc, const float m
 
 struct TMarkovChain
 {   
-    float u[NumStates];
+    double u[NumStates];
     pssmlt::PathContribution C;
 
     TMarkovChain()
@@ -64,35 +64,35 @@ struct TMarkovChain
 		Result.C = (*this).C;
 
 		// pixel location
-		Result.u[0] = perturb(u[0], 2.0 / float(PixelWidth+PixelHeight), 0.1f, s);
-		Result.u[1] = perturb(u[1], 2.0 / float(PixelWidth+PixelHeight), 0.1f, s);
+		Result.u[0] = perturb(u[0], 2.0 / double(PixelWidth+PixelHeight), 0.1f, s);
+		Result.u[1] = perturb(u[1], 2.0 / double(PixelWidth+PixelHeight), 0.1f, s);
 
 		// the rest
-		for (int i = 2; i < NumStates; i++) Result.u[i] = perturb(u[i], 1.0f / 1024.0f, 1.0f / 64.0f, s);
+		for (int i = 2; i < NumStates; i++) Result.u[i] = perturb(u[i], 1.0 / 1024.0, 1.0 / 64.0, s);
 		return Result;
 	}
 };
 
-void InitRandomNumbersByChain(const TMarkovChain &MC, float *prnds)
+void InitRandomNumbersByChain(const TMarkovChain &MC, double *prnds)
 { 
     for (int i = 0; i < NumStates; i++) 
         prnds[i] = MC.u[i]; 
 }
 
-void InitRandomNumbers(sampler &s, float *prnds) 
+void InitRandomNumbers(sampler &s, double *prnds) 
 { 
     for (int i = 0; i < NumStates; i++)
         prnds[i] = s.get1d();
 }
 
 // path sampling
-void pssmlt::TracePath(pssmlt::Path &path, const ray &r, Scene *scene, float *prnds, int &PathRndsOffset)
+void pssmlt::TracePath(pssmlt::Path &path, const ray &r, Scene *scene, double *prnds, int &PathRndsOffset)
 {
     hit_record dummy_hrec;
     // Compute scalar contribution function for this path
     state st;
     st.depth = 0;
-    st.prev_bsdf_pdf = 0.0f;
+    st.prev_bsdf_pdf = 0.0;
     st.prnds = prnds;
     st.PathRndsOffset = PathRndsOffset;
     st.prev_hrec = dummy_hrec;
@@ -102,7 +102,7 @@ void pssmlt::TracePath(pssmlt::Path &path, const ray &r, Scene *scene, float *pr
     path.contrib.sc = std::max(std::max(c[0], c[1]), c[2]);
 }
 
-pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, float *prnds, int &PathRndsOffset)
+pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, double *prnds, int &PathRndsOffset)
 {
     Path Result;
     Result.n = 0;
@@ -134,8 +134,8 @@ pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, float
     Vector3f Direction = Result.camera_ray;
     Vector3f ScreenCenter = cam.origin + (cam.w * cam.dist);
     Vector3f ScreenPosition = cam.origin + (Direction * (cam.dist / dot(Direction, cam.w))) - ScreenCenter;
-    Result.contrib.x = -dot(cam.u, ScreenPosition) + (PixelWidth * 0.5f);
-    Result.contrib.y = -dot(cam.v, ScreenPosition) + (PixelHeight * 0.5f);
+    Result.contrib.x = -dot(cam.u, ScreenPosition) + (PixelWidth * 0.5);
+    Result.contrib.y = -dot(cam.v, ScreenPosition) + (PixelHeight * 0.5);
 
     //std::cout << Direction[0] << " " << Direction[1] << " " << Direction[2] << std::endl;
     //std::cout << Result.contrib.x << " " << Result.contrib.y << std::endl;
@@ -156,14 +156,14 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
         // set path data
         path.x[path.n] = Vert(hrec.p, hrec.normal, hrec.obj); 
         path.n++;
-        float rnd0 = st.prnds[st.PathRndsOffset + 0];
-        float rnd1 = st.prnds[st.PathRndsOffset + 1];
-        float rnd2 = st.prnds[st.PathRndsOffset + 2];
+        double rnd0 = st.prnds[st.PathRndsOffset + 0];
+        double rnd1 = st.prnds[st.PathRndsOffset + 1];
+        double rnd2 = st.prnds[st.PathRndsOffset + 2];
         st.PathRndsOffset += NumRNGsPerEvent;
         Vector3f rnd(rnd0, rnd1, rnd2);
 
         /* If we hit a light source, weight its contribution */
-        if (((Le.r() != 0.0f) || (Le.g() != 0.0f) || (Le.b() != 0.0f)))
+        if (((Le.r() != 0.0) || (Le.g() != 0.0) || (Le.b() != 0.0)))
         {
             if ((st.depth == 0)
                 || (dynamic_cast<modified_phong*>(st.prev_hrec.mat_ptr) != nullptr)
@@ -186,7 +186,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
                 hit_record lrec;
                 Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
                 Vector3f to_light = scene->lights[index]->sample_direct(lrec, offset_origin, Vector2f(rnd1, rnd2));
-                const float dist_to_light = to_light.length();
+                const double dist_to_light = to_light.length();
 
                 ray shadow_ray = ray(offset_origin, to_light);
 
@@ -194,17 +194,17 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
                 {
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
-                    const float cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
-                    const float cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0f);
+                    const double cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
+                    const double cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0);
                     if (srec.is_specular)
                     {
                         surface_bsdf *= cos_wi;
                     }
                     if (cos_wo != 0)
                     {
-                        float distance_squared = dist_to_light * dist_to_light;
+                        double distance_squared = dist_to_light * dist_to_light;
 
-                        float light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light);
+                        double light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light);
                         light_pdf *= distance_squared / cos_wo;
                         // Visibility term is always 1
                         // because of the invariant imposed on these objects by the if above.
@@ -216,13 +216,13 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
             }
             if (srec.is_specular)
             {
-                const float surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0f;
+                const double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 if (surface_bsdf_pdf == 0)
                 {
                     return Vector3f(0, 0, 0);
                 }
-                //const float cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                //const double cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
                 const bool outside = dot(hrec.normal, srec.specular_ray.d) > 0;
                 srec.specular_ray.o = outside ? (srec.specular_ray.o + (EPSILON * hrec.normal)) : (srec.specular_ray.o - (EPSILON * hrec.normal));
                 st.depth += 1;
@@ -239,14 +239,14 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
                 Vector2f rnd_2d(st.prnds[st.PathRndsOffset + 0], st.prnds[st.PathRndsOffset + 1]);
                 st.PathRndsOffset += 2;
                 ray wo(hrec.p, srec.pdf_ptr->generate(rnd_2d, srec));
-                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
+                const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
                 if (surface_bsdf_pdf == 0)
                 {
                     return Vector3f(0, 0, 0);
                 }
-                const float cos_wo = abs(dot(hrec.normal, unit_vector(wo.direction())));
+                const double cos_wo = abs(dot(hrec.normal, unit_vector(wo.direction())));
                 st.depth += 1;
                 st.prev_bsdf_pdf = surface_bsdf_pdf;
                 st.prev_hrec = hrec;
@@ -286,7 +286,7 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
     sampler init_s;
     double b = 0.0;
-    float prnds_init[NumStates];
+    double prnds_init[NumStates];
     int PathRndsOffsetInit;
     for (int i = 0; i < N_Init; i++)
     {
@@ -301,33 +301,33 @@ void pssmlt::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
     {
         // internal states of random numbers
         int PathRndsOffset;
-        float prnds[NumStates];
+        double prnds[NumStates];
 
         static thread_local sampler s(thread_id * 39);
         std::cout << thread_id << std::endl;
         TMarkovChain current(s), proposal(s);
         InitRandomNumbersByChain(current, prnds);
         current.C = GenerateEyePath(MaxEvents, scene, prnds, PathRndsOffset).contrib;
-        //fprintf(stderr, "\r%f%%", (float(total_samples) / film_viewer->ns)*100.0f);
-        const int samples_per_thread = film_viewer->ns / tf.num_workers();
-        for (int total_samples = 0; total_samples < samples_per_thread; ++total_samples)
+        //fprintf(stderr, "\r%f%%", (double(total_samples) / film_viewer->ns)*100.0);
+        const uint_fast64_t samples_per_thread = film_viewer->ns / tf.num_workers();
+        for (uint_fast64_t total_samples = 0; total_samples < samples_per_thread; ++total_samples)
         {
             if (film_viewer->to_exit) break;
-            float is_large_step_done;
+            double is_large_step_done;
             if (s.get1d() < LargeStepProb)
             {
                 proposal = current.large_step(s);
-                is_large_step_done = 1.0f;
+                is_large_step_done = 1.0;
             }
             else
             {
                 proposal = current.mutate(s);
-                is_large_step_done = 0.0f;
+                is_large_step_done = 0.0;
             }
             InitRandomNumbersByChain(proposal, prnds);
             proposal.C = GenerateEyePath(MaxEvents, scene, prnds, PathRndsOffset).contrib;
 
-            float a = 1.0f;
+            double a = 1.0;
             if (current.C.sc > 0.0)
                 a = std::max(std::min(1.0, proposal.C.sc / current.C.sc), 0.0);
 

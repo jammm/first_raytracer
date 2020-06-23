@@ -7,12 +7,12 @@ static void glfw_error_callback(int, const char* err_str)
     std::cout << "GLFW Error: " << err_str << std::endl;
 }
 
-viewer::viewer(const int& nx, const int& ny, const int &ns, const int& num_channels) : to_exit(false), nx(nx), ny(ny), ns(ns), num_channels(num_channels)
+viewer::viewer(const int nx, const int ny, const uint_fast64_t ns, const int num_channels) : to_exit(false), nx(nx), ny(ny), ns(ns), num_channels(num_channels)
 {
     out_image = std::make_unique<GLubyte[]>(nx * ny * num_channels + 64);
-    fout_image = std::make_unique<GLfloat[]>(nx * ny * num_channels + 64);
+    fout_image = std::make_unique<GLdouble[]>(nx * ny * num_channels + 64);
     memset(out_image.get(), 0, nx * ny * num_channels + 64);
-    memset(fout_image.get(), 0.0f, nx * ny * num_channels + 64);
+    memset(fout_image.get(), 0.0, nx * ny * num_channels + 64);
 }
 
 GLFWwindow* viewer::init()
@@ -106,17 +106,17 @@ void viewer::background_thread(const std::shared_future<void>& future, GLFWwindo
     }
 }
 
-void viewer::add_sample(const Vector2i& pixel, Vector3f sample)
+void viewer::add_sample(const Vector2i& pixel, Vector3f &sample)
 {
-    sample /= float(ns);
+    sample /= double(ns);
 
-    const float &fr = sample[0];
-    const float &fg = sample[1];
-    const float &fb = sample[2];
+    const double &fr = sample[0];
+    const double &fg = sample[1];
+    const double &fb = sample[2];
 
-    const int ir = std::min(int(pow(fr, 1.0f / 2.2f) * 255.9999), 255);
-    const int ig = std::min(int(pow(fg, 1.0f / 2.2f) * 255.9999), 255);
-    const int ib = std::min(int(pow(fb, 1.0f / 2.2f) * 255.9999), 255);
+    const int ir = std::min(int(pow(fr, 1.0 / 2.2f) * 255.9999), 255);
+    const int ig = std::min(int(pow(fg, 1.0 / 2.2f) * 255.9999), 255);
+    const int ib = std::min(int(pow(fb, 1.0 / 2.2f) * 255.9999), 255);
     const int index = (pixel[1] * nx + pixel[0]) * num_channels;
 
     // Store output pixels

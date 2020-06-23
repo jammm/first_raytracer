@@ -14,7 +14,7 @@
 #include "point_light.h"
 #include "Scene.h"
 
-Scene *bunny_scene(const float &aspect)
+Scene *bunny_scene(const double &aspect)
 {
     hitable **list = new hitable*[500000];
     int i = 0;
@@ -79,21 +79,21 @@ Scene *bunny_scene(const float &aspect)
 
     Vector3f lookfrom(0, 5, 15);
     Vector3f lookat(0, 0, 0);
-    constexpr float dist_to_focus = 100;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 45.0f;
+    constexpr double dist_to_focus = 100;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 45.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.2f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0, 0.0, 0.2f))),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-Scene *bunny_20_scene(const float &aspect)
+Scene *bunny_20_scene(const double &aspect)
 {
     hitable **list = new hitable*[2500000];
     int i = 0;
@@ -182,21 +182,21 @@ Scene *bunny_20_scene(const float &aspect)
 
     Vector3f lookfrom(0, 5, 15);
     Vector3f lookat(0, 0, 0);
-    constexpr float dist_to_focus = 100;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 45.0f;
+    constexpr double dist_to_focus = 100;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 45.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.2f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0, 0.0, 0.2f))),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-Scene *teapot_scene(const float &aspect)
+Scene *teapot_scene(const double &aspect)
 {
     hitable **list = new hitable*[10000];
     int i = 0;
@@ -261,21 +261,21 @@ Scene *teapot_scene(const float &aspect)
 
     Vector3f lookfrom(0, 3, 6);
     Vector3f lookat(0, 0, 0);
-    constexpr float dist_to_focus = 100;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 45.0f;
+    constexpr double dist_to_focus = 100;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 45.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
         new environment_map(std::make_unique<constant_texture>(Vector3f(0, 0, 0.2f))),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-Scene *sponza_scene(const float &aspect)
+Scene *sponza_scene(const double &aspect)
 {
     hitable **list = new hitable*[3000000];
     int i = 0;
@@ -318,19 +318,19 @@ Scene *sponza_scene(const float &aspect)
         }
     }
 
-    Vector3f lookfrom(8, 1.5f, 1);
-    Vector3f lookat(0, 2.5f, -1);
-    constexpr float dist_to_focus = 100;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 55.0f;
+    Vector3f lookfrom(8, 1.5, 1);
+    Vector3f lookat(0, 2.5, -1);
+    constexpr double dist_to_focus = 100;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 55.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.2f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0, 0.0, 0.2f))),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 

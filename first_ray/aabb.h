@@ -11,15 +11,15 @@ public:
 
 
 	// AABB intersection using slab method as described by peter shirley's ray tracing the next week book.
-	bool hit(const ray &r, float tmin, float tmax) const
+	bool hit(const ray &r, double tmin, double tmax) const
 	{
 		for (unsigned int i = 0; i < 3; ++i)
 		{
-			float invD = 1.0f / r.direction()[i];
-			float t0 = (min[i] - r.origin()[i]) * invD;
-			float t1 = (max[i] - r.origin()[i]) * invD;
+			double invD = 1.0 / r.direction()[i];
+			double t0 = (min[i] - r.origin()[i]) * invD;
+			double t1 = (max[i] - r.origin()[i]) * invD;
 
-			if (invD < 0.0f)
+			if (invD < 0.0)
 				std::swap(t0, t1);
 			tmin = t0 > tmin ? t0 : tmin;
 			tmax = t1 < tmax ? t1 : tmax;
@@ -43,7 +43,7 @@ public:
 	}
 
 	// Returns surface area of AABB
-	inline float area() const
+	inline double area() const
 	{
 		return 2 * ((size.x() * size.y()) + (size.y() * size.z()) + (size.x() * size.z()));
 	}

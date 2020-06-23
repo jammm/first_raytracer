@@ -56,15 +56,15 @@ public:
 
 struct alignas(16) PrecomputedTriangle
 {
-    float nx, ny, nz, nd;
-    float ux, uy, uz, ud;
-    float vx, vy, vz, vd;
+    double nx, ny, nz, nd;
+    double ux, uy, uz, ud;
+    double vx, vy, vz, vd;
 };
 
-const float int_coef_arr[4] = { -1, -1, -1, 1 };
+const double int_coef_arr[4] = { -1, -1, -1, 1 };
 const __m128 int_coef = _mm_load_ps(int_coef_arr);
 
-const float inv_coef_p_arr[4] = { 1, 1, 1, 1 };
+const double inv_coef_p_arr[4] = { 1, 1, 1, 1 };
 const __m128 inv_coef_p = _mm_load_ps(inv_coef_p_arr);
 
 class triangle : public hitable
@@ -77,7 +77,7 @@ public:
         mat_ptr(mesh->mat.get())
     {
         V = &mesh->indices[3 * tri_num];
-        inv_area = 1 / (0.5f * cross(edge1, edge2).length() * mesh->nTriangles);
+        inv_area = 1 / (0.5 * cross(edge1, edge2).length() * mesh->nTriangles);
 
         Vector3f A = mesh->vertices[V[0]];
 
@@ -85,14 +85,14 @@ public:
         if (n.squared_length() == 0)
             n = mesh->normals[V[0]];
 
-        float n_sq_len = n.squared_length();
+        double n_sq_len = n.squared_length();
 
         p.nx = n.x();
         p.ny = n.y();
         p.nz = n.z();
         p.nd = dot(A, n);
 
-        const float inv_n_sq_len = 1.0f / n_sq_len;
+        const double inv_n_sq_len = 1.0 / n_sq_len;
 
         Vector3f n1 = cross(edge2, n) * inv_n_sq_len;
         p.ux = n1.x();
@@ -107,12 +107,12 @@ public:
         p.vd = -dot(n2, A);
     }
 
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hrec) const
+    virtual bool hit(const ray &r, double t_min, double t_max, hit_record &hrec) const
     {
         ++Scene::num_ray_tri_intersections;
         ray r_new = r;
-        r_new.o.e[3] = 1.0f;
-        r_new.d.e[3] = 0.0f;
+        r_new.o.e[3] = 1.0;
+        r_new.d.e[3] = 0.0;
         const __m128 o = _mm_load_ps(&(r_new.o.e[0]));
         const __m128 d = _mm_load_ps(&(r_new.d.e[0]));
         const __m128 n = _mm_load_ps(&(p.nx));
@@ -140,8 +140,8 @@ public:
                         _mm_store_ps(&hrec.p.e[0], _mm_mul_ps(detp,
                             _mm_shuffle_ps(inv_det, inv_det, 0)));
 
-                        const float u = hrec.uv.x;
-                        const float v = hrec.uv.y;
+                        const double u = hrec.uv.x;
+                        const double v = hrec.uv.y;
                         hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
                         Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                         hrec.u = uvhit.x;
@@ -158,7 +158,7 @@ public:
         return false;
     }
 
-    virtual bool bounding_box(float t0, float t1, aabb &b) const
+    virtual bool bounding_box(double t0, double t1, aabb &b) const
     {
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f &v1 = mesh->vertices[V[1]];
@@ -177,7 +177,7 @@ public:
         return true;
     }
 
-    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
+    virtual double pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
         // This is explicitly converting to area measure
         // TODO: Allow switching between solid angle/area measure
@@ -190,13 +190,13 @@ public:
         const Vector3f &v2 = mesh->vertices[V[2]];
 
         const Vector2f &u = sample;
-        float su0 = std::sqrt(u.x);
-        float b0 = 1 - su0;
-        float b1 = u.y * su0;
+        double su0 = std::sqrt(u.x);
+        double b0 = 1 - su0;
+        double b1 = u.y * su0;
 
         Vector3f random_point = (1 - b0 - b1) * v0 + b0 * v1 + b1 * v2;
 
-        rec.t = 1.0f;
+        rec.t = 1.0;
         rec.p = random_point;
         rec.normal = unit_vector((1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]]);
         rec.mat_ptr = mat_ptr;
@@ -215,7 +215,7 @@ public:
 
     // Triangle vertex index data
     const int *V;
-    float inv_area;
+    double inv_area;
     // Store edges here so we don't calculate for every intersection test
     const Vector3f edge1;
     const Vector3f edge2;

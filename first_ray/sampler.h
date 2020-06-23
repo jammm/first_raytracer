@@ -14,21 +14,21 @@ struct sampler
     sampler() : engine(std::time(0))
     {}
 
-    inline float get1d()
+    inline double get1d()
     {
-        return std::uniform_real_distribution<>(0.0f, 1.0f)(engine);
+        return std::uniform_real_distribution<>(0.0, 1.0)(engine);
     }
 
     inline Vector2f get2d()
     {
-        return Vector2f(std::uniform_real_distribution<>(0.0f, 1.0f)(engine), std::uniform_real_distribution<>(0.0f, 1.0f)(engine));
+        return Vector2f(std::uniform_real_distribution<>(0.0, 1.0)(engine), std::uniform_real_distribution<>(0.0, 1.0)(engine));
     }
 
     inline Vector3f get3d()
     {
-        return Vector3f(std::uniform_real_distribution<>(0.0f, 1.0f)(engine),
-                        std::uniform_real_distribution<>(0.0f, 1.0f)(engine),
-                        std::uniform_real_distribution<>(0.0f, 1.0f)(engine));
+        return Vector3f(std::uniform_real_distribution<>(0.0, 1.0)(engine),
+                        std::uniform_real_distribution<>(0.0, 1.0)(engine),
+                        std::uniform_real_distribution<>(0.0, 1.0)(engine));
     }
 
     std::mt19937 engine;

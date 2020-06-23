@@ -8,21 +8,21 @@ class xy_rect : public hitable
 {
 public:
 	xy_rect() = default;
-    xy_rect(const float &x0, const float &x1, const float &y0, const float &y1, const float &k, material *mat) : x0(x0), x1(x1), y0(y0), y1(y1), k(k), mat(mat) {}
+    xy_rect(const double &x0, const double &x1, const double &y0, const double &y1, const double &k, material *mat) : x0(x0), x1(x1), y0(y0), y1(y1), k(k), mat(mat) {}
 
 
-    virtual bool bounding_box(float t0, float t1, aabb &box) const
+    virtual bool bounding_box(double t0, double t1, aabb &box) const
     {
         box = aabb(Vector3f(x0, y0, k - 0.0001), Vector3f(x1, y1, k + 0.0001));
         return true;
     }
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+    virtual bool hit(const ray &r, double t_min, double t_max, hit_record &rec) const
     {
-        const float t = (k - r.origin().z()) / r.direction().z();
+        const double t = (k - r.origin().z()) / r.direction().z();
         if (t < t_min || t > t_max)
             return false;
-        const float x = r.origin().x() + t*r.direction().x();
-        const float y = r.origin().y() + t*r.direction().y();
+        const double x = r.origin().x() + t*r.direction().x();
+        const double y = r.origin().y() + t*r.direction().y();
 
         // check if ray lies outside the rect
         if (x < x0 || y < y0 || x > x1 || y > y1)
@@ -39,12 +39,12 @@ public:
     }
 
 
-    float x0;
-    float x1;
-    float y0;
-    float y1;
+    double x0;
+    double x1;
+    double y0;
+    double y1;
     // z coord. of this XY plane
-    float k;
+    double k;
     material *mat;
 };
 
@@ -52,23 +52,23 @@ class xz_rect : public hitable
 {
 public:
     xz_rect() {}
-    xz_rect(const float &x0, const float &x1, const float &z0, const float &z1, const float &k, material *mat) : x0(x0), x1(x1), z0(z0), z1(z1), k(k), mat(mat) {}
+    xz_rect(const double &x0, const double &x1, const double &z0, const double &z1, const double &k, material *mat) : x0(x0), x1(x1), z0(z0), z1(z1), k(k), mat(mat) {}
 
 
-    bool bounding_box(float t0, float t1, aabb &box) const override
+    bool bounding_box(double t0, double t1, aabb &box) const override
     {
         box = aabb(Vector3f(x0, k - 0.0001, z0), Vector3f(x1, k + 0.0001, z1));
         return true;
     }
 
-    virtual float pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
+    virtual double pdf_direct_sampling(const Vector3f &o, const Vector3f &v) const
     {
         hit_record rec;
         if (this->hit(ray(o, v), 0.001, FLT_MAX, rec))
         {
-            float area = (x1 - x0)*(z1 - z0);
-            float distance_squared = rec.t*rec.t*v.squared_length();
-            float cosine = fabs(dot(v, rec.normal) / v.length());
+            double area = (x1 - x0)*(z1 - z0);
+            double distance_squared = rec.t*rec.t*v.squared_length();
+            double cosine = fabs(dot(v, rec.normal) / v.length());
 
             return distance_squared / (cosine * area);
         }
@@ -81,13 +81,13 @@ public:
         return random_point - o;
     }
 
-    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override
+    bool hit(const ray &r, double t_min, double t_max, hit_record &rec) const override
     {
-        const float t = (k - r.origin().y()) / r.direction().y();
+        const double t = (k - r.origin().y()) / r.direction().y();
         if (t < t_min || t > t_max)
             return false;
-        const float x = r.origin().x() + t*r.direction().x();
-        const float z = r.origin().z() + t*r.direction().z();
+        const double x = r.origin().x() + t*r.direction().x();
+        const double z = r.origin().z() + t*r.direction().z();
 
         // check if ray lies outside the rect
         if (x < x0 || z < z0 || x > x1 || z > z1)
@@ -104,12 +104,12 @@ public:
     }
 
 
-    float x0;
-    float x1;
-    float z0;
-    float z1;
+    double x0;
+    double x1;
+    double z0;
+    double z1;
     // y coord. of this XZ plane
-    float k;
+    double k;
     material *mat;
 };
 
@@ -117,21 +117,21 @@ class yz_rect : public hitable
 {
 public:
     yz_rect() {}
-    yz_rect(const float &y0, const float &y1, const float &z0, const float &z1, const float &k, material *mat) : y0(y0), y1(y1), z0(z0), z1(z1), k(k), mat(mat) {}
+    yz_rect(const double &y0, const double &y1, const double &z0, const double &z1, const double &k, material *mat) : y0(y0), y1(y1), z0(z0), z1(z1), k(k), mat(mat) {}
 
 
-    virtual bool bounding_box(float t_min, float t_max, aabb &box) const
+    virtual bool bounding_box(double t_min, double t_max, aabb &box) const
     {
         box = aabb(Vector3f(k - 0.0001, y0, z0), Vector3f(k + 0.0001, y1, z1));
         return true;
     }
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+    virtual bool hit(const ray &r, double t_min, double t_max, hit_record &rec) const
     {
-        const float t = (k - r.origin().x()) / r.direction().x();
+        const double t = (k - r.origin().x()) / r.direction().x();
         if (t < t_min || t > t_max)
             return false;
-        const float y = r.origin().y() + t*r.direction().y();
-        const float z = r.origin().z() + t*r.direction().z();
+        const double y = r.origin().y() + t*r.direction().y();
+        const double z = r.origin().z() + t*r.direction().z();
 
         // check if ray lies outside the rect
         if (z < z0 || y < y0 || z > z1 || y > y1)
@@ -147,12 +147,12 @@ public:
         return true;
     }
 
-    float y0;
-    float y1;
-    float z0;
-    float z1;
+    double y0;
+    double y1;
+    double z0;
+    double z1;
     // x coord. of this XY plane
-    float k;
+    double k;
     material *mat;
 };
 

@@ -93,7 +93,7 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 			// JGT 1998, Vol 3
 			for (int j = 0; j < mesh->mNumFaces; ++j)
 			{
-				Vector3f n(0.0f, 0.0f, 0.0f);
+				Vector3f n(0.0, 0.0, 0.0);
 				const int* V = &indices[3 * j];
 				for (int i = 0; i < 3; ++i)
 				{
@@ -106,11 +106,11 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 					if (i == 0)
 					{
 						n = cross(edge1, edge2);
-						float length = n.length();
+						double length = n.length();
 						if (length == 0) break;
 						n /= length;
 					}
-					float angle = unit_angle(unit_vector(edge1), unit_vector(edge2));
+					double angle = unit_angle(unit_vector(edge1), unit_vector(edge2));
 					normals[V[i]] += n * angle;
 				}
 

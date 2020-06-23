@@ -9,11 +9,11 @@ class parallel_bvh_node : public hitable_list
 {
 public:
     parallel_bvh_node() {}
-    parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, const int &n, const int &g_index, float time0, float time1);
-    virtual bool hit(const ray &r, float tmin, float tmax, hit_record &rec) const;
-    virtual bool bounding_box(float t0, float t1, aabb &b) const;
+    parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, const int &n, const int &g_index, double time0, double time1);
+    virtual bool hit(const ray &r, double tmin, double tmax, hit_record &rec) const;
+    virtual bool bounding_box(double t0, double t1, aabb &b) const;
 
-    static parallel_bvh_node *create_bvh(hitable **l, int n, float time0, float time1);
+    static parallel_bvh_node *create_bvh(hitable **l, int n, double time0, double time1);
 
     // Members for each node
     std::unique_ptr<hitable> left;
@@ -22,28 +22,28 @@ public:
 
     // Static members for the entire BVH
     static std::unique_ptr<aabb[]> g_boxes;
-    static std::unique_ptr<float[]> g_left_area;
-    static std::unique_ptr<float[]> g_right_area;
+    static std::unique_ptr<double[]> g_left_area;
+    static std::unique_ptr<double[]> g_right_area;
 };
 
 std::unique_ptr<aabb[]> parallel_bvh_node::g_boxes = nullptr;
-std::unique_ptr<float[]> parallel_bvh_node::g_left_area = nullptr;
-std::unique_ptr<float[]> parallel_bvh_node::g_right_area = nullptr;
+std::unique_ptr<double[]> parallel_bvh_node::g_left_area = nullptr;
+std::unique_ptr<double[]> parallel_bvh_node::g_right_area = nullptr;
 
-bool parallel_bvh_node::bounding_box(float t0, float t1, aabb &b) const
+bool parallel_bvh_node::bounding_box(double t0, double t1, aabb &b) const
 {
     b = box;
     return true;
 }
 
-bool parallel_bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+bool parallel_bvh_node::hit(const ray &r, double t_min, double t_max, hit_record &rec) const
 {
     ++Scene::num_rays_traversed;
     // Martin Lamber's BVH improvement https://twitter.com/Peter_shirley/status/1105292977423900673
     if (box.hit(r, t_min, t_max))
     {
         ++Scene::num_ray_box_intersections;
-        float ray_min_t = t_min;
+        double ray_min_t = t_min;
         if (ray_min_t == EPSILON)
             ray_min_t *= std::max(std::max(std::max(std::abs(r.o[0]),
                 std::abs(r.o[1])), std::abs(r.o[2])), EPSILON);
@@ -64,20 +64,20 @@ bool parallel_bvh_node::hit(const ray &r, float t_min, float t_max, hit_record &
 }
 
 // Construct parallel_bvh using SAH method
-parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, const int &n, const int &g_index, float time0, float time1)
+parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, const int &n, const int &g_index, double time0, double time1)
     : hitable_list(std::vector<hitable*>(l, l + n), n), left(nullptr), right(nullptr)
 {
     ++Scene::num_bvh_nodes;
     if (!parallel_bvh_node::g_boxes)
     {
         parallel_bvh_node::g_boxes = std::make_unique<aabb[]>(n);
-        parallel_bvh_node::g_left_area = std::make_unique<float[]>(n);
-        parallel_bvh_node::g_right_area = std::make_unique<float[]>(n);
+        parallel_bvh_node::g_left_area = std::make_unique<double[]>(n);
+        parallel_bvh_node::g_right_area = std::make_unique<double[]>(n);
     }
 
     aabb* const boxes = g_boxes.get() + g_index;
-    float* const left_area = g_left_area.get() + g_index;
-    float* const right_area = g_right_area.get() + g_index;
+    double* const left_area = g_left_area.get() + g_index;
+    double* const right_area = g_right_area.get() + g_index;
 
     aabb main_box;
     l[0]->bounding_box(time0, time1, main_box);
@@ -114,11 +114,11 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
         right_box = surrounding_box(right_box, boxes[i]);
         right_area[i] = right_box.area();
     }
-    float min_SAH = FLT_MAX;
+    double min_SAH = FLT_MAX;
     int min_SAH_idx;
     for (int i = 0; i < n - 1; ++i)
     {
-        float SAH = i * left_area[i] + (n - i - 1)*right_area[i + 1];
+        double SAH = i * left_area[i] + (n - i - 1)*right_area[i + 1];
         if (SAH < min_SAH)
         {
             min_SAH_idx = i;
@@ -159,7 +159,7 @@ parallel_bvh_node::parallel_bvh_node(tf::SubflowBuilder &subflow, hitable **l, c
     box = main_box;
 }
 
-parallel_bvh_node *parallel_bvh_node::create_bvh(hitable **l, int n, float time0, float time1)
+parallel_bvh_node *parallel_bvh_node::create_bvh(hitable **l, int n, double time0, double time1)
 {
     tf::Taskflow tf;
     parallel_bvh_node *root;

@@ -2,7 +2,7 @@
 #include "material.h"
 
 Vector3f ass_1_renderer::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-    const float &prev_bsdf_pdf, sampler &random_sampler)
+    const double &prev_bsdf_pdf, sampler &random_sampler)
 {
     hit_record hrec;
     auto &world = scene->world;
@@ -24,9 +24,9 @@ Vector3f ass_1_renderer::Li(const ray &r, Scene *scene, const int &depth, const 
                 ray shadow_ray = ray(offset_origin, to_light);
 
                 Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
-                const float cos_wi = std::max(0.0f, dot(hrec.normal, unit_vector(to_light)));
+                const double cos_wi = std::max(0.0, dot(hrec.normal, unit_vector(to_light)));
 
-                const float light_pdf = light->pdf_direct_sampling(hrec, to_light);
+                const double light_pdf = light->pdf_direct_sampling(hrec, to_light);
 
                 Le += surface_bsdf * lrec.mat_ptr->emitted(shadow_ray, lrec) * cos_wi / light_pdf;
             }
@@ -45,15 +45,15 @@ void ass_1_renderer::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
             for (int x = 0; x < film_viewer->nx; x++)
             {
                 if (film_viewer->to_exit) break;
-                Vector3f col(0.0f, 0.0f, 0.0f);
+                Vector3f col(0.0, 0.0, 0.0);
                 for (int s = 0; s < film_viewer->ns; s++)
                 {
-                    float u = float(x + random_sampler.get1d()) / float(film_viewer->nx);
-                    float v = float(y + random_sampler.get1d()) / float(film_viewer->ny);
+                    double u = double(x + random_sampler.get1d()) / double(film_viewer->nx);
+                    double v = double(y + random_sampler.get1d()) / double(film_viewer->ny);
                     ray r = scene->cam.get_ray(u, v, random_sampler.get2d());
                     hit_record hrec;
                     // Compute a sample
-                    const Vector3f sample = Li(r, scene, 0, hrec, 0.0f, random_sampler);
+                    const Vector3f sample = Li(r, scene, 0, hrec, 0.0, random_sampler);
                     assert(std::isfinite(sample[0])
                         && std::isfinite(sample[1])
                         && std::isfinite(sample[2]));

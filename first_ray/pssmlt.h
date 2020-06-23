@@ -10,7 +10,7 @@ constexpr static int PixelWidth = 512;
 constexpr static int PixelHeight = 512;
 constexpr static int MaxPathLength = 0;
 constexpr static int N_Init = 1000000;
-constexpr static float LargeStepProb = 0.3f;
+constexpr static double LargeStepProb = 0.3f;
 
 constexpr static int NumRNGsPerEvent = 3;
 constexpr static int MaxEvents = (MaxPathLength + 1);
@@ -21,8 +21,8 @@ struct state
 {
     int depth;
     hit_record prev_hrec;
-    float prev_bsdf_pdf;
-    float *prnds;
+    double prev_bsdf_pdf;
+    double *prnds;
     int PathRndsOffset;
 };
 
@@ -38,12 +38,12 @@ struct pssmlt
     struct PathContribution
     {
         //x,y coordinate of eye ray
-        float x, y;
+        double x, y;
         Vector3f c;
         //scalar contribution of path
         double sc;
         PathContribution() {};
-        PathContribution(float x_, float y_, const Vector3f &c_, const double sc_) : x(x_), y(y_), c(c_), sc(sc_)
+        PathContribution(double x_, double y_, const Vector3f &c_, const double sc_) : x(x_), y(y_), c(c_), sc(sc_)
         {} 
     };
     struct Path
@@ -62,9 +62,9 @@ struct pssmlt
         contrib_msg(const Vector2i &pixel_, const Vector3f &contrib_) : pixel(pixel_), contrib(contrib_) {}
     };
 
-    void TracePath(Path &path, const ray &r, Scene* scene, float *prnds, int &PathRndsOffset);
+    void TracePath(Path &path, const ray &r, Scene* scene, double *prnds, int &PathRndsOffset);
 
-    Path GenerateEyePath(const int MaxEyeEvents, Scene *scene, float *prnds, int &PathRndsOffset);
+    Path GenerateEyePath(const int MaxEyeEvents, Scene *scene, double *prnds, int &PathRndsOffset);
 
     Vector3f Li(Path &path, const ray &r, Scene *scene, state &st);
 

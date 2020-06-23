@@ -12,7 +12,7 @@ public:
     Vector3f u() const { return axis[0]; }
     Vector3f v() const { return axis[1]; }
     Vector3f w() const { return axis[2]; }
-    Vector3f local(const float &a, const float &b, const float &c) { return a*u() + b*v() + c*w(); }
+    Vector3f local(const double &a, const double &b, const double &c) { return a*u() + b*v() + c*w(); }
     Vector3f fromLocal(const Vector3f &a) const { return a.x()*u() + a.y()*v() + a.z()*w(); }
     Vector3f toLocal(const Vector3f& a) const { return Vector3f(dot(a, axis[0]), dot(a, axis[1]), dot(a, axis[2])); }
     void build_from_w(const Vector3f &n)

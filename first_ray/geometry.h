@@ -10,7 +10,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
-#include <float.h>
+#include <cfloat>
 #include <xmmintrin.h>
 #include <smmintrin.h>
 #include <cassert>
@@ -30,7 +30,7 @@ template <typename T>
 struct Vector4
 {
     constexpr Vector4() = default;
-    constexpr Vector4(const float e1, const float e2, const float e3, const float e4)
+    constexpr Vector4(const double e1, const double e2, const double e3, const double e4)
     {
         e[0] = e1;
         e[1] = e2;
@@ -52,14 +52,14 @@ struct Vector4
             && std::isfinite(e[3]));
     }
 
-    inline float x() const { return e[0]; }
-    inline float y() const { return e[1]; }
-    inline float z() const { return e[2]; }
-    inline float w() const { return e[3]; }
-    inline float r() const { return e[0]; }
-    inline float g() const { return e[1]; }
-    inline float b() const { return e[2]; }
-    inline float a() const { return e[3]; }
+    inline double x() const { return e[0]; }
+    inline double y() const { return e[1]; }
+    inline double z() const { return e[2]; }
+    inline double w() const { return e[3]; }
+    inline double r() const { return e[0]; }
+    inline double g() const { return e[1]; }
+    inline double b() const { return e[2]; }
+    inline double a() const { return e[3]; }
 
     inline const Vector4<T>& operator+() const { return *this; }
     inline Vector4 operator-() const { return Vector4<T>(-e[0], -e[1], -e[2], -e[3]); }
@@ -75,7 +75,7 @@ struct Vector4
 
     inline T length() const
     {
-        return static_cast<float>(sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2] + e[3] * e[3]));
+        return static_cast<double>(sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2] + e[3] * e[3]));
     }
     inline T squared_length() const
     {
@@ -90,7 +90,7 @@ struct Vector4
                std::numeric_limits<T>::quiet_NaN() };
 };
 
-typedef Vector4<float> Vector4f;
+typedef Vector4<double> Vector4f;
 
 template <typename T>
 inline std::istream& operator >> (std::istream& is, Vector4<T>& t)
@@ -109,7 +109,7 @@ inline std::ostream& operator<<(std::ostream& os, const Vector4<T>& t)
 template <typename T>
 inline void Vector4<T>::make_unit_vector()
 {
-    T k = 1.0f / length();
+    T k = 1.0 / length();
     e[0] *= k;
     e[1] *= k;
     e[2] *= k;
@@ -141,27 +141,27 @@ inline Vector4<T> operator/(const Vector4<T>& v1, const Vector4<T>& v2)
 }
 
 template <typename T>
-inline Vector4<T> operator*(const float& t, const Vector4<T>& v)
+inline Vector4<T> operator*(const double& t, const Vector4<T>& v)
 {
     return Vector4<T>(t * v.e[0], t * v.e[1], t * v.e[2], t * v.e[3]);
 }
 
 template <typename T>
-inline Vector4<T>operator*(const Vector4<T>& v, const float& t)
+inline Vector4<T>operator*(const Vector4<T>& v, const double& t)
 {
     assert(std::isfinite(t));
     return t * v;
 }
 
 template <typename T>
-inline Vector4<T>operator/(const Vector4<T>& v, float t)
+inline Vector4<T>operator/(const Vector4<T>& v, double t)
 {
-    float denominator = 1.0f / t;
+    double denominator = 1.0 / t;
     return Vector4<T>(v.e[0] * t, v.e[1] * t, v.e[2] * t, v.e[3] * t);
 }
 
 template <typename T>
-inline float dot(const Vector4<T>& v1, const Vector4<T>& v2)
+inline double dot(const Vector4<T>& v1, const Vector4<T>& v2)
 {
     assert(std::isfinite(v2[0])
         && std::isfinite(v2[1])
@@ -277,7 +277,7 @@ inline Vector4<T>& Vector4<T>::operator*=(const T& t)
 template <typename T>
 inline Vector4<T>& Vector4<T>::operator/=(const T& t)
 {
-    float k = 1.0f / t;
+    double k = 1.0 / t;
 
     e[0] *= k;
     e[1] *= k;
@@ -297,7 +297,7 @@ template <typename T>
 struct alignas(16) Vector3
 {
     constexpr Vector3() = default;
-    constexpr Vector3(const float e1, const float e2, const float e3) 
+    constexpr Vector3(const double e1, const double e2, const double e3) 
     { 
         e[0] = e1;
         e[1] = e2;
@@ -316,12 +316,12 @@ struct alignas(16) Vector3
             && std::isfinite(e[2]));
     }
 
-    inline float x() const { return e[0]; }
-    inline float y() const { return e[1]; }
-    inline float z() const { return e[2]; }
-    inline float r() const { return e[0]; }
-    inline float g() const { return e[1]; }
-    inline float b() const { return e[2]; }
+    inline double x() const { return e[0]; }
+    inline double y() const { return e[1]; }
+    inline double z() const { return e[2]; }
+    inline double r() const { return e[0]; }
+    inline double g() const { return e[1]; }
+    inline double b() const { return e[2]; }
 
     inline const Vector3<T>& operator+() const { return *this; }
     inline Vector3 operator-() const { return Vector3<T>(-e[0], -e[1], -e[2]); }
@@ -336,7 +336,7 @@ struct alignas(16) Vector3
     inline Vector3& operator/=(const T &t);
 
     inline T length() const
-        { return static_cast<float>(sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2])); }
+        { return static_cast<double>(sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2])); }
     inline T squared_length () const
         { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
     inline void make_unit_vector();
@@ -348,7 +348,7 @@ struct alignas(16) Vector3
                0 };
 };
 
-typedef Vector3<float> Vector3f;
+typedef Vector3<double> Vector3f;
 
 template <typename T>
 inline std::istream& operator >> (std::istream &is, Vector3<T> &t)
@@ -367,7 +367,7 @@ inline std::ostream &operator<<(std::ostream &os, const Vector3<T> &t)
 template <typename T>
 inline void Vector3<T>::make_unit_vector()
 {
-    float k = 1.0f / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+    double k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
     e[0] *= k;
     e[1] *= k;
     e[2] *= k;
@@ -398,26 +398,26 @@ inline Vector3<T> operator/(const Vector3<T> &v1, const Vector3<T> &v2)
 }
 
 template <typename T>
-inline Vector3<T> operator*(const float &t, const Vector3<T>&v)
+inline Vector3<T> operator*(const double &t, const Vector3<T>&v)
 {
     return Vector3<T>(t*v.e[0], t*v.e[1], t*v.e[2]);
 }
 
 template <typename T>
-inline Vector3<T>operator*(const Vector3<T>&v, const float &t)
+inline Vector3<T>operator*(const Vector3<T>&v, const double &t)
 {
     assert(std::isfinite(t));
     return t * v;
 }
 
 template <typename T>
-inline Vector3<T>operator/(const Vector3<T>&v, float t)
+inline Vector3<T>operator/(const Vector3<T>&v, double t)
 {
     return Vector3<T>(v.e[0] / t, v.e[1] / t, v.e[2] / t);
 }
 
 template <typename T>
-inline float dot(const Vector3<T>&v1, const Vector3<T>&v2)
+inline double dot(const Vector3<T>&v1, const Vector3<T>&v2)
 {
     assert(std::isfinite(v2[0])
         && std::isfinite(v2[1])
@@ -532,7 +532,7 @@ inline Vector3<T>& Vector3<T>::operator*=(const T &t)
 template <typename T>
 inline Vector3<T>& Vector3<T>::operator/=(const T &t)
 {
-    float k = 1.0f / t;
+    double k = 1.0 / t;
 
     e[0] *= k;
     e[1] *= k;
@@ -603,18 +603,18 @@ inline Vector2<T>& Vector2<T>::operator*=(const Vector2<T>& p2)
 }
 
 template <typename T>
-inline Vector2<T> operator*(const float &t, const Vector2<T>&p)
+inline Vector2<T> operator*(const double &t, const Vector2<T>&p)
 {
     return Vector2<T>(t*p[0], t*p[1]);
 }
 
 template <typename T>
-inline Vector2<T> operator*(const Vector2<T>&p, const float &t)
+inline Vector2<T> operator*(const Vector2<T>&p, const double &t)
 {
     return t * p;
 }
 
-typedef Vector2<float> Vector2f;
+typedef Vector2<double> Vector2f;
 typedef Vector2<int> Vector2i;
 
 // Matrix class taken from Mitsuba
@@ -654,7 +654,7 @@ template <int M, int N, typename T> struct Matrix {
     {
         for (int i = 0; i < M; ++i)
             for (int j = 0; j < N; ++j)
-                m[i][j] = (i == j) ? 1.0f : 0.0f;
+                m[i][j] = (i == j) ? 1.0 : 0.0;
     }
 
     inline void transpose(Matrix<N, M, T> &target) const {
@@ -803,7 +803,7 @@ template <int M, int N, typename T> struct Matrix {
     inline Matrix operator/(T value) const 
     {
         Matrix result;
-        float denominator = 1/value;
+        double denominator = 1/value;
         for (int i=0; i<M; ++i)
             for (int j=0; j<N; ++j)
                 result.m[i][j] = m[i][j]*denominator;
@@ -812,7 +812,7 @@ template <int M, int N, typename T> struct Matrix {
 
     inline const Matrix& operator/=(T value) 
     {
-        float denominator = 1/value;
+        double denominator = 1/value;
         for (int i=0; i<M; ++i)
             for (int j=0; j<N; ++j)
                 m[i][j] *= denominator;
@@ -830,9 +830,9 @@ template <int M, int N, typename T> struct Matrix {
     inline Vector3f normal_transform(const Vector3f &v) const
     {
 
-        float x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
-        float y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
-        float z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
+        double x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
+        double y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
+        double z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
 
         return Vector3f(x, y, z);
     }
@@ -916,15 +916,15 @@ template <typename T, int M1, int N1, int M2, int N2> inline Matrix<M1, N2, T>
         return m * f;
     }
 
-struct Matrix4x4 : public Matrix<4, 4, float> 
+struct Matrix4x4 : public Matrix<4, 4, double> 
 {
     inline Matrix4x4() { }
 
-    explicit inline Matrix4x4(float value) : Matrix<4, 4, float>(value) { }
+    explicit inline Matrix4x4(double value) : Matrix<4, 4, double>(value) { }
 
-    explicit inline Matrix4x4(const float _m[4][4]) : Matrix<4, 4, float>(_m) { }
+    explicit inline Matrix4x4(const double _m[4][4]) : Matrix<4, 4, double>(_m) { }
 
-    explicit inline Matrix4x4(const float _m[16]) : Matrix<4, 4, float>(_m) { }
+    explicit inline Matrix4x4(const double _m[16]) : Matrix<4, 4, double>(_m) { }
 
     explicit inline Matrix4x4(const Vector4f &v1, const Vector4f &v2, const Vector4f &v3, const Vector4f &v4) 
     {
@@ -934,13 +934,13 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         m[3][0] = v1[3]; m[3][1] = v2[3]; m[3][2] = v3[3]; m[3][3] = v4[3];
     }
 
-    inline Matrix4x4(const Matrix<4, 4, float> &mtx) : Matrix<4, 4, float>(mtx) {}
+    inline Matrix4x4(const Matrix<4, 4, double> &mtx) : Matrix<4, 4, double>(mtx) {}
 
     inline Matrix4x4(
-        float a00, float a01, float a02, float a03,
-        float a10, float a11, float a12, float a13,
-        float a20, float a21, float a22, float a23,
-        float a30, float a31, float a32, float a33) 
+        double a00, double a01, double a02, double a03,
+        double a10, double a11, double a12, double a13,
+        double a20, double a21, double a22, double a23,
+        double a30, double a31, double a32, double a33) 
     {
         m[0][0] = a00; m[0][1] = a01; m[0][2] = a02; m[0][3] = a03;
         m[1][0] = a10; m[1][1] = a11; m[1][2] = a12; m[1][3] = a13;
@@ -948,7 +948,7 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         m[3][0] = a30; m[3][1] = a31; m[3][2] = a32; m[3][3] = a33;
     }
 
-    inline float det3x3() const
+    inline double det3x3() const
     {
         return ((m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]))
               - (m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]))
@@ -968,22 +968,22 @@ struct Matrix4x4 : public Matrix<4, 4, float>
     inline Vector3f operator*(const Vector3f &v) const
     {
 
-        float x = m[0][0] * v[0] + m[0][1] * v[1]
+        double x = m[0][0] * v[0] + m[0][1] * v[1]
             + m[0][2] * v[2] + m[0][3];
-        float y = m[1][0] * v[0] + m[1][1] * v[1]
+        double y = m[1][0] * v[0] + m[1][1] * v[1]
             + m[1][2] * v[2] + m[1][3];
-        float z = m[2][0] * v[0] + m[2][1] * v[1]
+        double z = m[2][0] * v[0] + m[2][1] * v[1]
             + m[2][2] * v[2] + m[2][3];
-        float w = m[3][0] * v[0] + m[3][1] * v[1]
+        double w = m[3][0] * v[0] + m[3][1] * v[1]
             + m[3][2] * v[2] + m[3][3];
 
-        if (w == 1.0f)
+        if (w == 1.0)
             return Vector3f(x, y, z);
         
         return Vector3f(x, y, z) / w;
     }
 
-    inline Matrix4x4 operator*(float value) const 
+    inline Matrix4x4 operator*(double value) const 
     {
         Matrix4x4 result;
         for (int i=0; i<4; ++i)
@@ -992,7 +992,7 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         return result;
     }
 
-    inline Matrix4x4 &operator=(const Matrix<4, 4, float> &mat) 
+    inline Matrix4x4 &operator=(const Matrix<4, 4, double> &mat) 
     {
         for (int i=0; i<4; ++i)
             for (int j=0; j<4; ++j)
@@ -1014,7 +1014,7 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         );
     }
 
-    inline Matrix4x4 translate(const float x, const float y, const float z)
+    inline Matrix4x4 translate(const double x, const double y, const double z)
     {
         m[0][3] += x;
         m[1][3] += y;
@@ -1023,7 +1023,7 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         return *this;
     }
 
-    inline Matrix4x4 scale(const float x, const float y, const float z)
+    inline Matrix4x4 scale(const double x, const double y, const double z)
     {
         m[0][0] *= x;
         m[1][1] *= y;
@@ -1032,28 +1032,28 @@ struct Matrix4x4 : public Matrix<4, 4, float>
         return *this;
     }
 
-    inline Matrix4x4 rotate(const float angle, const float x, const float y, const float z)
+    inline Matrix4x4 rotate(const double angle, const double x, const double y, const double z)
     {
-        float rad = angle * (M_PI / 180.0f);
+        double rad = angle * (M_PI / 180.0);
 
         Vector3f axis(x, y, z);
         //axis.make_unit_vector();
 
-        float x2 = axis[0] * axis[0];
-        float y2 = axis[1] * axis[1];
-        float z2 = axis[2] * axis[2];
-        float c = cos(rad);
-        float cinv = 1 - c;
-        float s = sin(rad);
-        float xy = axis[0] * axis[1];
-        float xz = axis[0] * axis[2];
-        float yz = axis[1] * axis[2];
-        float xs = axis[0] * s;
-        float ys = axis[1] * s;
-        float zs = axis[2] * s;
-        float xzcinv = xz * cinv;
-        float xycinv = xy * cinv;
-        float yzcinv = yz * cinv;
+        double x2 = axis[0] * axis[0];
+        double y2 = axis[1] * axis[1];
+        double z2 = axis[2] * axis[2];
+        double c = cos(rad);
+        double cinv = 1 - c;
+        double s = sin(rad);
+        double xy = axis[0] * axis[1];
+        double xz = axis[0] * axis[2];
+        double yz = axis[1] * axis[2];
+        double xs = axis[0] * s;
+        double ys = axis[1] * s;
+        double zs = axis[2] * s;
+        double xzcinv = xz * cinv;
+        double xycinv = xy * cinv;
+        double yzcinv = yz * cinv;
 
         Matrix4x4 rot_mat(x2 + c * (1 - x2), xy * cinv + zs, xzcinv - ys, 0,
             xycinv - zs, y2 + c * (1 - y2), yzcinv + xs, 0,

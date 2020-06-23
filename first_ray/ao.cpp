@@ -2,7 +2,7 @@
 #include "material.h"
 
 Vector3f ao::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-    const float &prev_bsdf_pdf, sampler &random_sampler)
+    const double &prev_bsdf_pdf, sampler &random_sampler)
 {
     hit_record hrec;
     auto& world = scene->world;
@@ -18,10 +18,10 @@ Vector3f ao::Li(const ray &r, Scene *scene, const int &depth, const hit_record &
             // Find approximate max. radius from bounding box
             // TODO: evaluate bounding sphere for every hitable geometry
             aabb bbox;
-            scene->world->bounding_box(0.0f, 0.0f, bbox);
-            const float t_max = bbox.size.y() * 0.50f;
+            scene->world->bounding_box(0.0, 0.0, bbox);
+            const double t_max = bbox.size.y() * 0.50f;
             if (world->hit(shadow_ray, EPSILON, t_max, hrec))
-                return Vector3f(0.0f, 0.0f, 0.0f);
+                return Vector3f(0.0, 0.0, 0.0);
         }
     }
     return scene->env_map->eval(r, prev_hrec, depth);

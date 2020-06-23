@@ -13,8 +13,8 @@ namespace PRT
     struct SHSample
     {
         Vector3f direction;
-        float theta, phi;
-        std::array<float, n_coeffs> Ylm;
+        double theta, phi;
+        std::array<double, n_coeffs> Ylm;
     };
     typedef std::array<Vector3f, n_coeffs> SHCoefficients;
 }

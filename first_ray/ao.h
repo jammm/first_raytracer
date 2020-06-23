@@ -10,7 +10,7 @@ struct ao
     // TODO
     // Convert from recursive to iterative
     Vector3f Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-        const float &prev_bsdf_pdf, sampler &random_sampler);
+        const double &prev_bsdf_pdf, sampler &random_sampler);
 
     void Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
     {
@@ -21,15 +21,15 @@ struct ao
                 {
                     {
                         if (film_viewer->to_exit) break;
-                        Vector3f col(0.0f, 0.0f, 0.0f);
+                        Vector3f col(0.0, 0.0, 0.0);
                         for (int s = 0; s < film_viewer->ns; s++)
                         {
-                            float u = float(x + random_sampler.get1d()) / float(film_viewer->nx);
-                            float v = float(y + random_sampler.get1d()) / float(film_viewer->ny);
+                            double u = double(x + random_sampler.get1d()) / double(film_viewer->nx);
+                            double v = double(y + random_sampler.get1d()) / double(film_viewer->ny);
                             ray r = scene->cam.get_ray(u, v, random_sampler.get2d());
                             hit_record hrec;
                             // Compute a sample
-                            const Vector3f sample = Li(r, scene, 0, hrec, 0.0f, random_sampler);
+                            const Vector3f sample = Li(r, scene, 0, hrec, 0.0, random_sampler);
                             assert(std::isfinite(sample[0])
                                 && std::isfinite(sample[1])
                                 && std::isfinite(sample[2]));

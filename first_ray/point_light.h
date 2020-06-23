@@ -10,25 +10,25 @@ public:
     point_light(const Vector3f p_light_, point_light_mat *mat_) : p_light(p_light_), mat(mat_)
     {}
 
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hrec) const
+    virtual bool hit(const ray &r, double t_min, double t_max, hit_record &hrec) const
     {
         // It's point light, so we will never intersect it
         return false;
     }
 
-    virtual bool bounding_box(float t0, float t1, aabb &b) const
+    virtual bool bounding_box(double t0, double t1, aabb &b) const
     {
         // Not used
         return false;
     }
 
-    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
+    virtual double pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
-        return 1.0f;
+        return 1.0;
     }
     virtual Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
     {
-        rec.t = 1.0f;
+        rec.t = 1.0;
         rec.p = p_light;
         rec.normal = unit_vector(o - p_light);
         rec.mat_ptr = mat;

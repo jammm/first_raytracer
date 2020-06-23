@@ -2,7 +2,7 @@
 #include "material.h"
 
 Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record &prev_hrec,
-    const float &prev_bsdf_pdf, sampler &random_sampler)
+    const double &prev_bsdf_pdf, sampler &random_sampler)
 {
     hit_record hrec;
     auto &world = scene->world;
@@ -13,7 +13,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
         Vector3f Le = hrec.mat_ptr->emitted(r, hrec);
 
         /* If we hit a light source, weight its contribution */
-        if (((Le.r() != 0.0f) || (Le.g() != 0.0f) || (Le.b() != 0.0f)))
+        if (((Le.r() != 0.0) || (Le.g() != 0.0) || (Le.b() != 0.0)))
         {
             if ((depth == 0)
                 || (dynamic_cast<modified_phong*>(prev_hrec.mat_ptr) != nullptr)
@@ -21,19 +21,19 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 || (dynamic_cast<dielectric*>(prev_hrec.mat_ptr) != nullptr))
                 return Le;
             // Start with checking if camera ray hits a light source
-            const float cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0f);
-            float distance_squared = (hrec.p - prev_hrec.p).squared_length();
+            const double cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0);
+            double distance_squared = (hrec.p - prev_hrec.p).squared_length();
             if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-            float surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
-            const float light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction()) / lights.list_size;
+            double surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
+            const double light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction());
 
-            const float weight = miWeight(surface_bsdf_pdf, light_pdf);
+            const double weight = miWeight(surface_bsdf_pdf, light_pdf);
 
             return Le * weight;
         }
 
-        if (depth <= 10 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 50 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Direct light sampling */
             const int index = lights.pick_sample(random_sampler.get1d());
@@ -43,7 +43,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 hit_record lrec;
                 Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
                 Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin, random_sampler.get2d());
-                const float dist_to_light = to_light.length();
+                const double dist_to_light = to_light.length();
 
                 ray shadow_ray = ray(offset_origin, to_light);
 
@@ -51,26 +51,26 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 {
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
-                    const float cos_wi = dot(hrec.normal, unit_vector(to_light));
-                    const float cos_wo = dot(lrec.normal, -unit_vector(to_light));
+                    const double cos_wi = dot(hrec.normal, unit_vector(to_light));
+                    const double cos_wo = dot(lrec.normal, -unit_vector(to_light));
                     if (srec.is_specular)
                     {
                         surface_bsdf *= cos_wi;
                     }
                     if (cos_wo != 0)
                     {
-                        float distance_squared = dist_to_light * dist_to_light;
+                        double distance_squared = dist_to_light * dist_to_light;
 
-                        const float light_pdf = lights[index]->pdf_direct_sampling(hrec, to_light) / lights.list_size;
+                        const double light_pdf = lights[index]->pdf_direct_sampling(hrec, to_light);
                         // Visibility term is always 1
                         // because of the invariant imposed on these objects by the if above.
-                        const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
+                        const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
 
                         if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                        const float G = std::abs(cos_wi * cos_wo / distance_squared);
+                        const double G = std::abs(cos_wi * cos_wo / distance_squared);
 
-                        const float weight = miWeight(light_pdf, surface_bsdf_pdf);
+                        const double weight = miWeight(light_pdf, surface_bsdf_pdf);
 
                         Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
@@ -78,7 +78,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             }
             if (srec.is_specular)
             {
-                const float surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0f;
+                const double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 assert(std::isfinite(surface_bsdf[0])
                     && std::isfinite(surface_bsdf[1])
@@ -88,21 +88,21 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 {
                     return Vector3f(0, 0, 0);
                 }
-                //const float cos_wo = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                //const double cos_wo = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
                 return Le + surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) / surface_bsdf_pdf;
             }
             else
             {
                 /* Sample BSDF to generate next ray direction for indirect lighting */
                 ray wo(hrec.p + EPSILON * (hrec.normal), srec.pdf_ptr->generate(random_sampler.get2d(), srec));
-                const float surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
+                const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, wo.direction());
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(wo, hrec, wo.direction());
                 /* Reject current path in case the ray is on the wrong side of the surface (BRDF is 0 as ray is pointing away from the hemisphere )*/
                 if (surface_bsdf_pdf == 0)
                 {
                     return Vector3f(0, 0, 0);
                 }
-                const float cos_wo = abs(dot(hrec.normal, unit_vector(wo.direction())));
+                const double cos_wo = abs(dot(hrec.normal, unit_vector(wo.direction())));
 
                 return Le + surface_bsdf * Li(wo, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) * cos_wo / surface_bsdf_pdf;
             }
@@ -123,15 +123,15 @@ void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
                 //if (x == 360 && y == 127)
                 {
                     if (film_viewer->to_exit) break;
-                    Vector3f col(0.0f, 0.0f, 0.0f);
-                    for (int s = 0; s < film_viewer->ns; s++)
+                    Vector3f col(0.0, 0.0, 0.0);
+                    for (uint_fast64_t s = 0; s < film_viewer->ns; s++)
                     {
-                        float u = float(x + random_sampler.get1d()) / float(film_viewer->nx);
-                        float v = float(y + random_sampler.get1d()) / float(film_viewer->ny);
+                        double u = double(x + random_sampler.get1d()) / double(film_viewer->nx);
+                        double v = double(y + random_sampler.get1d()) / double(film_viewer->ny);
                         ray r = scene->cam.get_ray(u, v, random_sampler.get2d());
                         hit_record hrec;
                         // Compute a sample
-                        const Vector3f sample = Li(r, scene, 0, hrec, 0.0f, random_sampler);
+                        const Vector3f sample = Li(r, scene, 0, hrec, 0.0, random_sampler);
                         assert(std::isfinite(sample[0])
                             && std::isfinite(sample[1])
                             && std::isfinite(sample[2]));

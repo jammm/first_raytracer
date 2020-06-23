@@ -59,31 +59,31 @@ public:
         mat_ptr(mesh->mat.get())
     {
         V = &mesh->indices[3 * tri_num];
-        inv_area = 1 / (0.5f * cross(edge1, edge2).length() * mesh->nTriangles);
+        inv_area = 1 / (0.5 * cross(edge1, edge2).length() * mesh->nTriangles);
     }
 
     //Use M�ller�Trumbore intersection algorithm (Fast Minimum Storage Ray/Triangle Intersection)
-    virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hrec) const
+    virtual bool hit(const ray &r, double t_min, double t_max, hit_record &hrec) const
     {
         ++Scene::num_ray_tri_intersections;
-        float a, f, u, v;
+        double a, f, u, v;
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f h = cross(r.d, edge2);
         a = dot(edge1, h);
         // Check if this ray is parallel to this triangle's plane.
         if (a == 0)
             return false;    
-        f = 1.0f / a;
+        f = 1.0 / a;
         Vector3f s = r.o - v0;
         u = f * dot(s, h);
         if (u < 0.0 || u > 1.0)
             return false;
         Vector3f q = cross(s, edge1);
         v = f * dot(r.d, q);
-        if (v >= 0.0f && u + v <= 1.0)
+        if (v >= 0.0 && u + v <= 1.0)
         {
             // At this stage we can compute t to find out where the intersection point is on the line.
-            float t = f * dot(edge2, q);
+            double t = f * dot(edge2, q);
 
             // Check if ray intersected successfully
             if (t > t_min
@@ -110,7 +110,7 @@ public:
         return false;
     }
 
-    virtual bool bounding_box(float t0, float t1, aabb &b) const
+    virtual bool bounding_box(double t0, double t1, aabb &b) const
     {
         const Vector3f &v0 = mesh->vertices[V[0]];
         const Vector3f &v1 = mesh->vertices[V[1]];
@@ -129,7 +129,7 @@ public:
         return true;
     }
 
-    virtual float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
+    virtual double pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
     {
         // This is explicitly converting to area measure
         // TODO: Allow switching between solid angle/area measure
@@ -142,13 +142,13 @@ public:
         const Vector3f &v2 = mesh->vertices[V[2]];
 
         const Vector2f &u = sample;
-        float su0 = std::sqrt(u.x);
-        float b0 = 1 - su0;
-        float b1 = u.y * su0;
+        double su0 = std::sqrt(u.x);
+        double b0 = 1 - su0;
+        double b1 = u.y * su0;
 
         Vector3f random_point = (1 - b0 - b1) * v0 + b0 * v1 + b1 * v2;
 
-        rec.t = 1.0f;
+        rec.t = 1.0;
         rec.p = random_point;
         rec.normal = unit_vector((1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]]);
         rec.mat_ptr = mat_ptr;
@@ -165,7 +165,7 @@ public:
 
     // Triangle vertex index data
     const int *V;
-    float inv_area;
+    double inv_area;
     // Store edges here so we don't calculate for every intersection test
     const Vector3f edge1;
     const Vector3f edge2;

@@ -43,7 +43,7 @@ class image_pfm
 {
 public:
     image_pfm() {}
-    image_pfm(float *data, const int &nx, const int &ny, const int &nn) : data(data, data + nx*ny*nn), nx(nx), ny(ny), nn(nn) {}
+    image_pfm(double *data, const int &nx, const int &ny, const int &nn) : data(data, data + nx*ny*nn), nx(nx), ny(ny), nn(nn) {}
     image_pfm(const std::string &filename)
     {
         load_image(filename);

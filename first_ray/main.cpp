@@ -33,7 +33,7 @@
 #include "assignment_1.hpp"
 
 // Other includes
-#include <float.h>
+#include <cfloat>
 #include <chrono>
 
 #include <assimp/Importer.hpp>
@@ -52,7 +52,7 @@ inline Vector3f de_nan(const Vector3f &c)
     return temp;
 }
 
-hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &lights)
+hitable *random_scene(camera &cam, const double &aspect, std::vector<hitable *> &lights)
 {
     /* n == number of spheres */
     constexpr int n = 1100000;
@@ -67,7 +67,7 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
     {
         for (int b = -11; b < 11; b++)
         {
-            float choose_mat = s.get1d();
+            double choose_mat = s.get1d();
             Vector3f center(a + 0.9f * s.get1d(), 0.2f, b + 0.9f * s.get1d());
             if ((center - Vector3f(4, 0.2f, 0)).length() > 0.9f)
             {
@@ -80,12 +80,12 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
                 {
                     //metal
                     list[i++] = new sphere(center, 0.2f,
-                        new metal(Vector3f(0.5f*(1 + s.get1d()), 0.5f*(1 + s.get1d()), 0.5f*(1 + s.get1d())), 0.5f*s.get1d()));
+                        new metal(Vector3f(0.5*(1 + s.get1d()), 0.5*(1 + s.get1d()), 0.5*(1 + s.get1d())), 0.5*s.get1d()));
                 }
                 else
                 {
                     //dielectric
-                    list[i++] = new sphere(center, 0.2f, new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))));
+                    list[i++] = new sphere(center, 0.2f, new dielectric(1.5, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))));
                 }
             }
         }
@@ -93,16 +93,16 @@ hitable *random_scene(camera &cam, const float &aspect, std::vector<hitable *> &
 
     Vector3f lookfrom(12, 2, 3);
     Vector3f lookat(0, 0, 0);
-    constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.001f;
-    constexpr float vfov = 40.0f;
+    constexpr double dist_to_focus = 10.0;
+    constexpr double aperture = 0.001f;
+    constexpr double vfov = 40.0;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable *>(list, list + i), i);
 }
 
-hitable *cornell_box(camera &cam, const float &aspect)
+hitable *cornell_box(camera &cam, const double &aspect)
 {
     hitable **list = new hitable*[8];
     int i = 0;
@@ -117,30 +117,30 @@ hitable *cornell_box(camera &cam, const float &aspect)
     list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
     list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
     list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
-    material *glass = new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)));
+    material *glass = new dielectric(1.5, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)));
     list[i++] = new sphere(Vector3f(190, 90, 190), 90, glass);
     list[i++] = new translate(new rotate_y(
         new box(Vector3f(0, 0, 0), Vector3f(165, 330, 165), white), 15), Vector3f(265, 0, 295));
 
     Vector3f lookfrom(278, 278, -800);
     Vector3f lookat(278, 278, 0);
-    constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 40.0f;
+    constexpr double dist_to_focus = 10.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 40.0;
 
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     //return new hitable_list(list, i);
-    return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
 }
 
-Scene* prt_test(const float& aspect)
+Scene* prt_test(const double& aspect)
 {
     hitable** list = new hitable * [20000];
     int i = 0;
 
     std::vector<hitable*> lights;
-    //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
+    //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0, lightt));
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/plane.obj", lights);
 
     for (auto triangle : mesh)
@@ -148,11 +148,11 @@ Scene* prt_test(const float& aspect)
         list[i++] = triangle.get();
     }
 
-    Vector3f lookfrom(25, 25, 200.0f);
+    Vector3f lookfrom(25, 25, 200.0);
     Vector3f lookat(25, 25, 0);
-    constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 40.0f;
+    constexpr double dist_to_focus = 10.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 40.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
@@ -160,29 +160,29 @@ Scene* prt_test(const float& aspect)
         new environment_map("data/test.hdr"),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-Scene *furnace_test_scene(const float &aspect)
+Scene *furnace_test_scene(const double &aspect)
 {
     hitable **list = new hitable*[20000];
     int i = 0;
 
-    //Vector3f reflectance(1.0f, 1.0f, 1.0f);
+    //Vector3f reflectance(1.0, 1.0, 1.0);
     //material *specular = new modified_phong(new constant_texture(Vector3f(0, 0, 0)),
-    //                                    new constant_texture(reflectance), 100.0f);
+    //                                    new constant_texture(reflectance), 100.0);
     //material *lambert = new lambertian(new constant_texture(Vector3f(1, 1, 1)));
-    //material *mirror = new metal(Vector3f(1, 1, 1), 0.0f);
+    //material *mirror = new metal(Vector3f(1, 1, 1), 0.0);
     //material *lightt = new diffuse_light(new constant_texture(Vector3f(1, 1, 1)));
 
-    //list[i++] = new sphere(Vector3f(0, 0, 0), 1.0f, lightt);
+    //list[i++] = new sphere(Vector3f(0, 0, 0), 1.0, lightt);
     //list[i++] = new sphere(Vector3f(0, 0, 0), 0.3f, lambert);
-    //list[i++] = new sphere(Vector3f(0.30f, 50, 0), 50.0f, mirror);
+    //list[i++] = new sphere(Vector3f(0.30f, 50, 0), 50.0, mirror);
 
     std::vector<hitable*> lights;
-    //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0f, lightt));
-#define TEST_MATERIAL new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))
+    //lights.push_back(new sphere(Vector3f(0, 0, 0), 1.0, lightt));
+#define TEST_MATERIAL new dielectric(1.5, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))
     Matrix4x4 I;
     I.set_identity();
     static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("cube/teapot.obj", I, TEST_MATERIAL, lights);
@@ -193,23 +193,23 @@ Scene *furnace_test_scene(const float &aspect)
         list[i++] = triangle.get();
     }
     
-    Vector3f lookfrom(0, 125, 175.0f);
+    Vector3f lookfrom(0, 125, 175.0);
     Vector3f lookat(0, 50, 0);
-    constexpr float dist_to_focus = 300.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 40.0f;
+    constexpr double dist_to_focus = 300.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 40.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
         new environment_map("data/ennis.hdr"),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-Scene *cornell_box_obj(const float &aspect)
+Scene *cornell_box_obj(const double &aspect)
 {
     hitable **list = new hitable*[300];
     int i = 0;
@@ -223,23 +223,23 @@ Scene *cornell_box_obj(const float &aspect)
 
     Vector3f lookfrom(0, 1, 3.9f);
     Vector3f lookat(0, 1, 0);
-    constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 40.0f;
+    constexpr double dist_to_focus = 10.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 40.0;
     camera cam;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     //return new hitable_list(std::vector<hitable *>(list, list + i), i);
-    //return new bvh_node(list, i, 0.0f, 0.0f);
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new bvh_node(list, i, 0.0, 0.0);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0, 0.0, 0.0))),
         cam, lights
     );
 }
 
-Scene* cornell_box_ao(const float& aspect)
+Scene* cornell_box_ao(const double& aspect)
 {
     hitable** list = new hitable * [300];
     int i = 0;
@@ -253,20 +253,20 @@ Scene* cornell_box_ao(const float& aspect)
 
     Vector3f lookfrom(0, 1, 3.9f);
     Vector3f lookat(0, 1, 0);
-    constexpr float dist_to_focus = 10.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 40.0f;
+    constexpr double dist_to_focus = 10.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 40.0;
     camera cam;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(1.0f, 1.0f, 1.0f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(1.0, 1.0, 1.0))),
         cam, lights
     );
 }
 
-hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lights)
+hitable *veach_mis(camera &cam, const double &aspect, std::vector<hitable *> &lights)
 {
     hitable **list = new hitable*[300];
     int i = 0;
@@ -277,13 +277,13 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
         list[i++] = triangle.get();
     }
 
-    list[i++] = new sphere(Vector3f(10, 10, 4), 0.5f, new diffuse_light(new constant_texture(Vector3f(800, 800, 800))));
+    list[i++] = new sphere(Vector3f(10, 10, 4), 0.5, new diffuse_light(new constant_texture(Vector3f(800, 800, 800))));
     list[i++] = new sphere(Vector3f(-1.25f, 0, 0), 0.1f, new diffuse_light(new constant_texture(Vector3f(100, 100, 100))));
     list[i++] = new sphere(Vector3f(-3.75f, 0, 0), 0.03333f, new diffuse_light(new constant_texture(Vector3f(901.803f, 901.803f, 901.803f))));
     list[i++] = new sphere(Vector3f(1.25f, 0, 0), 0.3f, new diffuse_light(new constant_texture(Vector3f(11.1111f, 11.1111f, 11.1111f))));
     list[i++] = new sphere(Vector3f(3.75f, 0, 0), 0.9f, new diffuse_light(new constant_texture(Vector3f(1.23457, 1.23457, 1.23457))));
 
-    lights.push_back(new sphere(Vector3f(10, 10, 4), 0.5f, new diffuse_light(new constant_texture(Vector3f(800, 800, 800)))));
+    lights.push_back(new sphere(Vector3f(10, 10, 4), 0.5, new diffuse_light(new constant_texture(Vector3f(800, 800, 800)))));
     lights.push_back(new sphere(Vector3f(-1.25f, 0, 0), 0.1f, new diffuse_light(new constant_texture(Vector3f(100, 100, 100)))));
     lights.push_back(new sphere(Vector3f(-3.75f, 0, 0), 0.03333f, new diffuse_light(new constant_texture(Vector3f(901.803f, 901.803f, 901.803f)))));
     lights.push_back(new sphere(Vector3f(1.25f, 0, 0), 0.3f, new diffuse_light(new constant_texture(Vector3f(11.1111f, 11.1111f, 11.1111f)))));
@@ -291,17 +291,17 @@ hitable *veach_mis(camera &cam, const float &aspect, std::vector<hitable *> &lig
 
     Vector3f lookfrom(0, 2, 15);
     Vector3f lookat(0, -2, 2.5);
-    constexpr float dist_to_focus = 50.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 28.0f;
+    constexpr double dist_to_focus = 50.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 28.0;
     cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new hitable_list(std::vector<hitable *>(list, list + i), i);
-    //return new bvh_node(list, i, 0.0f, 0.0f);
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return new bvh_node(list, i, 0.0, 0.0);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
 }
 
-Scene *veach_door_scene(const float &aspect)
+Scene *veach_door_scene(const double &aspect)
 {
     hitable **list = new hitable*[500000];
     int i = 0;
@@ -325,11 +325,11 @@ Scene *veach_door_scene(const float &aspect)
     Matrix4x4 Mesh011_toWorld(1.8f, 0, 0, 2.3f, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
     Matrix4x4 Mesh014_toWorld(1.8f, 0, 0, 2.3f, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-#define POT2_MATERIAL new rough_conductor(0.15f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "ggx")
-#define FLOOR_MATERIAL new rough_conductor(0.1f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), \
+#define POT2_MATERIAL new rough_conductor(0.15f, 1.0, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "ggx")
+#define FLOOR_MATERIAL new rough_conductor(0.1f, 1.0, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), \
     new checker_texture(new constant_texture(Vector3f(0.8, 0.8, 0.8)), new constant_texture(Vector3f(0.2, 0.2, 0.2)), 20, 80), "ggx")
-#define DOORHANDLE_MATERIAL new rough_conductor(0.25f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "beckmann")
-#define HINGE_MATERIAL new rough_conductor(0.1f, 1.0f, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "ggx")
+#define DOORHANDLE_MATERIAL new rough_conductor(0.25f, 1.0, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "beckmann")
+#define HINGE_MATERIAL new rough_conductor(0.1f, 1.0, Vector3f(1.65746, 0.880369, 0.521229), Vector3f(9.22387, 6.26952, 4.837), new constant_texture(Vector3f(1, 1, 1)), "ggx")
 
     // Table of objects
     obj objects[] =
@@ -339,8 +339,8 @@ Scene *veach_door_scene(const float &aspect)
         {"veach_ajar/models/Mesh009.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , pot3_Mesh009_toWorld},
         {"veach_ajar/models/Mesh000.obj", POT2_MATERIAL                                                                                                            , pot2_Mesh000_toWorld},
         {"veach_ajar/models/Mesh009.obj", POT2_MATERIAL                                                                                                            , pot2_Mesh009_toWorld},                                                                                  
-        {"veach_ajar/models/Mesh000.obj", new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , dielectric_pot_Mesh000_toWorld},
-        {"veach_ajar/models/Mesh009.obj", new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , dielectric_pot_Mesh009_toWorld},
+        {"veach_ajar/models/Mesh000.obj", new dielectric(1.5, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , dielectric_pot_Mesh000_toWorld},
+        {"veach_ajar/models/Mesh009.obj", new dielectric(1.5, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , dielectric_pot_Mesh009_toWorld},
         {"veach_ajar/models/Mesh001.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
         {"veach_ajar/models/Mesh002.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
         {"veach_ajar/models/Mesh003.obj", new lambertian(new constant_texture(Vector3f(0.8f, 0.8f, 0.8f)))                                                         , identity},
@@ -379,21 +379,21 @@ Scene *veach_door_scene(const float &aspect)
 
     Vector3f lookfrom(4.05402f, 1.61647f, -2.30652f);
     Vector3f lookat(3.064f, 1.58417f, -2.44373f);
-    constexpr float dist_to_focus = 100;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 36.0f;
+    constexpr double dist_to_focus = 100;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 36.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0, 0.0, 0.0))),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
-Scene *glass_of_water(const float &aspect)
+Scene *glass_of_water(const double &aspect)
 {
     hitable **list = new hitable*[1000000];
     int i = 0;
@@ -408,29 +408,29 @@ Scene *glass_of_water(const float &aspect)
     Matrix4x4 identity;
     identity.set_identity();
 
-#define BACKDROP_MATERIAL new rough_conductor(0.1f, 1.0f, Vector3f(4.27751f, 3.51315f, 2.76113f), Vector3f(3.49118f, 2.88936f, 3.1117f), new constant_texture(Vector3f(0.578596f, 0.578596f, 0.578596f)), "ggx")
-#define FLOOR_MAT new rough_conductor(0.1f, 1.0f, Vector3f(1.65746f, 0.880369f, 0.521229f), Vector3f(9.22387f, 6.26952f, 4.837f), new constant_texture(Vector3f(0.578596f, 0.578596f, 0.578596f)), "ggx")
+#define BACKDROP_MATERIAL new rough_conductor(0.1f, 1.0, Vector3f(4.27751f, 3.51315f, 2.76113f), Vector3f(3.49118f, 2.88936f, 3.1117f), new constant_texture(Vector3f(0.578596f, 0.578596f, 0.578596f)), "ggx")
+#define FLOOR_MAT new rough_conductor(0.1f, 1.0, Vector3f(1.65746f, 0.880369f, 0.521229f), Vector3f(9.22387f, 6.26952f, 4.837f), new constant_texture(Vector3f(0.578596f, 0.578596f, 0.578596f)), "ggx")
 
     // Table of objects
     obj objects[] =
     {
         {"glass-of-water/models/light.obj"  , nullptr                                                                                                                    , identity},
-        {"glass-of-water/models/Mesh008.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
-        {"glass-of-water/models/Mesh005.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
-        {"glass-of-water/models/Mesh004.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
-        {"glass-of-water/models/Mesh003.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
-        {"glass-of-water/models/Mesh010.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
-        {"glass-of-water/models/Mesh009.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
-        {"glass-of-water/models/Mesh012.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
-        {"glass-of-water/models/Mesh014.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
-        {"glass-of-water/models/Mesh015.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
-        {"glass-of-water/models/Mesh006.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
-        {"glass-of-water/models/Mesh002.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f))) , identity},
-        {"glass-of-water/models/Mesh001.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh008.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
+        {"glass-of-water/models/Mesh005.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
+        {"glass-of-water/models/Mesh004.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
+        {"glass-of-water/models/Mesh003.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , identity},
+        {"glass-of-water/models/Mesh010.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
+        {"glass-of-water/models/Mesh009.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , identity},
+        {"glass-of-water/models/Mesh012.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , identity},
+        {"glass-of-water/models/Mesh014.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
+        {"glass-of-water/models/Mesh015.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , identity},
+        {"glass-of-water/models/Mesh006.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
+        {"glass-of-water/models/Mesh002.obj", new dielectric(0.763f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0))) , identity},
+        {"glass-of-water/models/Mesh001.obj", new dielectric(1.31f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
         {"glass-of-water/models/Mesh007.obj", BACKDROP_MATERIAL                                                                                                          , identity},
         {"glass-of-water/models/Mesh011.obj", FLOOR_MAT                                                                                                                  , identity},
-        {"glass-of-water/models/Mesh013.obj", new dielectric(1.5f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))   , identity},
-        {"glass-of-water/models/Mesh000.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)), new constant_texture(Vector3f(1.0f, 1.0f, 1.0f)))  , identity},
+        {"glass-of-water/models/Mesh013.obj", new dielectric(1.5, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))   , identity},
+        {"glass-of-water/models/Mesh000.obj", new dielectric(1.33f, new constant_texture(Vector3f(1.0, 1.0, 1.0)), new constant_texture(Vector3f(1.0, 1.0, 1.0)))  , identity},
     };
     constexpr int num_objs = sizeof(objects) / sizeof(obj);
     
@@ -454,17 +454,17 @@ Scene *glass_of_water(const float &aspect)
 
     Vector3f lookfrom(-0.0893585f, 2.69412f, 25.6726f);
     Vector3f lookat(-0.085623f, 2.70998f, 24.6727f);
-    constexpr float dist_to_focus = 300.0f;
-    constexpr float aperture = 0.0f;
-    constexpr float vfov = 21.0f;
+    constexpr double dist_to_focus = 300.0;
+    constexpr double aperture = 0.0;
+    constexpr double vfov = 21.0;
     camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
     return new Scene(
-        parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f),
-        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0f, 0.0f, 0.0f))),
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map(std::make_unique<constant_texture>(Vector3f(0.0, 0.0, 0.0))),
         cam, lights
     );
-    //return parallel_bvh_node::create_bvh(list, i, 0.0f, 0.0f);
+    //return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable*>(list, list + i), i);
 }
 
@@ -472,7 +472,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 512;
     constexpr int ny = 512;
-    int ns = 10;
+    uint_fast64_t ns = 10;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -494,8 +494,8 @@ int main(int argc, const char **argv)
     std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
 
     // Initialize scene
-    //std::unique_ptr<hitable> world(cornell_box_obj(cam, float(nx) / float(ny), lights));
-    std::unique_ptr<Scene> scene(cornell_box_obj(float(nx) / float(ny)));
+    //std::unique_ptr<hitable> world(cornell_box_obj(cam, double(nx) / double(ny), lights));
+    std::unique_ptr<Scene> scene(cornell_box_obj(double(nx) / double(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);

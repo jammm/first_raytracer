@@ -9,31 +9,31 @@ class sphere : public hitable
 {
 public:
     sphere() {}
-    sphere(const Vector3f &cen, const float &r, material *mat) : center(cen), radius(r), mat_ptr(mat) {}
+    sphere(const Vector3f &cen, const double &r, material *mat) : center(cen), radius(r), mat_ptr(mat) {}
 
-    bool hit(const ray &r, float t_min, float t_max, hit_record &rec) const override;
-    bool bounding_box(float t0, float t1, aabb &b) const override;
-    float pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const override;
+    bool hit(const ray &r, double t_min, double t_max, hit_record &rec) const override;
+    bool bounding_box(double t0, double t1, aabb &b) const override;
+    double pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const override;
     Vector3f sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const override;
 
     Vector3f center;
-    float radius;
+    double radius;
     material *mat_ptr;
 };
 
-bool sphere::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
+bool sphere::hit(const ray &r, double t_min, double t_max, hit_record &rec) const
 {
     Vector3f oc = r.origin() - center;
-    const float a = dot(r.direction(), r.direction());
-    const float b = dot(oc, r.direction());
-    const float c = dot(oc, oc) - radius * radius;
+    const double a = dot(r.direction(), r.direction());
+    const double b = dot(oc, r.direction());
+    const double c = dot(oc, oc) - radius * radius;
 
-    float discriminant = b*b - a*c;
+    double discriminant = b*b - a*c;
     
-    if (discriminant >= 0.0f)
+    if (discriminant >= 0.0)
     {
         discriminant = sqrt(discriminant);
-        float t = (-b - discriminant) / a;
+        double t = (-b - discriminant) / a;
         if (t < t_min) t = (-b + discriminant) / a;
 
         if (t < t_min || t > t_max)
@@ -51,31 +51,31 @@ bool sphere::hit(const ray &r, float t_min, float t_max, hit_record &rec) const
     return false;
 };
 
-bool sphere::bounding_box(float t0, float t1, aabb &box) const
+bool sphere::bounding_box(double t0, double t1, aabb &box) const
 {
 	box = aabb(center - Vector3f(radius, radius, radius), center + Vector3f(radius, radius, radius));
 	return true;
 }
 
-float sphere::pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
+double sphere::pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_light) const
 {
     const Vector3f o = ray(lrec.p, to_light).point_at_parameter(-lrec.t);
     const Vector3f direction = center - o;
-    const float distance_squared = direction.squared_length();
-    const float radius_squared = radius * radius;
+    const double distance_squared = direction.squared_length();
+    const double radius_squared = radius * radius;
     // If origin is inside sphere, return uniform sphere sampling PDF
     if (distance_squared <= radius_squared)
         return 1 / (4 * M_PI * radius * radius);
 
-    const float cos_theta_max = sqrt(1 - radius_squared / (center-o).squared_length());
-    const float solid_angle = 2 * M_PI * (1-cos_theta_max);
+    const double cos_theta_max = sqrt(1 - radius_squared / (center-o).squared_length());
+    const double solid_angle = 2 * M_PI * (1-cos_theta_max);
     return 1 / solid_angle;
 }
 
 Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
 {
     const Vector3f direction = center - o;
-    const float distance_squared = direction.squared_length();
+    const double distance_squared = direction.squared_length();
     onb uvw;
     uvw.build_from_w(direction);
     // If origin is inside sphere, do uniform sphere sampling instead

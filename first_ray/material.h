@@ -19,8 +19,8 @@ inline Vector3f random_in_unit_sphere(const Vector3f &sample)
 
     do
     {
-        p = 2.0f * sample - Vector3f(1, 1, 1);
-    } while (p.squared_length() >= 1.0f);
+        p = 2.0 * sample - Vector3f(1, 1, 1);
+    } while (p.squared_length() >= 1.0);
 
     return p;
 }
@@ -31,8 +31,8 @@ inline Vector3f random_on_unit_sphere(const Vector3f &sample)
 
     do
     {
-        p = 2.0f * sample - Vector3f(1, 1, 1);
-    } while (p.squared_length() >= 1.0f);
+        p = 2.0 * sample - Vector3f(1, 1, 1);
+    } while (p.squared_length() >= 1.0);
 
     return unit_vector(p);
 }
@@ -75,13 +75,13 @@ public:
 class modified_phong : public material
 {
 public:
-    modified_phong(texture *diffuse_reflectance_, texture *specular_reflectance_, const float &specular_exponent) 
+    modified_phong(texture *diffuse_reflectance_, texture *specular_reflectance_, const double &specular_exponent) 
         : diffuse_reflectance(diffuse_reflectance_), specular_reflectance(specular_reflectance_), specular_exponent(specular_exponent) {}
 
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
-        //const float rand_var = gen_cano_rand();
-        //constexpr float specular_chance = 0.5f;
+        //const double rand_var = gen_cano_rand();
+        //constexpr double specular_chance = 0.5;
 
         srec.is_specular = true;
 
@@ -94,7 +94,7 @@ public:
     Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
     {
         const Vector3f reflected = reflect(-hrec.wi, hrec.normal);
-        const float alpha = std::max(0.0f, dot(reflected, wo));
+        const double alpha = std::max(0.0, dot(reflected, wo));
         const Vector3f result = (diffuse_reflectance->value(hrec) / M_PI) + specular_reflectance->value(hrec)
                 * ((specular_exponent + 2) / (2 * M_PI)) * std::pow(alpha, specular_exponent);
 
@@ -103,20 +103,20 @@ public:
 
     texture *diffuse_reflectance;
     texture *specular_reflectance;
-    const float specular_exponent;
+    const double specular_exponent;
     Vector3f wo;
 };
 
 class metal : public material
 {
 public:
-    metal(const Vector3f &a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0f; }
+    metal(const Vector3f &a, double f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0; }
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         Vector3f reflected = reflect(unit_vector(r_in.direction()), hrec.normal);
         srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere(sample));
         srec.is_specular = true;
-        srec.pdf_ptr = std::make_unique<constant_pdf>(1.0f);
+        srec.pdf_ptr = std::make_unique<constant_pdf>(1.0);
         return true;
     }
     Vector3f eval_bsdf(const ray &r_in, const hit_record &rec, const Vector3f &wo) const override
@@ -125,14 +125,14 @@ public:
     }
 
     Vector3f albedo;
-    float fuzz;
+    double fuzz;
 };
 
 /* Dielectric BSDF taken from mitsuba */
 class dielectric : public material
 {
 public:
-    dielectric(float ref_idx_, texture *specular_reflectance_, texture *specular_transmittance_)
+    dielectric(double ref_idx_, texture *specular_reflectance_, texture *specular_transmittance_)
         : ref_idx(ref_idx_), specular_reflectance(specular_reflectance_), specular_transmittance(specular_transmittance_) {}
 
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
@@ -145,14 +145,14 @@ public:
     }
     Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
     {
-        //const float cosWi = dot(hrec.wi, hrec.normal);
-        float cosThetaT;
-        float F = fresnelDielectricExt(dot(hrec.wi, hrec.normal), cosThetaT, ref_idx);
+        //const double cosWi = dot(hrec.wi, hrec.normal);
+        double cosThetaT;
+        double F = fresnelDielectricExt(dot(hrec.wi, hrec.normal), cosThetaT, ref_idx);
 
         if (dot(hrec.wi, hrec.normal) * dot(wo, hrec.normal) >= 0)
         {
             if (std::abs(dot(reflect(-hrec.wi, hrec.normal), wo)-1) > DELTA_EPSILON)
-                return Vector3f(0.0f, 0.0f, 0.0f);
+                return Vector3f(0.0, 0.0, 0.0);
 
             return specular_reflectance->value(hrec) * F;
         } 
@@ -160,17 +160,17 @@ public:
         {
             //onb uvw(hrec.normal);
             if (std::abs(dot(refract(hrec.wi, hrec.normal, ref_idx, cosThetaT), wo)-1) > DELTA_EPSILON)
-                return Vector3f(0.0f, 0.0f, 0.0f);
+                return Vector3f(0.0, 0.0, 0.0);
 
             /* Radiance must be scaled to account for the solid angle compression
                that occurs when crossing the interface. */
-            float factor = cosThetaT < 0 ? (1.0f/ref_idx) : (ref_idx);
+            double factor = cosThetaT < 0 ? (1.0/ref_idx) : (ref_idx);
 
             return specular_reflectance->value(hrec) * factor * factor * (1 - F);
         }
     }
 
-    float ref_idx;
+    double ref_idx;
     texture *specular_reflectance;
     texture *specular_transmittance;
 };
@@ -218,21 +218,21 @@ public:
     Vector3f eval(const ray& r_in, hit_record hrec, const int &depth) const
     {
         const Vector3f direction = unit_vector(r_in.d);
-        float phi = std::atan2(direction.x(), -direction.z());
-        float theta = acos(direction.y());
+        double phi = std::atan2(direction.x(), -direction.z());
+        double theta = acos(direction.y());
 
         phi = (phi < 0) ? (phi + M_PI * 2) : phi;
         theta = (theta < 0) ? (theta + M_PI) : theta;
 
-        hrec.u = phi / (2.0f * M_PI);
+        hrec.u = phi / (2.0 * M_PI);
         hrec.v = theta / (M_PI);
 
         return env_map_tex->value(hrec);
     }
-    Vector3f eval(const float &theta, const float &phi) const
+    Vector3f eval(const double &theta, const double &phi) const
     {
         hit_record rec;
-        rec.u = (phi + M_PI*2) / (2.0f*M_PI);
+        rec.u = (phi + M_PI*2) / (2.0*M_PI);
         rec.v = (theta + M_PI) / M_PI;
 
         return env_map_tex->value(rec);
@@ -245,7 +245,7 @@ public:
 class rough_conductor : public material
 {
 public:
-    rough_conductor(const float alpha_, const float extEta_, const Vector3f &eta_, const Vector3f &k_,
+    rough_conductor(const double alpha_, const double extEta_, const Vector3f &eta_, const Vector3f &k_,
                     texture *specular_reflectance_, const std::string &distribution_) 
         : alpha(alpha_), extEta(extEta_), alphaU(alpha), alphaV(alpha), eta(eta_), k(k_), specular_reflectance(specular_reflectance_), distribution(distribution_)
     {
@@ -268,17 +268,17 @@ public:
         return true;
     }
 
-    inline float G_term(const Vector3f &wi, const Vector3f &wo, const Vector3f &m, const hit_record &hrec) const {
+    inline double G_term(const Vector3f &wi, const Vector3f &wo, const Vector3f &m, const hit_record &hrec) const {
         return microfacet::smithG1(wi, m, hrec, alphaU, alphaV, distribution_type) * microfacet::smithG1(wo, m, hrec, alphaU, alphaV, distribution_type);
     }
 
     Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
     {
-        float cosWi = dot(hrec.wi, hrec.normal);
+        double cosWi = dot(hrec.wi, hrec.normal);
         /* Stop if this component was not requested */
         if (cosWi <= 0 ||
             dot(wo, hrec.normal) <= 0)
-            return Vector3f(0.0f, 0.0f, 0.0f);
+            return Vector3f(0.0, 0.0, 0.0);
 
         /* Calculate the reflection half-vector */
         Vector3f H = unit_vector(wo+hrec.wi);
@@ -287,26 +287,26 @@ public:
            roughness values at the current surface position. */
 
         /* Evaluate the microfacet normal distribution */
-        const float D = microfacet::eval(H, hrec, alphaU, alphaV, distribution_type);
+        const double D = microfacet::eval(H, hrec, alphaU, alphaV, distribution_type);
         if (D == 0)
-            return Vector3f(0.0f, 0.0f, 0.0f);
+            return Vector3f(0.0, 0.0, 0.0);
 
         /* Fresnel factor */
         const Vector3f F = microfacet::fresnelConductorExact(dot(hrec.wi, H), eta, k) *
             specular_reflectance->value(hrec);
 
         /* Smith's shadow-masking function */
-        const float G = G_term(hrec.wi, wo, H, hrec);
+        const double G = G_term(hrec.wi, wo, H, hrec);
 
         /* Calculate the total amount of reflection */
-        float model = D * G / (4.0f * cosWi);
+        double model = D * G / (4.0 * cosWi);
 
         return F * model;
     }
 
-    float alpha;
-    float extEta;
-    float alphaU, alphaV;
+    double alpha;
+    double extEta;
+    double alphaU, alphaV;
     Vector3f eta, k;
     texture *specular_reflectance;
     std::string distribution;
