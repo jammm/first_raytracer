@@ -482,7 +482,7 @@ int main(int argc, const char **argv)
         const std::string arg = argv[1];
         if (arg == "--ns")
         {
-            ns = std::atoi(argv[2]);
+            ns = std::atoll(argv[2]);
         }
     }
 	viewer film_viewer(nx, ny, ns, comp);
