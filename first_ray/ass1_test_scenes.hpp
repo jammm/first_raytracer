@@ -73,7 +73,7 @@ Scene *bunny_scene(const double &aspect)
     Vector2f *uv = new Vector2f[3];
 
     auto mesh = std::make_shared<triangle_mesh>(1, 3,
-        vertices, indices.data(), normals, uv, std::move(lambert), "floor", true);
+        vertices, indices.data(), normals, uv, std::move(lambert), false, "floor", true);
 
     list[i++] = new triangle(std::move(mesh), 0);
 
@@ -176,7 +176,7 @@ Scene *bunny_20_scene(const double &aspect)
     Vector2f *uv = new Vector2f[3];
 
     auto mesh = std::make_shared<triangle_mesh>(1, 3,
-        vertices, indices.data(), normals, uv, std::move(lambert), "floor", true);
+        vertices, indices.data(), normals, uv, std::move(lambert), false, "floor", true);
 
     list[i++] = new triangle(std::move(mesh), 0);
 
@@ -255,7 +255,7 @@ Scene *teapot_scene(const double &aspect)
     Vector2f *uv = new Vector2f[3];
 
     auto mesh = std::make_shared<triangle_mesh>(1, 3,
-        vertices, indices.data(), normals, uv, std::move(lambert), "floor", true);
+        vertices, indices.data(), normals, uv, std::move(lambert), false, "floor", true);
 
     list[i++] = new triangle(std::move(mesh), 0);
 

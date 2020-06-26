@@ -18,7 +18,7 @@
 class mesh_loader
 {
 public:
-    static std::vector<std::shared_ptr<triangle_mesh>> load_obj(std::string file);
+    static std::vector<std::shared_ptr<triangle_mesh>> load_obj(std::string file, bool use_geometry_normals);
 };
 
 #endif

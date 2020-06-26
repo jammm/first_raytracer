@@ -214,7 +214,9 @@ Scene *cornell_box_obj(const double &aspect)
     hitable **list = new hitable*[300];
     int i = 0;
     std::vector<hitable*> lights;
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights);
+
+    // Use geometry normals
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights, true);
 
     for (auto triangle : mesh)
     {
@@ -472,7 +474,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 512;
     constexpr int ny = 512;
-    uint_fast64_t ns = 10;
+    uint_fast64_t ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 

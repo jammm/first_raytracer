@@ -6,9 +6,9 @@
 #include "mesh_loader.h"
 
 
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights)
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights, bool use_geometry_normals)
 {
-    std::vector<std::shared_ptr<triangle_mesh>> meshes = mesh_loader::load_obj(file);
+    std::vector<std::shared_ptr<triangle_mesh>> meshes = mesh_loader::load_obj(file, use_geometry_normals);
     std::vector<std::shared_ptr<hitable>> triangles;
     for (auto &mesh : meshes)
     {
@@ -23,9 +23,10 @@ std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &fi
     return triangles;
 }
 
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable *> &lights)
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf,
+                                                            std::vector<hitable *> &lights, bool use_geometry_normals)
 {
-    std::vector<std::shared_ptr<triangle_mesh>> meshes = mesh_loader::load_obj(file);
+    std::vector<std::shared_ptr<triangle_mesh>> meshes = mesh_loader::load_obj(file, use_geometry_normals);
     std::vector<std::shared_ptr<hitable>> triangles;
 
     Matrix4x4 toWorld_inv_transform;

@@ -23,10 +23,12 @@ public:
 	triangle_mesh() {}
 
     triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
-        const int *indices, Vector3f *n, Vector2f *_uv, std::unique_ptr<material> mat, std::string name, const bool &shallow_copy = false)
+        const int *indices, Vector3f *n, Vector2f *_uv, std::unique_ptr<material> mat, bool _use_geometry_normals,
+        std::string name, const bool &shallow_copy = false)
         : nTriangles(nTriangles),
         nVertices(nVertices),
         indices(indices, indices + 3 * nTriangles), mat(move(mat)),
+        use_geometry_normals(_use_geometry_normals),
         name(name)
     {
 
@@ -50,6 +52,7 @@ public:
     std::unique_ptr<Vector3f[]> normals;
     std::unique_ptr<Vector2f[]> uv;
     std::unique_ptr<material> mat;
+    bool use_geometry_normals;
     // Name of the object this mesh belongs to
     std::string name;
 };
@@ -225,6 +228,6 @@ public:
 	std::unique_ptr<PRT::SHCoefficients[]> coeffs;
 };
 
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable*> &lights);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights, bool use_geometry_normals = false);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable*> &lights, bool use_geometry_normals = false);
 

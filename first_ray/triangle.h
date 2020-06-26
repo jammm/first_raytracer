@@ -18,10 +18,12 @@ public:
 	triangle_mesh() {}
 
     triangle_mesh(const int &nTriangles, const int &nVertices, Vector3f *v,
-        const int *indices, Vector3f *n, Vector2f *_uv, std::unique_ptr<material> mat, std::string name, const bool &shallow_copy = false)
+        const int *indices, Vector3f *n, Vector2f *_uv, std::unique_ptr<material> mat, bool _use_geometry_normals,
+        std::string name, const bool &shallow_copy = false)
         : nTriangles(nTriangles),
         nVertices(nVertices),
         indices(indices, indices + 3 * nTriangles), mat(move(mat)),
+        use_geometry_normals(_use_geometry_normals),
         name(name)
     {
 
@@ -45,6 +47,7 @@ public:
     std::unique_ptr<Vector3f[]> normals;
     std::unique_ptr<Vector2f[]> uv;
     std::unique_ptr<material> mat;
+    bool use_geometry_normals;
     // Name of the object this mesh belongs to
     std::string name;
 };
@@ -94,7 +97,11 @@ public:
                 // Use u, v to find interpolated normals and texture coords
                 // P = (1 - u - v) * V0 + u * V1 + v * V2
                 //hrec.normal = unit_vector(cross(edge1, edge2));
-				hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+                if (mesh->use_geometry_normals)
+                    hrec.normal = unit_vector(cross(edge1, edge2));
+                else
+				    hrec.normal = unit_vector((1 - u - v) * mesh->normals[V[0]] + u * mesh->normals[V[1]] + v * mesh->normals[V[2]]);
+
                 Vector2f uvhit = (1 - u - v) * mesh->uv[V[0]] + u * mesh->uv[V[1]] + v * mesh->uv[V[2]];
                 hrec.u = uvhit.x;
                 hrec.v = uvhit.y;
@@ -150,7 +157,11 @@ public:
 
         rec.t = 1.0;
         rec.p = random_point;
-        rec.normal = unit_vector((1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]]);
+        if (mesh->use_geometry_normals)
+            rec.normal = unit_vector(cross(edge1, edge2));
+        else
+            rec.normal = unit_vector((1 - b0 - b1) * mesh->normals[V[0]] + b0 * mesh->normals[V[1]] + b1 * mesh->normals[V[2]]);
+
         rec.mat_ptr = mat_ptr;
         Vector2f uvhit = (1 - b0 - b1) * mesh->uv[V[0]] + b0 * mesh->uv[V[1]] + b1 * mesh->uv[V[2]];
         rec.u = uvhit.x;
@@ -175,8 +186,7 @@ public:
 	std::unique_ptr<PRT::SHCoefficients[]> coeffs;
 };
 
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights);
-std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable*> &lights);
-
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, std::vector<hitable *> &lights, bool use_geometry_normals = false);
+std::vector<std::shared_ptr<hitable>> create_triangle_mesh(const std::string &file, const Matrix4x4 &toWorld, material *bsdf, std::vector<hitable *> &lights, bool use_geometry_normals = false);
 
 #endif

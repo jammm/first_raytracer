@@ -2,12 +2,12 @@
 #include "material.h"
 #include "util.h"
 
-std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string file)
+std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string file, bool use_geometry_normals)
 {
     std::vector<std::shared_ptr<triangle_mesh>> meshes;
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(file, ((aiProcessPreset_TargetRealtime_Fast)));
+    const aiScene *scene = importer.ReadFile(file, ((aiProcessPreset_TargetRealtime_Fast & ~aiProcess_GenNormals)));
     // If the import failed, report it
     if (!scene)
     {
@@ -116,10 +116,20 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
 
 			}
 			for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
-				normals[j].make_unit_vector();
+			{
+				Vector3f &n = normals[j];
+				double length = n.length();
+				if (length != 0)
+					n /= length;
+				else
+				{
+					n = Vector3f(1, 0, 0);
+				}
+			}
 		}
 
-        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv, std::move(mat), name.C_Str(), true));
+        meshes.push_back(std::make_shared<triangle_mesh>(mesh->mNumFaces, mesh->mNumVertices, vertices, indices.data(), normals, uv,
+							std::move(mat), use_geometry_normals, name.C_Str(), true));
 	}
 
     return meshes;
