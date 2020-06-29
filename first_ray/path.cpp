@@ -42,13 +42,14 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 /* Sample a random light source */
                 hit_record lrec;
                 Vector3f offset_origin = hrec.p + (EPSILON * hrec.normal);
-                Vector3f to_light = unit_vector(lights[index]->sample_direct(lrec, offset_origin, random_sampler.get2d()));
+                Vector3f to_light = lights[index]->sample_direct(lrec, offset_origin, random_sampler.get2d());
                 const double dist_to_light = to_light.length();
 
                 ray shadow_ray = ray(offset_origin, to_light);
 
                 if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                 {
+                    to_light.make_unit_vector();
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
                     const double cos_wi = dot(hrec.normal, unit_vector(to_light));

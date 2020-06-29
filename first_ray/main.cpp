@@ -226,7 +226,7 @@ Scene *cornell_box_obj(const double &aspect)
     std::vector<hitable*> lights;
 
     // Use geometry normals
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Mirror.obj", lights, true);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights, true);
 
     for (auto triangle : mesh)
     {
