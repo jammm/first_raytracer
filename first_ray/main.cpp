@@ -52,17 +52,23 @@ inline Vector3f de_nan(const Vector3f &c)
     return temp;
 }
 
-hitable *random_scene(camera &cam, const double &aspect, std::vector<hitable *> &lights)
+Scene *random_scene(const double &aspect)
 {
     /* n == number of spheres */
     constexpr int n = 1100000;
-    hitable **list = new hitable*[n + 1];
+    hitable **list = new hitable * [n + 1];
+    std::vector<hitable *> lights;
     //Large sphere's texture can be checkered
     texture *checker = new checker_texture(new constant_texture(Vector3f(0.2f, 0.3f, 0.1f)), new constant_texture(Vector3f(0.99f, 0.99f, 0.99f)), 1, 1);
     sampler s;
 
+
     list[0] = new sphere(Vector3f(0, -1000, 0), 1000, new lambertian(checker));
     int i = 1;
+
+    list[i++] = new sphere(Vector3f(0, 1.5, 0), 1.5, new diffuse_light(new constant_texture(Vector3f(10, 10, 10))));
+    lights.push_back(new sphere(Vector3f(0, 1.5, 0), 1.5, new diffuse_light(new constant_texture(Vector3f(10, 10, 10)))));
+
     for (int a = -11; a < 11; a++)
     {
         for (int b = -11; b < 11; b++)
@@ -71,16 +77,16 @@ hitable *random_scene(camera &cam, const double &aspect, std::vector<hitable *> 
             Vector3f center(a + 0.9f * s.get1d(), 0.2f, b + 0.9f * s.get1d());
             if ((center - Vector3f(4, 0.2f, 0)).length() > 0.9f)
             {
-                if (choose_mat < 0.8)
+                if (choose_mat < 0.5)
                 {
                     //diffuse
                     list[i++] = new sphere(center, 0.2f, new lambertian(new constant_texture(Vector3f(s.get1d() * s.get1d(), s.get1d() * s.get1d(), s.get1d() * s.get1d()))));
                 }
-                else if (choose_mat < 0.95)
+                else if (choose_mat < 0.75)
                 {
-                    //metal
+                    //metal (specular/mirror)
                     list[i++] = new sphere(center, 0.2f,
-                        new metal(Vector3f(0.5*(1 + s.get1d()), 0.5*(1 + s.get1d()), 0.5*(1 + s.get1d())), 0.5*s.get1d()));
+                        new metal(Vector3f(0.5*(1 + s.get1d()), 0.5*(1 + s.get1d()), 0.5*(1 + s.get1d()))));
                 }
                 else
                 {
@@ -91,15 +97,19 @@ hitable *random_scene(camera &cam, const double &aspect, std::vector<hitable *> 
         }
     }
 
-    Vector3f lookfrom(12, 2, 3);
+    Vector3f lookfrom(-15, 2, 1);
     Vector3f lookat(0, 0, 0);
     constexpr double dist_to_focus = 10.0;
-    constexpr double aperture = 0.001f;
+    constexpr double aperture = 0.1f;
     constexpr double vfov = 40.0;
-    cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
+    camera cam = camera(lookfrom, lookat, Vector3f(0, 1, 0), vfov, aspect, aperture, dist_to_focus);
 
-    return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
     //return new hitable_list(std::vector<hitable *>(list, list + i), i);
+    return new Scene(
+        parallel_bvh_node::create_bvh(list, i, 0.0, 0.0),
+        new environment_map("data/grace.hdr"),
+        cam, lights
+    );
 }
 
 hitable *cornell_box(camera &cam, const double &aspect)
@@ -134,7 +144,7 @@ hitable *cornell_box(camera &cam, const double &aspect)
     return parallel_bvh_node::create_bvh(list, i, 0.0, 0.0);
 }
 
-Scene* prt_test(const double& aspect)
+Scene *prt_test(const double &aspect)
 {
     hitable** list = new hitable * [20000];
     int i = 0;
@@ -497,7 +507,7 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, double(nx) / double(ny), lights));
-    std::unique_ptr<Scene> scene(cornell_box_obj(double(nx) / double(ny)));
+    std::unique_ptr<Scene> scene(random_scene(double(nx) / double(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);

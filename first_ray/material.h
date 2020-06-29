@@ -107,14 +107,15 @@ public:
     Vector3f wo;
 };
 
+// metal/specular material
 class metal : public material
 {
 public:
-    metal(const Vector3f &a, double f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1.0; }
+    metal(const Vector3f &a) : albedo(a) {}
     bool scatter(const ray &r_in, const hit_record &hrec, scatter_record &srec, const Vector3f &sample) const override
     {
         Vector3f reflected = reflect(unit_vector(r_in.direction()), hrec.normal);
-        srec.specular_ray = ray(hrec.p, reflected + fuzz*random_in_unit_sphere(sample));
+        srec.specular_ray = ray(hrec.p, reflected);
         srec.is_specular = true;
         srec.pdf_ptr = std::make_unique<constant_pdf>(1.0);
         return true;

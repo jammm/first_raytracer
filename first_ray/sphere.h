@@ -8,8 +8,9 @@
 class sphere : public hitable
 {
 public:
-    sphere() {}
-    sphere(const Vector3f &cen, const double &r, material *mat) : center(cen), radius(r), mat_ptr(mat) {}
+    sphere(const Vector3f &cen, const double &r, material *mat) : center(cen), radius(r), mat_ptr(mat),
+            inv_surface_area(1/(4*M_PI*r*r))
+    {}
 
     bool hit(const ray &r, double t_min, double t_max, hit_record &rec) const override;
     bool bounding_box(double t0, double t1, aabb &b) const override;
@@ -19,6 +20,7 @@ public:
     Vector3f center;
     double radius;
     material *mat_ptr;
+    const double inv_surface_area;
 };
 
 bool sphere::hit(const ray &r, double t_min, double t_max, hit_record &rec) const
@@ -42,9 +44,11 @@ bool sphere::hit(const ray &r, double t_min, double t_max, hit_record &rec) cons
         rec.t = t;
         rec.p = r.point_at_parameter(rec.t);
         rec.normal = (rec.p - center) / radius;
+        rec.wi = -unit_vector(r.d);
         if ((r.origin() - center).squared_length() < radius * radius)
             rec.normal = -rec.normal;
         rec.mat_ptr = mat_ptr;
+        rec.obj = (hitable *)this;
         get_sphere_uv((rec.p - center), rec.u, rec.v);
         return true;
     }
@@ -67,9 +71,10 @@ double sphere::pdf_direct_sampling(const hit_record &lrec, const Vector3f &to_li
     if (distance_squared <= radius_squared)
         return 1 / (4 * M_PI * radius * radius);
 
-    const double cos_theta_max = sqrt(1 - radius_squared / (center-o).squared_length());
+    const double cos_theta_max = sqrt(1 - radius_squared / direction.squared_length());
     const double solid_angle = 2 * M_PI * (1-cos_theta_max);
-    return 1 / solid_angle;
+    return (1 / solid_angle) * std::abs(dot(to_light, lrec.normal))
+        / direction.squared_length();
 }
 
 Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o, const Vector2f& sample) const
@@ -85,11 +90,20 @@ Vector3f sphere::sample_direct(hit_record &rec, const Vector3f &o, const Vector2
         rec.p = p;
         rec.mat_ptr = mat_ptr;
         rec.normal = unit_vector(center - p);
+        rec.wi = unit_vector(o - p);
 		rec.obj = (hitable *)this;
 
         return p - o;
     }
-    return uvw.fromLocal(random_to_sphere(radius, distance_squared, sample));
+    else
+    {
+        Vector3f p = uvw.fromLocal(random_to_sphere(radius, distance_squared, sample));
+        rec.mat_ptr = mat_ptr;
+        rec.normal = unit_vector(p);
+        rec.wi = unit_vector(-p);
+        rec.obj = (hitable *)this;
+        return p;
+    }
 }
 
 #endif

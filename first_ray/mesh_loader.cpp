@@ -74,8 +74,34 @@ std::vector<std::shared_ptr<triangle_mesh>> mesh_loader::load_obj(std::string fi
             }
             else
             {
-                matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
-                mat = std::make_unique<lambertian>(new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))));
+				matt->Get(AI_MATKEY_COLOR_SPECULAR, c);
+				if (c != aiColor3D(0, 0, 0))
+				{
+					aiColor3D c_d(0.f, 0.f, 0.f);
+					matt->Get(AI_MATKEY_COLOR_DIFFUSE, c_d);
+					double opacity;
+					matt->Get(AI_MATKEY_OPACITY, opacity);
+					if (opacity < 1.0)
+					{
+						double ref_idx;
+						matt->Get(AI_MATKEY_REFRACTI, ref_idx);
+						mat = std::make_unique<dielectric>(ref_idx, new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))),
+							new constant_texture(Vector3f(1.0, 1.0, 1.0)));
+					}
+					else
+					{
+						double specular_exponent;
+						matt->Get(AI_MATKEY_SHININESS, specular_exponent);
+						mat = std::make_unique<modified_phong>(new constant_texture(Vector3f(FromSrgb(c_d.r), FromSrgb(c_d.g), FromSrgb(c_d.b))),
+															   new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))), specular_exponent);
+					}
+				}
+				else
+				{
+					matt->Get(AI_MATKEY_COLOR_DIFFUSE, c);
+					mat = std::make_unique<lambertian>(new constant_texture(Vector3f(FromSrgb(c.r), FromSrgb(c.g), FromSrgb(c.b))));
+				}
+
             }
         }
         else
