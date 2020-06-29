@@ -93,7 +93,7 @@ public:
 
     Vector3f eval_bsdf(const ray &r_in, const hit_record &hrec, const Vector3f &wo) const override
     {
-        const Vector3f reflected = reflect(-hrec.wi, hrec.normal);
+        const Vector3f reflected = unit_vector(reflect(-hrec.wi, hrec.normal));
         const double alpha = std::max(0.0, dot(reflected, wo));
         const Vector3f result = (diffuse_reflectance->value(hrec) / M_PI) + specular_reflectance->value(hrec)
                 * ((specular_exponent + 2) / (2 * M_PI)) * std::pow(alpha, specular_exponent);

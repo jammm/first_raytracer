@@ -221,12 +221,12 @@ Scene *furnace_test_scene(const double &aspect)
 
 Scene *cornell_box_obj(const double &aspect)
 {
-    hitable **list = new hitable*[300];
+    hitable **list = new hitable*[3000];
     int i = 0;
     std::vector<hitable*> lights;
 
     // Use geometry normals
-    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Original.obj", lights, true);
+    static std::vector <std::shared_ptr<hitable>> mesh = create_triangle_mesh("CornellBox/CornellBox-Mirror.obj", lights, true);
 
     for (auto triangle : mesh)
     {
@@ -507,7 +507,7 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, double(nx) / double(ny), lights));
-    std::unique_ptr<Scene> scene(random_scene(double(nx) / double(ny)));
+    std::unique_ptr<Scene> scene(cornell_box_obj(double(nx) / double(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
