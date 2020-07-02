@@ -37,6 +37,9 @@ include_directories(
 # set some variables
 set(BUILD_SHARED_LIBS ON)
 set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_ASSIMP_VIEW OFF)
+set(ASSIMP_DOUBLE_PRECISION ON)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 
 add_subdirectory(dependencies/assimp-5.0.1)
