@@ -13,7 +13,7 @@ struct renderer : public integrator
 {
     double Render(Scene *scene, viewer& film_viewer)
     {
-        // Initialize viewer and create gl window
+        // Initialize viewer to create gl window
         GLFWwindow* window = film_viewer.init();
         // Use cpp-taskflow https://github.com/cpp-taskflow/cpp-taskflow
         tf::Taskflow tf;

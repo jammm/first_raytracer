@@ -63,6 +63,7 @@ struct scatter_record
     bool is_specular;
     hit_record hrec;
     double eta;
+    double sampled_pdf;
     std::unique_ptr<pdf> pdf_ptr;
 
     scatter_record(const hit_record &hrec_) : hrec(hrec_) {}
@@ -84,7 +85,7 @@ public:
     {
         double cosine = std::max<double>(dot(uvw.w(), unit_vector(direction)), 0.0);
         
-        return cosine / (double) (double)M_PI;
+        return cosine / (double)M_PI;
     }
 
     Vector3f generate(const Vector2f &sample, scatter_record &srec) const override
@@ -239,46 +240,10 @@ public:
          || dot(hrec.normal, hrec.wi) <= 0)
             return 0.0;
 
-
         /* Calculate the reflection half-vector */
         Vector3f H = unit_vector(wo+hrec.wi);
 
-        /* Construct the microfacet distribution matching the
-           roughness values at the current surface position. */
-        double cosTheta = dot(hrec.normal, H);
-
-        if (cosTheta <= 0)
-            return 0.0;
-
-        double cosTheta2 = cosTheta * cosTheta;
-        double beckmannExponent = ((H[0]*H[0]) / (alphaU * alphaU)
-                + (H[1] * H[1]) / (alphaV * alphaV)) / cosTheta2;
-
-        double eval_result;
-        switch (distribution_type)
-        {
-            case microfacet_distributions::beckmann:
-            {
-                /* Beckmann distribution function for Gaussian random surfaces - [Walter 2005] evaluation */
-                eval_result = fastexp(-beckmannExponent) /
-                    (M_PI * alphaU * alphaV * cosTheta2 * cosTheta2);
-                break;
-            }
-            case microfacet_distributions::ggx:
-            {
-                /* GGX / Trowbridge-Reitz distribution function for rough surfaces */
-                double root = ((double)1 + beckmannExponent) * cosTheta2;
-                eval_result = (double)1 / (M_PI * alphaU * alphaV * root * root);
-                break;
-            }
-            default:
-                // invalid microfacet distribution type
-                return -1;
-        }
-
-        /* Prevent potential numerical issues in other stages of the model */
-        if (eval_result * cosTheta < 1e-20f)
-            eval_result = 0.0;
+        double eval_result = microfacet::eval(uvw.fromLocal(H), hrec, alphaU, alphaV, distribution_type);
 
         return eval_result * microfacet::smithG1(hrec.wi, H, hrec, alphaU, alphaV, distribution_type)
             / (4.0 * dot(hrec.wi, hrec.normal));
@@ -310,14 +275,7 @@ public:
         return 0.5 * (Rp2 + Rs2);
     }
 
-    double pdfVisible(const Vector3f &wi, const Vector3f &m, const hit_record &hrec) const
-    {
-        double cosTheta = dot(hrec.normal, wi);
-        if (cosTheta == 0)
-            return 0.0;
-        return microfacet::smithG1(wi, m, hrec, alphaU, alphaV, distribution_type)
-                * std::abs(dot(wi, m)) * microfacet::eval(m, hrec, alphaU, alphaV, distribution_type) / std::abs(cosTheta);
-    }
+    double pdfVisible(const Vector3f &wi, const Vector3f &m, const hit_record &hrec) const;
 
     Vector2f sampleVisible11(double thetaI, Vector2f sample) const {
         const double SQRT_PI_INV = 1 / std::sqrt(M_PI);
@@ -498,8 +456,8 @@ public:
     {
         Vector3f m;
         m = sampleVisible(wi, sample);
-        //pdf = pdfVisible(wi, m, hrec);
-        pdf = 0.0;
+        pdf = pdfVisible(uvw.fromLocal(wi), uvw.fromLocal(m), hrec);
+
         return m;
     }
 
@@ -510,11 +468,15 @@ public:
 
         hit_record &hrec = srec.hrec;
         /* Sample M, the microfacet normal */
-        double pdf;
-        Vector3f m = sample_microfacet(uvw.toLocal(hrec.wi), sample, pdf, hrec);
+        Vector3f m = sample_microfacet(uvw.toLocal(hrec.wi), sample, srec.sampled_pdf, hrec);
 
         /* Perfect specular reflection based on the microfacet normal */
         Vector3f wo = reflect(-hrec.wi, uvw.fromLocal(m));
+
+        Vector3f H = unit_vector(wo + hrec.wi);
+
+        /* Jacobian of the half-direction mapping */
+        srec.sampled_pdf /= 4.0 * dot(wo, H);
 
         return wo;
     }

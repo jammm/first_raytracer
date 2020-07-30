@@ -86,7 +86,7 @@ void InitRandomNumbers(sampler &s, double *prnds)
 }
 
 // path sampling
-void pssmlt::TracePath(pssmlt::Path &path, const ray &r, Scene *scene, double *prnds, int &PathRndsOffset)
+void pssmlt::TracePath(pssmlt::Path *path, const ray &r, Scene *scene, double *prnds, int &PathRndsOffset)
 {
     hit_record dummy_hrec;
     // Compute scalar contribution function for this path
@@ -98,8 +98,8 @@ void pssmlt::TracePath(pssmlt::Path &path, const ray &r, Scene *scene, double *p
     st.prev_hrec = dummy_hrec;
     Vector3f c = Li(path, r, scene, st);
     PathRndsOffset = st.PathRndsOffset;
-    path.contrib.c = c;
-    path.contrib.sc = std::max(std::max(c[0], c[1]), c[2]);
+    path->contrib.c = c;
+    path->contrib.sc = std::max(std::max(c[0], c[1]), c[2]);
 }
 
 pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, double *prnds, int &PathRndsOffset)
@@ -128,7 +128,7 @@ pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, doubl
 
     Result.n++;
     hit_record dummy_hrec;
-    TracePath(Result, r, scene, prnds, PathRndsOffset);
+    TracePath(&Result, r, scene, prnds, PathRndsOffset);
 
     // get the pixel location
     Vector3f Direction = Result.camera_ray;
@@ -144,18 +144,18 @@ pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, doubl
 }
 
 
-Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
+Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
 {
     hit_record hrec;
     auto &world = scene->world;
-    if (world->hit(r, EPSILON, FLT_MAX, hrec))
+    if (st.depth <= MaxPathLength && world->hit(r, EPSILON, FLT_MAX, hrec))
     {
         scatter_record srec(hrec);
         Vector3f Le = hrec.mat_ptr->emitted(r, hrec);
 
         // set path data
-        path.x[path.n] = Vert(hrec.p, hrec.normal, hrec.obj); 
-        path.n++;
+        path->x[path->n] = Vert(hrec.p, hrec.normal, hrec.obj); 
+        path->n++;
         double rnd0 = st.prnds[st.PathRndsOffset + 0];
         double rnd1 = st.prnds[st.PathRndsOffset + 1];
         double rnd2 = st.prnds[st.PathRndsOffset + 2];
@@ -172,7 +172,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
                 return Le;
         }
 
-        if (st.depth <= MaxPathLength && hrec.mat_ptr->scatter(r, hrec, srec, rnd))
+        if (hrec.mat_ptr->scatter(r, hrec, srec, rnd))
         {
             /* Direct light sampling */
             rnd0 = st.prnds[st.PathRndsOffset + 0];
@@ -192,6 +192,7 @@ Vector3f pssmlt::Li(Path &path, const ray &r, Scene *scene, state &st)
 
                 if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                 {
+                    to_light.make_unit_vector();
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
                     const double cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));

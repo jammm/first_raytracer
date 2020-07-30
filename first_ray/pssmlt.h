@@ -8,8 +8,8 @@
 /* Reference: smallpssmlt by Professor Toshiya Hachisuka https://www.ci.i.u-tokyo.ac.jp/~hachisuka/smallpssmlt.cpp */
 constexpr static int PixelWidth = 512;
 constexpr static int PixelHeight = 512;
-constexpr static int MaxPathLength = 20;
-constexpr static int N_Init = 100000;
+constexpr static int MaxPathLength = 10;
+constexpr static int N_Init = 1000;
 constexpr static double LargeStepProb = 0.3f;
 
 constexpr static int NumRNGsPerEvent = 3;
@@ -62,11 +62,11 @@ struct pssmlt
         contrib_msg(const Vector2i &pixel_, const Vector3f &contrib_) : pixel(pixel_), contrib(contrib_) {}
     };
 
-    void TracePath(Path &path, const ray &r, Scene* scene, double *prnds, int &PathRndsOffset);
+    void TracePath(Path *path, const ray &r, Scene* scene, double *prnds, int &PathRndsOffset);
 
     Path GenerateEyePath(const int MaxEyeEvents, Scene *scene, double *prnds, int &PathRndsOffset);
 
-    Vector3f Li(Path &path, const ray &r, Scene *scene, state &st);
+    Vector3f Li(Path *path, const ray &r, Scene *scene, state &st);
 
     void Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf);
 

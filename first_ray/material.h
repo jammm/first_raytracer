@@ -281,23 +281,27 @@ public:
             dot(wo, hrec.normal) <= 0)
             return Vector3f(0.0, 0.0, 0.0);
 
+        onb uvw;
+        uvw.build_from_w(hrec.normal);
         /* Calculate the reflection half-vector */
-        Vector3f H = unit_vector(wo+hrec.wi);
+        Vector3f H = (wo + hrec.wi);
+        if (H.x() == 0 || H.y() == 0 || H.z() == 0) return Vector3f(0, 0, 0);
+        H.make_unit_vector();
 
         /* Construct the microfacet distribution matching the
            roughness values at the current surface position. */
 
         /* Evaluate the microfacet normal distribution */
-        const double D = microfacet::eval(H, hrec, alphaU, alphaV, distribution_type);
+        const double D = microfacet::eval(uvw.fromLocal(H), hrec, alphaU, alphaV, distribution_type);
         if (D == 0)
             return Vector3f(0.0, 0.0, 0.0);
 
         /* Fresnel factor */
-        const Vector3f F = microfacet::fresnelConductorExact(dot(hrec.wi, H), eta, k) *
+        const Vector3f F = microfacet::fresnelConductorExact(dot(hrec.wi, (H)), eta, k) *
             specular_reflectance->value(hrec);
 
         /* Smith's shadow-masking function */
-        const double G = G_term(hrec.wi, wo, H, hrec);
+        const double G = G_term(hrec.wi, wo, (H), hrec);
 
         /* Calculate the total amount of reflection */
         double model = D * G / (4.0 * cosWi);

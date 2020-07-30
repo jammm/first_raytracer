@@ -133,12 +133,6 @@ void viewer::add_sample(const Vector2i& pixel, Vector3f &sample)
 
 void viewer::save_and_destroy(const std::string &filename)
 {
-    std::cout << "Saving BMP..." << std::endl;
-    image(out_image.get(), nx, ny, num_channels).save_image(filename, formats::STBI_BMP);
-    std::cout << "Saving JPG..." << std::endl;
-    image(out_image.get(), nx, ny, num_channels).save_image(filename, formats::STBI_JPG);
-    std::cout << "Saving PNG..." << std::endl;
-    image(out_image.get(), nx, ny, num_channels).save_image(filename, formats::STBI_PNG);
     std::cout << "Saving PFM..." << std::endl;
     image_pfm(fout_image.get(), nx, ny, num_channels).save_image(filename + ".pfm");
 

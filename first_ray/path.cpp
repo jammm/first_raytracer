@@ -33,7 +33,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             return Le * weight;
         }
 
-        if (depth <= 10 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
+        if (depth <= 33 && hrec.mat_ptr->scatter(r, hrec, srec, random_sampler.get3d()))
         {
             /* Direct light sampling */
             const int index = lights.pick_sample(random_sampler.get1d());
