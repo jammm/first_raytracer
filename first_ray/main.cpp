@@ -484,7 +484,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 512;
     constexpr int ny = 512;
-    uint_fast64_t ns = 1000;
+    uint_fast64_t ns = 100;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 

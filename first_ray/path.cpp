@@ -54,10 +54,6 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                     // Calculate geometry term
                     const double cos_wi = dot(hrec.normal, unit_vector(to_light));
                     const double cos_wo = dot(lrec.normal, -unit_vector(to_light));
-                    if (srec.is_specular)
-                    {
-                        surface_bsdf *= cos_wi;
-                    }
                     if (cos_wo != 0)
                     {
                         double distance_squared = dist_to_light * dist_to_light;
@@ -79,7 +75,8 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
             }
             if (srec.is_specular)
             {
-                const double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
+                double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
+                if (srec.sampled_pdf > 0.0) surface_bsdf_pdf = srec.sampled_pdf;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 assert(std::isfinite(surface_bsdf[0])
                     && std::isfinite(surface_bsdf[1])

@@ -66,7 +66,7 @@ struct scatter_record
     double sampled_pdf;
     std::unique_ptr<pdf> pdf_ptr;
 
-    scatter_record(const hit_record &hrec_) : hrec(hrec_) {}
+    scatter_record(const hit_record &hrec_) : hrec(hrec_), sampled_pdf(-1.0) {}
 };
 
 class pdf
