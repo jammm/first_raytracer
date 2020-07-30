@@ -109,10 +109,10 @@ pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, doubl
     camera &cam = scene->cam;
 
     if (MaxEyeEvents == 0) return Result;
-    for (int i = 0; i < MaxEvents; i++) Result.x[i].hit_obj = (hitable*)0xdeadbeef;
+    //for (int i = 0; i < MaxEvents; i++) Result.x[i].hit_obj = (hitable*)0xdeadbeef;
     PathRndsOffset = 0;
 
-    ray r = cam.get_ray(prnds[PathRndsOffset + 0], prnds[PathRndsOffset + 1], sampler().get2d());
+    ray r(cam.get_ray(prnds[PathRndsOffset + 0], prnds[PathRndsOffset + 1], Vector2f(prnds[PathRndsOffset + 2], prnds[PathRndsOffset + 3])));
     
     //const Vector3f su = cam.u * -(0.5 - prnds[PathRndsOffset + 0]) * PixelWidth;
     //const Vector3f sv = cam.v * (0.5 - prnds[PathRndsOffset + 1]) * PixelHeight;
@@ -121,9 +121,9 @@ pssmlt::Path pssmlt::GenerateEyePath(const int MaxEyeEvents, Scene *scene, doubl
     //std::cout << r.d[0] << " " << r.d[1] << " " << r.d[2] << std::endl;
 
 
-    PathRndsOffset += 2;
+    PathRndsOffset += 4;
 
-    Result.x[0] = Vert(r.o, cam.w, nullptr); 
+    //Result.x[0] = Vert(r.o, cam.w, nullptr); 
     Result.camera_ray = unit_vector(r.d);
 
     Result.n++;
@@ -154,7 +154,7 @@ Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
         Vector3f Le = hrec.mat_ptr->emitted(r, hrec);
 
         // set path data
-        path->x[path->n] = Vert(hrec.p, hrec.normal, hrec.obj); 
+        //path->x[path->n] = Vert(hrec.p, hrec.normal, hrec.obj); 
         path->n++;
         double rnd0 = st.prnds[st.PathRndsOffset + 0];
         double rnd1 = st.prnds[st.PathRndsOffset + 1];
@@ -170,6 +170,18 @@ Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
                 || (dynamic_cast<metal*>(st.prev_hrec.mat_ptr) != nullptr)
                 || (dynamic_cast<dielectric*>(st.prev_hrec.mat_ptr) != nullptr))
                 return Le;
+
+            // Start with checking if camera ray hits a light source
+            const double cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0);
+            double distance_squared = (hrec.p - st.prev_hrec.p).squared_length();
+            if (distance_squared <= EPSILON) distance_squared = EPSILON;
+
+            double surface_bsdf_pdf = st.prev_bsdf_pdf * cos_wo / distance_squared;
+            const double light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction());
+
+            const double weight = miWeight(surface_bsdf_pdf, light_pdf);
+
+            return Le * weight;
         }
 
         if (hrec.mat_ptr->scatter(r, hrec, srec, rnd))
@@ -195,35 +207,37 @@ Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
                     to_light.make_unit_vector();
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
-                    const double cos_wi = std::abs(dot(hrec.normal, unit_vector(to_light)));
-                    const double cos_wo = std::max(dot(lrec.normal, -unit_vector(to_light)), 0.0);
-                    if (srec.is_specular)
-                    {
-                        surface_bsdf *= cos_wi;
-                    }
+                    const double cos_wi = dot(hrec.normal, unit_vector(to_light));
+                    const double cos_wo = dot(lrec.normal, -unit_vector(to_light));
                     if (cos_wo != 0)
                     {
                         double distance_squared = dist_to_light * dist_to_light;
 
-                        double light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light);
-                        light_pdf *= distance_squared / cos_wo;
+                        const double light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light);
                         // Visibility term is always 1
                         // because of the invariant imposed on these objects by the if above.
+                        const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
+
                         if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf / light_pdf;
+                        const double G = std::abs(cos_wi * cos_wo / distance_squared);
+
+                        const double weight = miWeight(light_pdf, surface_bsdf_pdf);
+
+                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
                     }
                 }
             }
             if (srec.is_specular)
             {
-                const double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
+                double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
+                if (srec.sampled_pdf > 0.0) surface_bsdf_pdf = srec.sampled_pdf;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 if (surface_bsdf_pdf == 0)
                 {
                     return Vector3f(0, 0, 0);
                 }
-                //const double cos_wi = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                //const double cos_wo = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
                 const bool outside = dot(hrec.normal, srec.specular_ray.d) > 0;
                 srec.specular_ray.o = outside ? (srec.specular_ray.o + (EPSILON * hrec.normal)) : (srec.specular_ray.o - (EPSILON * hrec.normal));
                 st.depth += 1;

@@ -484,7 +484,7 @@ int main(int argc, const char **argv)
 {
     constexpr int nx = 512;
     constexpr int ny = 512;
-    uint_fast64_t ns = 100;
+    uint_fast64_t ns = 26214400;
     constexpr int comp = 3; //RGB
     //out_image = (GLubyte *)(((std::size_t)out_image) >> 6 <<6);
 
@@ -507,14 +507,14 @@ int main(int argc, const char **argv)
 
     // Initialize scene
     //std::unique_ptr<hitable> world(cornell_box_obj(cam, double(nx) / double(ny), lights));
-    std::unique_ptr<Scene> scene(glass_of_water(double(nx) / double(ny)));
+    std::unique_ptr<Scene> scene(cornell_box_obj(double(nx) / double(ny)));
 
     std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_spann = std::chrono::duration_cast<std::chrono::duration<double>>(t22 - t11);
     std::cout << "\nBVH construction took me " << time_spann.count() << " seconds.";
 
     // Use the renderer specified in template parameter
-    renderer<path> render;
+    renderer<pssmlt> render;
 
     double render_time = render.Render(scene.get(), film_viewer);
 

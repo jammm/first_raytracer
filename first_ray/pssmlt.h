@@ -9,12 +9,12 @@
 constexpr static int PixelWidth = 512;
 constexpr static int PixelHeight = 512;
 constexpr static int MaxPathLength = 10;
-constexpr static int N_Init = 1000;
+constexpr static int N_Init = 10000;
 constexpr static double LargeStepProb = 0.3f;
 
 constexpr static int NumRNGsPerEvent = 3;
 constexpr static int MaxEvents = (MaxPathLength + 1);
-constexpr static int NumStatesSubpath = ((MaxEvents + 2) * NumRNGsPerEvent);
+constexpr static int NumStatesSubpath = ((MaxEvents + 100) * NumRNGsPerEvent);
 constexpr static int NumStates = (NumStatesSubpath * 5);
 
 struct state
@@ -48,7 +48,7 @@ struct pssmlt
     };
     struct Path
     {
-        Vert x[MaxEvents];
+        //Vert x[MaxEvents];
         PathContribution contrib;
         Vector3f camera_ray;
         int n;

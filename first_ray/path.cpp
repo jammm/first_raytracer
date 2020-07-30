@@ -87,6 +87,8 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                     return Vector3f(0, 0, 0);
                 }
                 //const double cos_wo = abs(dot(hrec.normal, unit_vector(srec.specular_ray.direction())));
+                const bool outside = dot(hrec.normal, srec.specular_ray.d) > 0;
+                srec.specular_ray.o = outside ? (srec.specular_ray.o + (EPSILON * hrec.normal)) : (srec.specular_ray.o - (EPSILON * hrec.normal));
                 return Le + surface_bsdf * Li(srec.specular_ray, scene, depth + 1, hrec, surface_bsdf_pdf, random_sampler) / surface_bsdf_pdf;
             }
             else
