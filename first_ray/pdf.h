@@ -424,7 +424,9 @@ public:
         /* Step 2: simulate P22_{wi}(slope.x, slope.y, 1, 1) */
         Vector2f slope = sampleVisible11(theta, sample);
 
-        assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
+        //assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
+        if (!std::isfinite(slope.x))
+            slope[0] = 0.0;
 
         /* Step 3: rotate */
         slope = Vector2(
@@ -454,7 +456,7 @@ public:
     {
         Vector3f m;
         m = sampleVisible(wi, sample);
-        pdf = pdfVisible(uvw.fromLocal(wi), m, hrec);
+        pdf = pdfVisible(wi, m, hrec);
 
         return m;
     }
@@ -472,7 +474,7 @@ public:
         Vector3f wo = reflect(-hrec.wi, uvw.fromLocal(m));
 
         /* Jacobian of the half-direction mapping */
-        srec.sampled_pdf /= 4.0 * dot(uvw.toLocal(wo), m);
+        srec.sampled_pdf /= 4.0 * dot(wo, uvw.fromLocal(m));
 
         return wo;
     }

@@ -172,12 +172,12 @@ Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
                 return Le;
 
             // Start with checking if camera ray hits a light source
-            const double cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0);
-            double distance_squared = (hrec.p - st.prev_hrec.p).squared_length();
+            const double cos_wo = dot(hrec.normal, -unit_vector(r.direction()));
+            double distance_squared = hrec.t * hrec.t;
             if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-            double surface_bsdf_pdf = st.prev_bsdf_pdf * cos_wo / distance_squared;
-            const double light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction());
+            double surface_bsdf_pdf = st.prev_bsdf_pdf;
+            const double light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction()) * distance_squared / abs(cos_wo);
 
             const double weight = miWeight(surface_bsdf_pdf, light_pdf);
 
@@ -213,25 +213,26 @@ Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
                     {
                         double distance_squared = dist_to_light * dist_to_light;
 
-                        const double light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light);
+                        if (!srec.is_specular)
+                            surface_bsdf *= cos_wi;
+
+                        const double light_pdf = scene->lights[index]->pdf_direct_sampling(hrec, to_light) * distance_squared / abs(cos_wo);
                         // Visibility term is always 1
                         // because of the invariant imposed on these objects by the if above.
-                        const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
+                        const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light);
 
                         if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                        const double G = std::abs(cos_wi * cos_wo / distance_squared);
-
                         const double weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * weight / light_pdf;
                     }
                 }
             }
             if (srec.is_specular)
             {
                 double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
-                //if (srec.sampled_pdf > 0.0) surface_bsdf_pdf = srec.sampled_pdf;
+                if (srec.sampled_pdf > 0.0) surface_bsdf_pdf = srec.sampled_pdf;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 if (surface_bsdf_pdf == 0)
                 {

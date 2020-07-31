@@ -22,7 +22,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 return Le;
             // Start with checking if camera ray hits a light source
             const double cos_wo = dot(hrec.normal, -unit_vector(r.direction()));
-            double distance_squared = hrec.t * hrec.t;
+            double distance_squared = (hrec.p - prev_hrec.p).squared_length();
             if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
             double surface_bsdf_pdf = prev_bsdf_pdf;
@@ -58,6 +58,9 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                     if (cos_wo != 0)
                     {
                         double distance_squared = dist_to_light * dist_to_light;
+
+                        if (!srec.is_specular)
+                            surface_bsdf *= cos_wi;
 
                         const double light_pdf = lights[index]->pdf_direct_sampling(hrec, to_light) * distance_squared / abs(cos_wo);
                         // Visibility term is always 1
@@ -114,7 +117,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
 
 void path::Render(Scene *scene, viewer *film_viewer, tf::Taskflow &tf)
 {
-    tf.parallel_for(film_viewer->ny - 1, -1, -1, [=](int y)
+    tf.parallel_for(210 - 1, 100, -1, [=](int y)
         {
             static thread_local sampler random_sampler(y * 39);
             for (int x = 0; x < film_viewer->nx; x++)
