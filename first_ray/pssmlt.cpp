@@ -231,7 +231,7 @@ Vector3f pssmlt::Li(Path *path, const ray &r, Scene *scene, state &st)
             if (srec.is_specular)
             {
                 double surface_bsdf_pdf = srec.pdf_ptr ? srec.pdf_ptr->value(hrec, srec.specular_ray.direction()) : 1.0;
-                if (srec.sampled_pdf > 0.0) surface_bsdf_pdf = srec.sampled_pdf;
+                //if (srec.sampled_pdf > 0.0) surface_bsdf_pdf = srec.sampled_pdf;
                 const Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(r, hrec, srec.specular_ray.direction());
                 if (surface_bsdf_pdf == 0)
                 {

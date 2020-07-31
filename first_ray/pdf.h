@@ -243,7 +243,7 @@ public:
         /* Calculate the reflection half-vector */
         Vector3f H = unit_vector(wo+hrec.wi);
 
-        double eval_result = microfacet::eval(uvw.fromLocal(H), hrec, alphaU, alphaV, distribution_type);
+        double eval_result = microfacet::eval((H), hrec, alphaU, alphaV, distribution_type);
 
         return eval_result * microfacet::smithG1(hrec.wi, H, hrec, alphaU, alphaV, distribution_type)
             / (4.0 * dot(hrec.wi, hrec.normal));
@@ -424,9 +424,7 @@ public:
         /* Step 2: simulate P22_{wi}(slope.x, slope.y, 1, 1) */
         Vector2f slope = sampleVisible11(theta, sample);
 
-        //assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
-        if (!std::isfinite(slope.x))
-            slope[0] = 0.0;
+        assert(std::isfinite(slope[0]) && std::isfinite(slope[1]));
 
         /* Step 3: rotate */
         slope = Vector2(
@@ -456,7 +454,7 @@ public:
     {
         Vector3f m;
         m = sampleVisible(wi, sample);
-        pdf = pdfVisible(uvw.fromLocal(wi), uvw.fromLocal(m), hrec);
+        pdf = pdfVisible(uvw.fromLocal(wi), m, hrec);
 
         return m;
     }
@@ -473,10 +471,8 @@ public:
         /* Perfect specular reflection based on the microfacet normal */
         Vector3f wo = reflect(-hrec.wi, uvw.fromLocal(m));
 
-        Vector3f H = unit_vector(wo + hrec.wi);
-
         /* Jacobian of the half-direction mapping */
-        srec.sampled_pdf /= 4.0 * dot(wo, H);
+        srec.sampled_pdf /= 4.0 * dot(uvw.toLocal(wo), m);
 
         return wo;
     }

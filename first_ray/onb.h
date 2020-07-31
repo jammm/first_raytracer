@@ -17,15 +17,16 @@ public:
     Vector3f toLocal(const Vector3f& a) const { return Vector3f(dot(a, axis[0]), dot(a, axis[1]), dot(a, axis[2])); }
     void build_from_w(const Vector3f &n)
     {
-        axis[2] = unit_vector(n);
-        Vector3f a;
-        if (fabs(w().x()) > 0.9)
-            a = Vector3f(0, 1, 0);
-        else
-            a = Vector3f(1, 0, 0);
-
-        axis[1] = unit_vector(cross(w(), a));
-        axis[0] = cross(w(), v());
+        axis[2] = n;
+        if (std::abs(n[0]) > std::abs(n[1])) {
+            double invLen = 1.0 / std::sqrt(n[0] * n[0] + n[2] * n[2]);
+            axis[1] = Vector3f(n[2] * invLen, 0.0f, -n[0] * invLen);
+        }
+        else {
+            double invLen = 1.0 / std::sqrt(n[1] * n[1] + n[2] * n[2]);
+            axis[1] = Vector3f(0.0, n[2] * invLen, -n[1] * invLen);
+        }
+        axis[0] = cross(axis[1], axis[2]);
     }
 
     Vector3f axis[3];

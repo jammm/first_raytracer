@@ -89,13 +89,14 @@ struct microfacet
 
     static double eval(const Vector3f &m, const hit_record &hrec, const double alphaU, const double alphaV, microfacet_distributions distribution_type)
     {
-        const double cosTheta = dot(hrec.normal, m);
+        Vector3f m_ = onb(hrec.normal).toLocal(m);
+        const double cosTheta = m_.z();
         if (cosTheta <= 0)
             return 0.0;
 
         double cosTheta2 = cosTheta * cosTheta;
-        double beckmannExponent = ((m[0] * m[0]) / (alphaU * alphaU)
-            + (m[1] * m[1]) / (alphaV * alphaV)) / cosTheta2;
+        double beckmannExponent = ((m_[0] * m_[0]) / (alphaU * alphaU)
+            + (m_[1] * m_[1]) / (alphaV * alphaV)) / cosTheta2;
 
         double result;
         switch (distribution_type) {

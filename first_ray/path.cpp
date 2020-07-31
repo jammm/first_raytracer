@@ -21,12 +21,12 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 || (dynamic_cast<dielectric*>(prev_hrec.mat_ptr) != nullptr))
                 return Le;
             // Start with checking if camera ray hits a light source
-            const double cos_wo = std::max(dot(hrec.normal, -unit_vector(r.direction())), 0.0);
-            double distance_squared = (hrec.p - prev_hrec.p).squared_length();
+            const double cos_wo = dot(hrec.normal, -unit_vector(r.direction()));
+            double distance_squared = hrec.t * hrec.t;
             if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-            double surface_bsdf_pdf = prev_bsdf_pdf * cos_wo / distance_squared;
-            const double light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction());
+            double surface_bsdf_pdf = prev_bsdf_pdf;
+            const double light_pdf = hrec.obj->pdf_direct_sampling(hrec, r.direction()) * distance_squared / abs(cos_wo);
 
             const double weight = miWeight(surface_bsdf_pdf, light_pdf);
 
@@ -50,6 +50,7 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                 if (!world->hit(shadow_ray, EPSILON, 1 - SHADOW_EPSILON, lrec))
                 {
                     to_light.make_unit_vector();
+                    shadow_ray.d = to_light;
                     Vector3f surface_bsdf = hrec.mat_ptr->eval_bsdf(shadow_ray, hrec, to_light);
                     // Calculate geometry term
                     const double cos_wi = dot(hrec.normal, unit_vector(to_light));
@@ -58,18 +59,16 @@ Vector3f path::Li(const ray &r, Scene *scene, const int &depth, const hit_record
                     {
                         double distance_squared = dist_to_light * dist_to_light;
 
-                        const double light_pdf = lights[index]->pdf_direct_sampling(hrec, to_light);
+                        const double light_pdf = lights[index]->pdf_direct_sampling(hrec, to_light) * distance_squared / abs(cos_wo);
                         // Visibility term is always 1
                         // because of the invariant imposed on these objects by the if above.
-                        const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light) * cos_wo / distance_squared;
+                        const double surface_bsdf_pdf = srec.pdf_ptr->value(hrec, to_light);
 
                         if (distance_squared <= EPSILON) distance_squared = EPSILON;
 
-                        const double G = std::abs(cos_wi * cos_wo / distance_squared);
-
                         const double weight = miWeight(light_pdf, surface_bsdf_pdf);
 
-                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * G * weight / light_pdf;
+                        Le += lrec.mat_ptr->emitted(shadow_ray, lrec) * surface_bsdf * weight / light_pdf;
                     }
                 }
             }
