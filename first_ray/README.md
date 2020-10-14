@@ -1,9 +1,6 @@
-# Compiling on OSX
-(Warning: only works on jam's machine, You can fix it by changing the include and lib directories.)
-For OSX (clang):
-`c++ -std=c++17 \`pkg-config glfw3 assimp --cflags\` *.cpp -o main \`pkg-config glfw3 glew assimp --static --libs\` -I./deps/cpp-taskflow-2.1.0  -framework OpenGL`
+# Compiling on OSX/Linux
+* Use `cmake build .` in this folder.
+* The output executable is named `main`, you can run it as `./main`
 
-For Linux:
-`g++ -std=c++17 -O3 *.cpp -o main -pthread -lGL -lglfw -lGLEW -lassimp -I./deps/cpp-taskflow-2.1.0`
-
-TODO: Use cmake
+# Compiling on Windows
+* Use the vs19/vs14 folder containing the corresponding Visual Studio solution files. It might have hard-coded dependencies so take care accordingly.
